@@ -271,7 +271,7 @@ task("createChangelog") {
         def changesXML = new XmlSlurper().parse(teamCityURL + "guestAuth/app/rest/changes?locator=build:(id:" + teamcity["teamcity.build.id"] + ")")
 
         def changes = changesXML.change
-        println("createChangelog: Identified " + changes.size() + " changes to be written into the changelog.")
+        logger.lifecycle("Identified " + changes.size() + " changes to be written into the changelog.")
 
         out << "# Aequivaleo Changelog \n"
         out << "## Version: _" + version + "_ \n"
@@ -392,8 +392,7 @@ publishing {
     }
 }
 
-pluginManager.withPlugin('com.jfrog.artifactory') {
-    System.out.println("Configuring artifactory.")
+try {
     artifactory {
         publish {
             publications ('mavenJava')
@@ -403,4 +402,7 @@ pluginManager.withPlugin('com.jfrog.artifactory') {
             publishIvy = true   //Publish generated Ivy descriptor files to Artifactory (true by default).
         }
     }
+} catch (Exception ex) {
+    logger.lifecycle("Failed to setup artifactory. Not currently running in CI/CD environment.")
 }
+
