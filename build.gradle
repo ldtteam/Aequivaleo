@@ -322,11 +322,12 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = project.group
 
-            from components.java
             artifact reobfArtifact
             artifact packageJavadoc
             artifact sourceJar
             artifact apiJar
+            artifact packageApiJavadoc
+            artifact apiSourceJar
 
             pom {
                 url = 'https://github.com/ldtteam/Aequivaleo'
