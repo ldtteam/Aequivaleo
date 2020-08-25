@@ -14,6 +14,7 @@ buildscript {
 }
 
 plugins {
+    id "com.github.johnrengelman.shadow" version "1.2.4"
     id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
@@ -186,8 +187,7 @@ jar {
         ])
     }
 
-    classifier = 'universal'
-    baseName project.modBaseName
+    classifier = 'slim'
 }
 
 javadoc {
@@ -197,7 +197,6 @@ javadoc {
 task packageJavadoc(type: Jar) {
     from javadoc
     classifier = 'javadoc'
-    baseName project.modBaseName
 }
 
 task apiJavadocs(type: Javadoc) {
@@ -207,20 +206,17 @@ task apiJavadocs(type: Javadoc) {
 task packageApiJavadoc(type: Jar) {
     from apiJavadocs
     classifier = 'javadoc-api'
-    baseName project.modBaseName
 }
 
 task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allJava
     from sourceSets.api.allJava
-    baseName project.modBaseName
 }
 
 task apiSourceJar(type: Jar) {
     classifier = 'api-sources'
     from sourceSets.api.allJava
-    baseName project.modBaseName
 }
 
 idea {
@@ -241,6 +237,29 @@ task setupCIWorkspace {
     }
 }
 
+shadowJar {
+    from sourceSets.main.output
+    from sourceSets.api.output
+
+    // Only shadow apache commons-math3
+    dependencies {
+        include dependency("org.jgrapht:jgrapht-core:${project.jgraphtVersion}")
+        include dependency("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}")
+    }
+    // Relocate apache commons-math3 to prevent conflicts with other mods that include it
+    relocate 'org.jgrapht', 'com.ldtteam.shaded.jgrapht'
+
+    classifier = 'universal' // Replace the default JAR
+}
+
+reobf {
+    shadowJar {
+    }
+    apiJar {
+        classpath = sourceSets.api.compileClasspath
+    }
+}
+
 curseforge {
     if (System.getenv().CURSEAPIKEY != null && System.getenv().CURSERELEASETYPE != null)
     {
@@ -258,7 +277,7 @@ curseforge {
             addArtifact sourceJar
             addArtifact apiJar
             addArtifact packageJavadoc
-            mainArtifact(jar)
+            mainArtifact(shadowJar)
         }
     }
     else
@@ -298,18 +317,8 @@ task("createChangelog") {
     }
 }
 
-// Example configuration to allow publishing using the maven-publish task
-// we define a custom artifact that is sourced from the reobfJar output task
-// and then declare that to be published
-// Note you'll need to add a repository here
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile) {
-    type 'jar'
-    builtBy 'reobfJar'
-}
-
 artifacts {
-    reobfArtifact
+    shadowJar
     packageJavadoc
     sourceJar
     apiJar
@@ -322,7 +331,9 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = project.group
 
-            artifact reobfArtifact
+            from components.java
+            artifact jar
+            artifact shadowJar
             artifact packageJavadoc
             artifact sourceJar
             artifact apiJar
