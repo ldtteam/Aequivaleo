@@ -197,9 +197,23 @@ task packageJavadoc(type: Jar) {
     classifier = 'javadoc'
 }
 
+task apiJavadocs(type: Javadoc) {
+    source = sourceSets.api.allJava
+}
+
+task packageApiJavadoc(type: Jar) {
+    from apiJavadocs
+    classifier = 'javadoc-api'
+}
+
 task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allJava
+    from sourceSets.api.allJava
+}
+
+task apiSourceJar(type: Jar) {
+    classifier = 'api-sources'
     from sourceSets.api.allJava
 }
 
@@ -233,6 +247,8 @@ curseforge {
             changelogType = 'markdown'
             releaseType = System.getenv().CURSERELEASETYPE
 
+            addArtifact packageApiJavadoc
+            addArtifact apiSourceJar
             addArtifact sourceJar
             addArtifact apiJar
             addArtifact packageJavadoc
@@ -286,9 +302,18 @@ def reobfArtifact = artifacts.add('default', reobfFile) {
     builtBy 'reobfJar'
 }
 
+artifacts {
+    reobfArtifact
+    packageJavadoc
+    sourceJar
+    apiJar
+    packageApiJavadoc
+    apiSourceJar
+}
+
 publishing {
     publications {
-        maven(MavenPublication) {
+        mavenJava(MavenPublication) {
             groupId = project.group
 
             artifact reobfArtifact

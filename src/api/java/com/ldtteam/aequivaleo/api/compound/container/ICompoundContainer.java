@@ -9,14 +9,14 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
 
     /**
      * The contents of this container.
-     * Set to the 1 unit of the content type {@link T}
+     * Set to the 1 unit of the content type {@code T}
      *
      * @return The contents.
      */
     T getContents();
 
     /**
-     * The amount of {@link T}s contained in this wrapper.
+     * The amount of {@code T}s contained in this wrapper.
      * @return The amount.
      */
     Double getContentsCount();

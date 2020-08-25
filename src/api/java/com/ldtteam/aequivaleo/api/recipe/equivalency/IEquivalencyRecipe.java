@@ -30,7 +30,7 @@ public interface IEquivalencyRecipe
     /**
      * Returns the offset factor between inputs and outputs.
      *
-     * @return
+     * @return The offset factor.
      */
     Double getOffsetFactor();
 }
