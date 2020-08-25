@@ -14,7 +14,7 @@ buildscript {
 }
 
 plugins {
-    id "com.matthewprenger.cursegradle" version "1.1.0"
+    id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 repositories {
@@ -396,7 +396,6 @@ pluginManager.withPlugin('com.jfrog.artifactory') {
     artifactory {
         publish {
             publications('mavenJava')
-            publishConfigs('archives', 'published')
             publishBuildInfo = true   //Publish build-info to Artifactory (true by default)
             publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
             publishPom = true   //Publish generated POM files to Artifactory (true by default).
