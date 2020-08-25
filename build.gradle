@@ -186,8 +186,6 @@ jar {
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
-
-    classifier = 'slim'
 }
 
 javadoc {
@@ -201,6 +199,7 @@ task packageJavadoc(type: Jar) {
 
 task apiJavadocs(type: Javadoc) {
     source = sourceSets.api.allJava
+    classpath = sourceSets.api.compileClasspath
 }
 
 task packageApiJavadoc(type: Jar) {
@@ -332,7 +331,6 @@ publishing {
             groupId = project.group
 
             from components.java
-            artifact jar
             artifact shadowJar
             artifact packageJavadoc
             artifact sourceJar
