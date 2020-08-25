@@ -45,6 +45,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @param <T>   The type of the compound container to check.
      * @return True when a factory for type T is registered false when not.
      */
+    @Override
     public <T> boolean canBeWrapped(@NotNull final Class<T> inputType)
     {
         notNull(inputType);
@@ -58,6 +59,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @param <T>       The type of the compound container to check.
      * @return True when a factory for type T is registered false when not.
      */
+    @Override
     public <T> boolean canBeWrapped(@NotNull final T gameObject)
     {
         notNull(gameObject);
@@ -73,6 +75,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @param <R>   The type of the factory output to check.
      * @return True when a factory for type T is registered false when not.
      */
+    @Override
     public <T, R> boolean canBeWrapped(@NotNull final Class<T> inputType, @NotNull final Class<R> outputType)
     {
         notNull(inputType);
@@ -89,6 +92,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @param <R>   The type of the factory output to check.
      * @return True when a factory for type T is registered false when not.
      */
+    @Override
     public <T, R> boolean canBeWrapped(@NotNull final T gameObject, @NotNull final Class<R> outputType)
     {
         notNull(gameObject);
@@ -105,6 +109,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @return The wrapped instance.
      * @throws IllegalArgumentException When T can not be wrapped properly {@code canBeWrapped(tInstance) == false;}
      */
+    @Override
     @SuppressWarnings(Suppression.UNCHECKED)
     @NotNull
     public <T> ICompoundContainer<?> wrapInContainer(@NotNull final T gameObject, @NotNull final double count) throws IllegalArgumentException
@@ -124,6 +129,7 @@ public class CompoundContainerFactoryRegistry implements ICompoundContainerFacto
      * @return The wrapped instance.
      * @throws IllegalArgumentException When T can not be wrapped properly {@code canBeWrapped(tInstance) == false;}
      */
+    @Override
     @SuppressWarnings(Suppression.UNCHECKED)
     @NotNull
     public <T, R> ICompoundContainer<R> wrapInContainer(@NotNull final T gameObject, @NotNull final double count, @NotNull final Class<R> outputType) throws IllegalArgumentException

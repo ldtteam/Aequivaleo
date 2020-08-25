@@ -2,8 +2,12 @@ package com.ldtteam.aequivaleo.api.compound.information.locked;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -18,6 +22,17 @@ import java.util.Set;
  */
 public interface ILockedCompoundInformationRegistry
 {
+
+    /**
+     * Gives access to the current instance of the locked information registry.
+     *
+     * @param worldKey The key for the world for which the instance is retrieved.
+     *
+     * @return The locked information registry.
+     */
+    static ILockedCompoundInformationRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+        return IAequivaleoAPI.getInstance().getLockedCompoundWrapperToTypeRegistry(worldKey);
+    }
 
     /**
      * Registers a given set of compound instances to a given wrapper.

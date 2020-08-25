@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.api.gameobject.equivalent;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -13,6 +15,16 @@ import java.util.function.BiFunction;
  */
 public interface IGameObjectEquivalencyHandlerRegistry
 {
+
+    /**
+     * Gives access to the current instance of the handler registry.
+     *
+     * @return The handler registry.
+     */
+    static IGameObjectEquivalencyHandlerRegistry getInstance() {
+        return IAequivaleoAPI.getInstance().getGameObjectEquivalencyHandlerRegistry();
+    }
+
     /**
      * Registers a handler that can validate if two game objects contained in wrapper are actually equal to one another.
      * The callback should not check the wrapper or the internal size of the game object.

@@ -1,7 +1,11 @@
 package com.ldtteam.aequivaleo.api.compound.information.validity;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -13,6 +17,17 @@ import java.util.function.BiFunction;
  */
 public interface IValidCompoundTypeInformationProviderRegistry
 {
+
+    /**
+     * Gives access to the current instance of the valid information provider registry.
+     *
+     * @param worldKey The key for the world for which the instance is retrieved.
+     *
+     * @return The valid information provider registry.
+     */
+    static IValidCompoundTypeInformationProviderRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+        return IAequivaleoAPI.getInstance().getValidCompoundTypeInformationProviderRegistry(worldKey);
+    }
 
     /**
      * Registers an information provider used during analysis directly.

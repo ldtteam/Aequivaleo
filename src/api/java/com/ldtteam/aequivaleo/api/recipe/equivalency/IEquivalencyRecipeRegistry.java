@@ -1,12 +1,29 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
+
+import java.security.Key;
 
 /**
  * A registry containing recipes which the analysis engine uses to determine how compounds are passed from inputs to outputs.
  */
 public interface IEquivalencyRecipeRegistry
 {
+
+    /**
+     * Gives access to the current instance of the recipe registry.
+     *
+     * @param worldKey The key for the world for which the instance is retrieved.
+     *
+     * @return The recipe registry.
+     */
+    static IEquivalencyRecipeRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+        return IAequivaleoAPI.getInstance().getEquivalencyRecipeRegistry(worldKey);
+    }
 
     /**
      * Adds a new recipe to the registry.

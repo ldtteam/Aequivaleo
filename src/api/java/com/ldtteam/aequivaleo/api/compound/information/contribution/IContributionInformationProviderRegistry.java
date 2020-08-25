@@ -1,15 +1,29 @@
 package com.ldtteam.aequivaleo.api.compound.information.contribution;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
 public interface IContributionInformationProviderRegistry
 {
+    /**
+     * Gives access to the current instance of the contribution information provider registry.
+     *
+     * @param worldKey The key for the world for which the instance is retrieved.
+     *
+     * @return The contribution information provider registry.
+     */
+    static IContributionInformationProviderRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+        return IAequivaleoAPI.getInstance().getContributionInformationProviderRegistry(worldKey);
+    }
 
     /**
      * Registers an information provider used during analysis directly, when analyzing recipe inputs.

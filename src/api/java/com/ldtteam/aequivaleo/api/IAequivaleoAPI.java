@@ -22,6 +22,16 @@ public interface IAequivaleoAPI
 {
 
     /**
+     * Returns the instance of the api, once it has been initialized.
+     * (Initialization happens during mod construction)
+     *
+     * @return The api.
+     */
+    static IAequivaleoAPI getInstance() {
+        return IAequivaleoAPI.Holder.getInstance();
+    }
+
+    /**
      * Gives access to the registry that handles the callbacks that convert game objects to their wrapped instances.
      * @return The registry that handles the callbacks used to convert game objects into wrapped counterparts.
      */
@@ -84,7 +94,7 @@ public interface IAequivaleoAPI
      * @param worldKey The world key to get the equivalency cache for.
      * @return The equivalency cache for a given dimension.
      */
-    IResultsInformationCache getEquivalencyInformationCache(@NotNull final RegistryKey<World> worldKey);
+    IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey);
 
     /**
      * Gives access to the registry that contains the information providers that handle the compound contribution logic during analysis for a given world.

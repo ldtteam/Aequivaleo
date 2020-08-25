@@ -1,5 +1,7 @@
 package com.ldtteam.aequivaleo.api.tags;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
 import com.ldtteam.aequivaleo.api.util.TagUtils;
 import net.minecraft.tags.*;
 import net.minecraft.util.ResourceLocation;
@@ -10,6 +12,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ITagEquivalencyRegistry
 {
+    /**
+     * Gives access to the current instance of the tag equivalency registry.
+     *
+     * @return The tag equivalency registry.
+     */
+    static ITagEquivalencyRegistry getInstance() {
+        return IAequivaleoAPI.getInstance().getTagEquivalencyRegistry();
+    }
+
     /**
      * Adds a given tag to the registry.
      * Allowing the tag to be used by the analysis engine during analysis, and marks all game objects included in the tag to be equal.

@@ -8,6 +8,7 @@ import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
+import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
@@ -60,6 +61,7 @@ public final class WorldBootstrapper
         LockedCompoundInformationRegistry.getInstance(world.func_234923_W_()).reset();
         ValidCompoundTypeInformationProviderRegistry.getInstance(world.func_234923_W_()).reset();
         EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).reset();
+        ContributionInformationProviderRegistry.getInstance(world.func_234923_W_()).reset();
     }
 
     private static void doBootstrapTagInformation(final World world)

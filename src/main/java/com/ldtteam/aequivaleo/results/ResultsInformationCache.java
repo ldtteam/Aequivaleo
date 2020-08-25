@@ -28,7 +28,7 @@ public class ResultsInformationCache implements IResultsInformationCache
     }
 
     @Override
-    public Map<ICompoundContainer<?>, Set<ICompoundInstance>> get()
+    public Map<ICompoundContainer<?>, Set<ICompoundInstance>> getAll()
     {
         return cacheData;
     }

@@ -1,10 +1,23 @@
 package com.ldtteam.aequivaleo.api.compound.container.registry;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents a registry where serializers for compound containers can be registered.
+ */
 public interface ICompoundContainerSerializerRegistry
 {
+
+    /**
+     * Gives access to the current instance of the serializer registry.
+     *
+     * @return The serializer registry.
+     */
+    static ICompoundContainerSerializerRegistry getInstance() {
+        return IAequivaleoAPI.getInstance().getCompoundContainerSerializerRegistry();
+    }
 
     /**
      * Registers a serializer to the registry.

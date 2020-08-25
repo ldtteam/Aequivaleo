@@ -24,7 +24,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
-public class AequivaleoAPI implements IAequivaleoAPI
+public final class AequivaleoAPI implements IAequivaleoAPI
 {
     private static AequivaleoAPI ourInstance = new AequivaleoAPI();
 
@@ -86,7 +86,7 @@ public class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public IResultsInformationCache getEquivalencyInformationCache(@NotNull final RegistryKey<World> worldKey)
+    public IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey)
     {
         return ResultsInformationCache.getInstance(worldKey);
     }

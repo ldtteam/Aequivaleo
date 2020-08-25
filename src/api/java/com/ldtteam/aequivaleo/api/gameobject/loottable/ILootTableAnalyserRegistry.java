@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.api.gameobject.loottable;
 
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import net.minecraft.world.server.ServerWorld;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +14,14 @@ import java.util.function.BiFunction;
  */
 public interface ILootTableAnalyserRegistry
 {
-
+    /**
+     * Gives access to the current instance of the analyzer registry.
+     *
+     * @return The analyzer registry.
+     */
+    static ILootTableAnalyserRegistry getInstance() {
+        return IAequivaleoAPI.getInstance().getLootTableAnalyserRegistry();
+    }
 
     @NotNull
     <T> ILootTableAnalyserRegistry register(
