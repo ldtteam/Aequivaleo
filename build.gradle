@@ -228,7 +228,7 @@ curseforge {
 
         project {
             id = '404450'
-            addGameVersion '1.15.2'
+            addGameVersion project.minecraftVersion
             changelog = file('build/changelog.md')
             changelogType = 'markdown'
             releaseType = System.getenv().CURSERELEASETYPE
