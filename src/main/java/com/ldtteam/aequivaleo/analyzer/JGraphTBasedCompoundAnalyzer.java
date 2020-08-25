@@ -11,7 +11,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.compound.simple.SimpleCompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.implementation.SimpleCompoundInstance;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import net.minecraft.world.World;

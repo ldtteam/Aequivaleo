@@ -1,9 +1,7 @@
-package com.ldtteam.aequivaleo.compound.simple;
+package com.ldtteam.aequivaleo.api.compound.implementation;
 
 import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleCompoundInstance implements ICompoundInstance
