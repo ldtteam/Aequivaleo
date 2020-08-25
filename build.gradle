@@ -392,6 +392,7 @@ publishing {
 }
 
 pluginManager.withPlugin('com.jfrog.artifactory') {
+    System.out.println("Configuring artifactory.")
     artifactory {
         publish {
             publications('mavenJava')
