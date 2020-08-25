@@ -113,7 +113,7 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
             LOGGER.info("Starting equivalency data reload for world: " + serverWorld.func_234923_W_().func_240901_a_().toString());
 
             JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(serverWorld);
-            ResultsInformationCache.getInstance(serverWorld).set(analyzer.calculateAndGet());
+            ResultsInformationCache.getInstance(serverWorld.func_234923_W_()).set(analyzer.calculateAndGet());
         }
 
         public ServerWorld getServerWorld()
