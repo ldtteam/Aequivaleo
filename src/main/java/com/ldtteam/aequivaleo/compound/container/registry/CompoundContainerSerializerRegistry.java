@@ -2,12 +2,12 @@ package com.ldtteam.aequivaleo.compound.container.registry;
 
 import com.google.common.collect.Sets;
 import com.google.gson.*;
+import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerSerializerRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
 import com.ldtteam.aequivaleo.api.util.CompositeType;
-import com.ldtteam.aequivaleo.api.util.Configuration;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.api.util.Suppression;
 import org.apache.commons.lang3.Validate;
@@ -73,7 +73,7 @@ public class CompoundContainerSerializerRegistry implements ICompoundContainerSe
           .setLenient()
           .registerTypeAdapter(ICompoundContainer.class, new JSONWrapperHandler(this));
 
-        if (Configuration.persistence.prettyPrint)
+        if (Aequivaleo.getInstance().getConfiguration().getCommon().jsonPrettyPrint.get())
             builder.setPrettyPrinting();
 
         return builder.create();
@@ -189,7 +189,7 @@ public class CompoundContainerSerializerRegistry implements ICompoundContainerSe
               .registerTypeAdapter(tClass, jsonHandler)
               .setLenient();
 
-            if (Configuration.persistence.prettyPrint)
+            if (Aequivaleo.getInstance().getConfiguration().getCommon().jsonPrettyPrint.get())
             {
                 builder.setPrettyPrinting();
             }

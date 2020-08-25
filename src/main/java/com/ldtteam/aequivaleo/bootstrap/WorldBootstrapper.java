@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.google.common.collect.Sets;
+import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
@@ -21,6 +22,8 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -31,6 +34,8 @@ import java.util.stream.Collectors;
 
 public final class WorldBootstrapper
 {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private WorldBootstrapper()
     {
@@ -155,11 +160,23 @@ public final class WorldBootstrapper
       @NotNull final ServerWorld world
     )
     {
-        ForgeRegistries.BLOCKS.getValues().stream().forEach(block -> {
+        ForgeRegistries.BLOCKS.getValues().forEach(block -> {
             final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(block, 1);
-            final DropsEquivalency inputRecipe = new DropsEquivalency(compoundContainer, true, world);
-            final DropsEquivalency outputRecipe = new DropsEquivalency(compoundContainer, false, world);
-            EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
+            try {
+                final DropsEquivalency inputRecipe = new DropsEquivalency(compoundContainer, true, world);
+                final DropsEquivalency outputRecipe = new DropsEquivalency(compoundContainer, false, world);
+                EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
+            } catch (Exception ex) {
+                if (Aequivaleo.getInstance().getConfiguration().getCommon().writeExceptionOnBlockDropFailure.get()) {
+                    LOGGER.warn(String.format("Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required.",
+                      block.getRegistryName()), ex);
+                }
+                else
+                {
+                    LOGGER.warn(String.format("Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required. Turn the config value for block drop exceptions on to see more details.",
+                      block.getRegistryName()));
+                }
+            }
         });
     }
 }
