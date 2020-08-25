@@ -202,7 +202,6 @@ task packageJavadoc(type: Jar) {
 
 task apiJavadocs(type: Javadoc) {
     source = sourceSets.api.allJava
-    baseName project.name
 }
 
 task packageApiJavadoc(type: Jar) {
