@@ -187,7 +187,7 @@ jar {
     }
 
     classifier = 'universal'
-    baseName project.name
+    baseName project.modBaseName
 }
 
 javadoc {
@@ -197,7 +197,7 @@ javadoc {
 task packageJavadoc(type: Jar) {
     from javadoc
     classifier = 'javadoc'
-    baseName project.name
+    baseName project.modBaseName
 }
 
 task apiJavadocs(type: Javadoc) {
@@ -207,20 +207,20 @@ task apiJavadocs(type: Javadoc) {
 task packageApiJavadoc(type: Jar) {
     from apiJavadocs
     classifier = 'javadoc-api'
-    baseName project.name
+    baseName project.modBaseName
 }
 
 task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allJava
     from sourceSets.api.allJava
-    baseName project.name
+    baseName project.modBaseName
 }
 
 task apiSourceJar(type: Jar) {
     classifier = 'api-sources'
     from sourceSets.api.allJava
-    baseName project.name
+    baseName project.modBaseName
 }
 
 idea {
