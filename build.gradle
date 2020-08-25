@@ -70,7 +70,7 @@ sourceSets {
     }
 }
 
-version = modVersion
+version = project.exactMinecraftVersion + "-" + System.getenv().containsKey("Version") ? System.getenv("Version") : 'null'
 group = modGroup
 archivesBaseName = modBaseName
 
