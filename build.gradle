@@ -316,6 +316,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = project.group
 
+            from components.java
             artifact reobfArtifact
             artifact packageJavadoc
             artifact sourceJar
@@ -395,7 +396,7 @@ pluginManager.withPlugin('com.jfrog.artifactory') {
     System.out.println("Configuring artifactory.")
     artifactory {
         publish {
-            publications('mavenJava')
+            publications ('mavenJava')
             publishBuildInfo = true   //Publish build-info to Artifactory (true by default)
             publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
             publishPom = true   //Publish generated POM files to Artifactory (true by default).
