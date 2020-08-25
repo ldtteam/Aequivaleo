@@ -54,6 +54,7 @@ public final class WorldBootstrapper
         doBootstrapDefaultCraftingRecipes(world);
         doBootstrapBlockDropEquivalencies(world);
 
+        doFireDataLoadEvent(world);
     }
 
     private static void resetDataForWorld(final World world)

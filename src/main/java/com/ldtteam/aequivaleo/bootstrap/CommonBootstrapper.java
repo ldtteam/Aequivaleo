@@ -46,11 +46,15 @@ public final class CommonBootstrapper
     static void doBootstrap()
     {
         LOGGER.info("Bootstrapping aequivaleo");
+
         doBootstrapWrapperFactories();
         doBootstrapSerializerFactories();
         doBootstrapEquivalencyHandler();
         doBootstrapTagNames();
         doBootstrapLootTableAnalyzers();
+
+        doFireDataLoadedEvent();
+
         doPrepopulateTypeCache();
     }
 
