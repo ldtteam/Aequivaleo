@@ -10,7 +10,6 @@ buildscript {
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
     }
 }
 
@@ -37,7 +36,6 @@ apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
-apply plugin: "com.jfrog.artifactory"
 
 sourceSets {
     api {
@@ -394,13 +392,19 @@ publishing {
     }
 }
 
-artifactory {
-    publish {
-        publications ('mavenJava')
-        publishBuildInfo = true   //Publish build-info to Artifactory (true by default)
-        publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
-        publishPom = true   //Publish generated POM files to Artifactory (true by default).
-        publishIvy = true   //Publish generated Ivy descriptor files to Artifactory (true by default).
+pluginManager.withPlugin("com.jfrog.artifactory") {
+    artifactory {
+        publish {
+            defaults {
+                publications ('mavenJava')
+                publishBuildInfo = true   //Publish build-info to Artifactory (true by default)
+                publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
+                publishPom = true   //Publish generated POM files to Artifactory (true by default).
+                publishIvy = true   //Publish generated Ivy descriptor files to Artifactory (true by default).
+            }
+        }
     }
 }
+
+
 
