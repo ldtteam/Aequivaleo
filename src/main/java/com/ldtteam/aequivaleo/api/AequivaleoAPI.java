@@ -1,18 +1,20 @@
 package com.ldtteam.aequivaleo.api;
 
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.ILockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.IValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerSerializerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
-import com.ldtteam.aequivaleo.compound.information.LockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
+import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerSerializerRegistry;
-import com.ldtteam.aequivaleo.compound.information.ValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
@@ -84,8 +86,14 @@ public class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public IResultsInformationCache getEquivalencyInformationCache(@NotNull final World world)
+    public IResultsInformationCache getEquivalencyInformationCache(@NotNull final RegistryKey<World> worldKey)
     {
-        return ResultsInformationCache.getInstance(world);
+        return ResultsInformationCache.getInstance(worldKey);
+    }
+
+    @Override
+    public IContributionInformationProviderRegistry getContributionInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey)
+    {
+        return ContributionInformationProviderRegistry.getInstance(worldKey);
     }
 }

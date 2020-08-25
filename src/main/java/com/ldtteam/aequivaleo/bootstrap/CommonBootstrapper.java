@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.event.OnGlobalDataLoadedEvent;
 import com.ldtteam.aequivaleo.api.util.*;
 import com.ldtteam.aequivaleo.compound.container.blockstate.BlockContainer;
 import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
@@ -26,6 +27,7 @@ import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.gen.feature.ReplaceBlockConfig;
 import net.minecraft.world.gen.placement.IPlacementConfig;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
@@ -33,10 +35,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CommonBootstrapper
+public final class CommonBootstrapper
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -256,7 +259,8 @@ public class CommonBootstrapper
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
             Block.class,
-            (left, right) -> Optional.of(left.getContents().getRegistryName().toString().equals(right.getContents().getRegistryName().toString()))
+            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+                                                                                                                                                 .getRegistryName()).toString()))
           );
     }
 
@@ -278,6 +282,11 @@ public class CommonBootstrapper
                          Collectors.toSet());
           }
         );
+    }
+
+    private static void doFireDataLoadedEvent() {
+        LOGGER.info("Firing global data loaded event.");
+        MinecraftForge.EVENT_BUS.post(new OnGlobalDataLoadedEvent());
     }
 
     private static void doPrepopulateTypeCache() {

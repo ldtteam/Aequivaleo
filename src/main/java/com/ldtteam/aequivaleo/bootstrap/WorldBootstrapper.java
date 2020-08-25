@@ -4,23 +4,26 @@ import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
-import com.ldtteam.aequivaleo.compound.information.LockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.compound.information.ValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.DropsEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.SimpleEquivalancyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.SmeltingEquivalancyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +52,7 @@ public final class WorldBootstrapper
         doBootstrapTagInformation(world);
         doBootstrapDefaultCraftingRecipes(world);
         doBootstrapBlockDropEquivalencies(world);
+
     }
 
     private static void resetDataForWorld(final World world)
@@ -60,9 +64,7 @@ public final class WorldBootstrapper
 
     private static void doBootstrapTagInformation(final World world)
     {
-        TagEquivalencyRegistry.getInstance().get().forEach((ITag.INamedTag<?> tag) -> {
-            doBootstrapSingleTagInformation(world, tag);
-        });
+        TagEquivalencyRegistry.getInstance().get().forEach((ITag.INamedTag<?> tag) -> doBootstrapSingleTagInformation(world, tag));
     }
 
     private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
@@ -71,20 +73,16 @@ public final class WorldBootstrapper
                                                                   .map(stack -> CompoundContainerFactoryRegistry.getInstance().wrapInContainer(stack, 1d))
                                                                   .collect(Collectors.toList());
 
-        elementsOfTag.forEach(inputStack -> {
-            elementsOfTag
-              .stream()
-              .filter(outputStack -> !GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
-              .forEach(outputStack -> {
-                  EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
-                    .register(
-                      new TagEquivalencyRecipe<>(
-                        tag,
-                        Sets.newHashSet(inputStack),
-                        Sets.newHashSet(outputStack)
-                      ));
-              });
-        });
+        elementsOfTag.forEach(inputStack -> elementsOfTag
+          .stream()
+          .filter(outputStack -> !GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
+          .forEach(outputStack -> EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+            .register(
+              new TagEquivalencyRecipe<>(
+                tag,
+                Sets.newHashSet(inputStack),
+                Sets.newHashSet(outputStack)
+              ))));
     }
 
     private static void doBootstrapDefaultCraftingRecipes(@NotNull final World world)
@@ -92,31 +90,27 @@ public final class WorldBootstrapper
         final List<ICraftingRecipe> craftingRecipes = world.getRecipeManager().func_241447_a_(IRecipeType.CRAFTING);
         craftingRecipes
           .parallelStream()
-          .forEach(recipe -> {
-              processCraftingRecipe(world, recipe);
-          });
+          .forEach(recipe -> processCraftingRecipe(world, recipe));
 
         final List<FurnaceRecipe> smeltingRecipe = world.getRecipeManager().func_241447_a_(IRecipeType.SMELTING);
         smeltingRecipe
           .parallelStream()
-          .forEach(recipe -> {
-              processSmeltingRecipe(world, recipe);
-          });
+          .forEach(recipe -> processSmeltingRecipe(world, recipe));
     }
 
-    private static void processSmeltingRecipe(@NotNull final World world, IRecipe iRecipe)
+    private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, SmeltingEquivalancyRecipe::new);
     }
 
-    private static void processCraftingRecipe(@NotNull final World world, IRecipe iRecipe)
+    private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, SimpleEquivalancyRecipe::new);
     }
 
     private static void processIRecipe(
       @NotNull final World world,
-      IRecipe iRecipe,
+      IRecipe<?> iRecipe,
       BiFunction<Set<ICompoundContainer<?>>, Set<ICompoundContainer<?>>, IEquivalencyRecipe> recipeProducer
     )
     {
@@ -139,7 +133,7 @@ public final class WorldBootstrapper
         final Set<ICompoundContainer<?>> wrappedInput = inputStacks
                                                                  .stream()
                                                                  .map(stack -> CompoundContainerFactoryRegistry.getInstance()
-                                                                                 .wrapInContainer(stack, (double) stack.getCount()))
+                                                                                 .wrapInContainer(stack, stack.getCount()))
                                                                  .collect(Collectors.toMap(wrapper -> wrapper, ICompoundContainer::getContentsCount, Double::sum))
                                                                  .entrySet()
                                                                  .stream()
@@ -178,5 +172,11 @@ public final class WorldBootstrapper
                 }
             }
         });
+    }
+
+    private static void doFireDataLoadEvent(
+      @NotNull final ServerWorld world) {
+        LOGGER.info(String.format("Firing data loaded event for world: %s", world.func_234923_W_().func_240901_a_()));
+        MinecraftForge.EVENT_BUS.post(new OnWorldDataReloadedEvent(world));
     }
 }

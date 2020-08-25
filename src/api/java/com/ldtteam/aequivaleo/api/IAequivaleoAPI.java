@@ -1,7 +1,8 @@
 package com.ldtteam.aequivaleo.api;
 
-import com.ldtteam.aequivaleo.api.compound.information.ILockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.IValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerSerializerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
@@ -80,10 +81,33 @@ public interface IAequivaleoAPI
     /**
      * Gives access to the cache that contains the equivalency information after calculation.
      *
-     * @param world The world to get the equivalency cache for.
+     * @param worldKey The world key to get the equivalency cache for.
      * @return The equivalency cache for a given dimension.
      */
-    IResultsInformationCache getEquivalencyInformationCache(@NotNull final World world);
+    IResultsInformationCache getEquivalencyInformationCache(@NotNull final RegistryKey<World> worldKey);
 
+    /**
+     * Gives access to the registry that contains the information providers that handle the compound contribution logic during analysis for a given world.
+     *
+     * @param worldKey The world key.
+     * @return The registry containing information providers that handle the compound contribution logic for a given world.
+     */
+    IContributionInformationProviderRegistry getContributionInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey);
 
+    class Holder {
+        private static IAequivaleoAPI apiInstance;
+
+        public static IAequivaleoAPI getInstance()
+        {
+            return apiInstance;
+        }
+
+        public static void setInstance(final IAequivaleoAPI instance)
+        {
+            if (apiInstance != null)
+                throw new IllegalStateException("Can not setup API twice!");
+
+            apiInstance = instance;
+        }
+    }
 }

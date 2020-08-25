@@ -1,19 +1,19 @@
-package com.ldtteam.aequivaleo.compound.information;
+package com.ldtteam.aequivaleo.compound.information.validity;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
-import com.ldtteam.aequivaleo.api.compound.information.IValidCompoundTypeInformationProvider;
-import com.ldtteam.aequivaleo.api.compound.information.IValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProvider;
+import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.information.SimpleBiFunctionBasedValidCompoundTypeInformationProvider;
+import com.ldtteam.aequivaleo.api.util.Suppression;
+import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BiFunction;
 
 public class ValidCompoundTypeInformationProviderRegistry implements IValidCompoundTypeInformationProviderRegistry
 {
@@ -40,18 +40,12 @@ public class ValidCompoundTypeInformationProviderRegistry implements IValidCompo
         return this;
     }
 
-    @Override
-    public <T> IValidCompoundTypeInformationProviderRegistry registerNewProvider(
-      @NotNull final Class<T> clazz, @NotNull final BiFunction<ICompoundContainer<T>, ICompoundType, Optional<Boolean>> decider)
-    {
-        return this.registerNewProvider(new SimpleBiFunctionBasedValidCompoundTypeInformationProvider<>(clazz, decider));
-    }
-
     public void reset()
     {
         providers.clear();
     }
 
+    @SuppressWarnings(Suppression.UNCHECKED)
     public <T> boolean isCompoundTypeValidForWrapper(
       @NotNull final ICompoundContainer<T> wrapper,
       @NotNull final ICompoundType type

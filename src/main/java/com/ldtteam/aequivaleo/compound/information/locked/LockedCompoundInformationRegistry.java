@@ -1,10 +1,10 @@
-package com.ldtteam.aequivaleo.compound.information;
+package com.ldtteam.aequivaleo.compound.information.locked;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.information.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
 import net.minecraft.util.RegistryKey;

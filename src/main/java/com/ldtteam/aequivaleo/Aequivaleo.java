@@ -1,5 +1,7 @@
 package com.ldtteam.aequivaleo;
 
+import com.ldtteam.aequivaleo.api.AequivaleoAPI;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.config.Configuration;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -20,9 +22,10 @@ public class Aequivaleo
     
     public Aequivaleo()
     {
-        INSTANCE = this;
-
         LOGGER.info("Aequivaleo is being instantiated.");
+
+        INSTANCE = this;
+        IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
     }
 

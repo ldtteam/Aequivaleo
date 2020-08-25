@@ -9,10 +9,11 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.SourceGraphNode;
 import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
-import com.ldtteam.aequivaleo.compound.information.LockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
+import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.simple.SimpleCompoundInstance;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
-import com.ldtteam.aequivaleo.compound.information.ValidCompoundTypeInformationProviderRegistry;
+import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
@@ -168,6 +169,7 @@ public class JGraphTBasedCompoundAnalyzer
         return results;
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     private void removeDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph,
       @NotNull final Set<ContainerWrapperGraphNode> rootNodes)
     {
@@ -257,6 +259,7 @@ public class JGraphTBasedCompoundAnalyzer
         }
         if (clazz == RecipeGraphNode.class)
         {
+            final RecipeGraphNode recipeGraphNode = (RecipeGraphNode) node;
             final Set<ContainerWrapperGraphNode> resultNeighbors = recipeGraph
                                                                      .outgoingEdgesOf(node)
                                                                      .stream()
@@ -278,8 +281,10 @@ public class JGraphTBasedCompoundAnalyzer
                                                                      .flatMap(inputNeighbor-> inputNeighbor
                                                                                                 .getCompoundInstances()
                                                                                                 .stream()
+                                                                                                .filter(compoundInstance -> ContributionInformationProviderRegistry.getInstance(world.func_234923_W_()).canCompoundTypeContributeAsInput(inputNeighbor.getWrapper(),
+                                                                                                  recipeGraphNode.getRecipe(), compoundInstance.getType()))
                                                                                                 .map(compoundInstance -> new HashMap.SimpleEntry<>(compoundInstance.getType(), compoundInstance.getAmount() * recipeGraph.getEdgeWeight(recipeGraph.getEdge(inputNeighbor, node)))))
-                                                                     .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue, (val1, val2)-> val1 + val2))
+                                                                     .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue, Double::sum))
                                                                      .entrySet()
                                                                      .stream()
                                                                      .map(entry -> new SimpleCompoundInstance(entry.getKey(), entry.getValue()))
@@ -302,10 +307,11 @@ public class JGraphTBasedCompoundAnalyzer
                         .addAll(
                           summedCompoundInstances
                             .stream()
-                            .filter(compoundInstance -> ValidCompoundTypeInformationProviderRegistry.getInstance(world.func_234923_W_()).isCompoundTypeValidForWrapper(neighbor.getWrapper(), compoundInstance.getType()))
                             .map(compoundInstance -> new SimpleCompoundInstance(compoundInstance.getType(), Math.floor(compoundInstance.getAmount() / recipeGraph.getEdgeWeight(recipeGraph.getEdge(node, neighbor)))))
                             .filter(simpleCompoundInstance -> simpleCompoundInstance.getAmount() > 0)
                             .filter(simpleCompoundInstance -> ValidCompoundTypeInformationProviderRegistry.getInstance(world.func_234923_W_()).isCompoundTypeValidForWrapper(neighbor.getWrapper(), simpleCompoundInstance.getType()))
+                            .filter(simpleCompoundInstance -> ContributionInformationProviderRegistry.getInstance(world.func_234923_W_()).canCompoundTypeContributeAsOutput(neighbor.getWrapper(), recipeGraphNode.getRecipe(),
+                              simpleCompoundInstance.getType()))
                             .collect(Collectors.toSet())
                         );
                   }

@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.api.compound.information;
+package com.ldtteam.aequivaleo.api.compound.information.validity;
 
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
@@ -31,5 +31,8 @@ public interface IValidCompoundTypeInformationProviderRegistry
      * @param <T> The type of the game object.
      * @return The registry with the provider, constructed from the class and callback, added.
      */
-    <T> IValidCompoundTypeInformationProviderRegistry registerNewProvider(@NotNull final Class<T> clazz, @NotNull final BiFunction<ICompoundContainer<T>, ICompoundType, Optional<Boolean>> decider);
+    default <T> IValidCompoundTypeInformationProviderRegistry registerNewProvider(@NotNull final Class<T> clazz, @NotNull final BiFunction<ICompoundContainer<T>, ICompoundType, Optional<Boolean>> decider)
+    {
+        return this.registerNewProvider(new SimpleBiFunctionBasedValidCompoundTypeInformationProvider<>(clazz, decider));
+    }
 }

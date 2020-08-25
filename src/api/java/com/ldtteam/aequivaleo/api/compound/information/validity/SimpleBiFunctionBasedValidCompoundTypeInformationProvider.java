@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.api.compound.information;
+package com.ldtteam.aequivaleo.api.compound.information.validity;
 
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;

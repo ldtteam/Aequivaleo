@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class FMLInitHandler
+public final class FMLInitHandler
 {
     private static final Logger LOGGER = LogManager.getLogger();
 

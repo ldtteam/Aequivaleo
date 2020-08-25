@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.api.compound.information;
+package com.ldtteam.aequivaleo.api.compound.information.locked;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
