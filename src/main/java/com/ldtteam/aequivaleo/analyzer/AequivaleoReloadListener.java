@@ -71,20 +71,9 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
             @Override
             public Thread newThread(@NotNull final Runnable runnable)
             {
-                if (!(runnable instanceof AequivaleoWorldAnalysisRunner))
-                {
-                    final Thread thread = new Thread(runnable);
-                    thread.setContextClassLoader(classLoader);
-                    thread.setName("Aequivaleo generic runner: " + genericThreadCounter.incrementAndGet());
-                    LOGGER.info("Created generic runner thread: " + thread.getName());
-                    return thread;
-                }
-
-                final AequivaleoWorldAnalysisRunner runner = (AequivaleoWorldAnalysisRunner) runnable;
                 final Thread thread = new Thread(runnable);
                 thread.setContextClassLoader(classLoader);
-                thread.setName("Aequivaleo world reload runner: " + runner.getServerWorld().func_234923_W_().func_240901_a_());
-                LOGGER.info("Created reload runner thread: " + thread.getName());
+                thread.setName("Aequivaleo generic runner: " + genericThreadCounter.incrementAndGet());
                 return thread;
             }
         });
@@ -121,7 +110,7 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
 
         private void reloadEquivalencyData()
         {
-            LOGGER.info("Starting equivalency data reload for world: " + serverWorld.func_234923_W_().toString());
+            LOGGER.info("Starting equivalency data reload for world: " + serverWorld.func_234923_W_().func_240901_a_().toString());
 
             JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(serverWorld);
             ResultsInformationCache.getInstance(serverWorld).set(analyzer.calculateAndGet());
