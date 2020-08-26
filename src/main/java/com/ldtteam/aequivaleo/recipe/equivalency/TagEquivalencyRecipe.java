@@ -1,12 +1,12 @@
 package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ITagEquivalencyRecipe;
 import net.minecraft.tags.ITag;
 
 import java.util.Set;
 
-public class TagEquivalencyRecipe<T> implements IEquivalencyRecipe
+public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
 {
     private final ITag.INamedTag<T>          tag;
     private final Set<ICompoundContainer<?>> inputs;
@@ -22,6 +22,7 @@ public class TagEquivalencyRecipe<T> implements IEquivalencyRecipe
         this.outputs = outputs;
     }
 
+    @Override
     public ITag.INamedTag<T> getTag()
     {
         return tag;

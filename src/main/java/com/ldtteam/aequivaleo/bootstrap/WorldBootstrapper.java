@@ -12,12 +12,11 @@ import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInfo
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.recipe.equivalency.DropsEquivalency;
-import com.ldtteam.aequivaleo.recipe.equivalency.SimpleEquivalancyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.SmeltingEquivalancyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.DropsEquivalencyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
@@ -103,12 +102,12 @@ public final class WorldBootstrapper
 
     private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, SmeltingEquivalancyRecipe::new);
+        processIRecipe(world, iRecipe, FurnaceEquivalencyRecipe::new);
     }
 
     private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, SimpleEquivalancyRecipe::new);
+        processIRecipe(world, iRecipe, VanillaCraftingEquivalencyRecipe::new);
     }
 
     private static void processIRecipe(
@@ -160,8 +159,8 @@ public final class WorldBootstrapper
         ForgeRegistries.BLOCKS.getValues().forEach(block -> {
             final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(block, 1);
             try {
-                final DropsEquivalency inputRecipe = new DropsEquivalency(compoundContainer, true, world);
-                final DropsEquivalency outputRecipe = new DropsEquivalency(compoundContainer, false, world);
+                final DropsEquivalencyRecipe inputRecipe = new DropsEquivalencyRecipe(compoundContainer, true, world);
+                final DropsEquivalencyRecipe outputRecipe = new DropsEquivalencyRecipe(compoundContainer, false, world);
                 EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
             } catch (Exception ex) {
                 if (Aequivaleo.getInstance().getConfiguration().getCommon().writeExceptionOnBlockDropFailure.get()) {
