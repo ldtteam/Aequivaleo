@@ -1,14 +1,14 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht;
 
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 
 public class CompoundInstanceCalculationInformation
 {
 
     private final IAnalysisGraphNode source;
-    private final ICompoundInstance instance;
+    private final CompoundInstance   instance;
 
-    public CompoundInstanceCalculationInformation(final IAnalysisGraphNode source, final ICompoundInstance instance) {
+    public CompoundInstanceCalculationInformation(final IAnalysisGraphNode source, final CompoundInstance instance) {
         this.source = source;
         this.instance = instance;
     }

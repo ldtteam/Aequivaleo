@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht;
 
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ public class ContainerWrapperGraphNode implements IAnalysisGraphNode
     private final ICompoundContainer<?> wrapper;
 
     @NotNull
-    private final Set<ICompoundInstance> compoundInstances = Sets.newConcurrentHashSet();
+    private final Set<CompoundInstance> compoundInstances = Sets.newConcurrentHashSet();
 
     public ContainerWrapperGraphNode(@NotNull final ICompoundContainer<?> wrapper) {this.wrapper = wrapper;}
 
@@ -24,7 +24,7 @@ public class ContainerWrapperGraphNode implements IAnalysisGraphNode
     }
 
     @NotNull
-    public Set<ICompoundInstance> getCompoundInstances()
+    public Set<CompoundInstance> getCompoundInstances()
     {
         return compoundInstances;
     }

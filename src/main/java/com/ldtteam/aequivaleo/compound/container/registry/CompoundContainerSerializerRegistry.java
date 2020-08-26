@@ -9,6 +9,7 @@ import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainer
 import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
 import com.ldtteam.aequivaleo.api.util.CompositeType;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
 import com.ldtteam.aequivaleo.api.util.Suppression;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,10 @@ public class CompoundContainerSerializerRegistry implements ICompoundContainerSe
             builder.setPrettyPrinting();
 
         return builder.create();
+    }
+
+    public <T> IPacketBufferSerializer<ICompoundContainer<T>> getPacketBufferSerializer(final Class<T> clz) {
+        return getSerializerForType(clz).orElseThrow(() -> new IllegalArgumentException("Unknown serializer for type: " + clz.getName()));
     }
 
     private final class JSONWrapperHandler implements JsonSerializer<ICompoundContainer<?>>, JsonDeserializer<ICompoundContainer<?>>

@@ -4,34 +4,35 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
+import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Objects;
 
 public class BlockContainer implements ICompoundContainer<Block>
 {
 
-    public static final class BlockFactory implements ICompoundContainerFactory<Block, Block>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Block>
     {
 
-        @NotNull
-        @Override
-        public Class<Block> getInputType()
+        public Factory()
         {
-            return Block.class;
+            this.setRegistryName(Constants.MOD_ID, "block");
         }
 
         @NotNull
         @Override
-        public Class<Block> getOutputType()
+        public Class<Block> getContainedType()
         {
             return Block.class;
         }
@@ -41,41 +42,6 @@ public class BlockContainer implements ICompoundContainer<Block>
         public ICompoundContainer<Block> create(@NotNull final Block inputInstance, final double count)
         {
             return new BlockContainer(inputInstance, count);
-        }
-    }
-
-    public static final class BlockStateFactory implements ICompoundContainerFactory<BlockState, Block>
-    {
-
-        @NotNull
-        @Override
-        public Class<BlockState> getInputType()
-        {
-            return BlockState.class;
-        }
-
-        @NotNull
-        @Override
-        public Class<Block> getOutputType()
-        {
-            return Block.class;
-        }
-
-        @NotNull
-        @Override
-        public ICompoundContainer<Block> create(@NotNull final BlockState inputInstance, final double count)
-        {
-            return new BlockContainer(inputInstance.getBlock(), count);
-        }
-    }
-
-    public static final class Serializer implements ICompoundContainerSerializer<Block>
-    {
-
-        @Override
-        public Class<Block> getType()
-        {
-            return Block.class;
         }
 
         @Override
@@ -98,6 +64,22 @@ public class BlockContainer implements ICompoundContainer<Block>
             object.addProperty("count", src.getContentsCount());
 
             return object;
+        }
+
+        @Override
+        public void write(final ICompoundContainer<Block> object, final PacketBuffer buffer)
+        {
+            buffer.writeResourceLocation(Objects.requireNonNull(object.getContents().getRegistryName()));
+            buffer.writeDouble(object.getContentsCount());
+        }
+
+        @Override
+        public ICompoundContainer<Block> read(final PacketBuffer buffer)
+        {
+            return new BlockContainer(
+              Objects.requireNonNull(ForgeRegistries.BLOCKS.getValue(buffer.readResourceLocation())),
+              buffer.readDouble()
+            );
         }
     }
 
@@ -169,15 +151,15 @@ public class BlockContainer implements ICompoundContainer<Block>
 
         final BlockContainer that = (BlockContainer) o;
 
-        if (Double.compare(that.count, count) != 0)
+        if (Double.compare(that.getContentsCount(), count) != 0)
         {
             return false;
         }
 
-        if (contents.getTags().stream().anyMatch(r -> that.contents.getTags().contains(r)))
+        if (contents.getTags().stream().anyMatch(r -> that.getContents().getTags().contains(r)))
             return true;
 
-        return contents.getRegistryName().equals(that.contents.getRegistryName());
+        return contents.getRegistryName().equals(that.getContents().getRegistryName());
     }
 
     @Override

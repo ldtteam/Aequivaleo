@@ -1,15 +1,14 @@
 package com.ldtteam.aequivaleo.api;
 
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerSerializerRegistry;
-import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
+import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -35,15 +34,7 @@ public interface IAequivaleoAPI
      * Gives access to the registry that handles the callbacks that convert game objects to their wrapped instances.
      * @return The registry that handles the callbacks used to convert game objects into wrapped counterparts.
      */
-    ICompoundContainerFactoryRegistry getCompoundContainerFactoryRegistry();
-
-    /**
-     * Gives access to the registry that handles the callbacks that serialize and deserialize the game object with compounds
-     * from and to disk.
-     *
-     * @return The registry that handles the callbacks for serialization and deserialization of wrapped game objects.
-     */
-    ICompoundContainerSerializerRegistry getCompoundContainerSerializerRegistry();
+    ICompoundContainerFactoryManager getCompoundContainerFactoryManager();
 
     /**
      * Gives access to a registry which handles the registration of callbacks which can tell the system if two objects are equal to one another.

@@ -2,16 +2,12 @@ package com.ldtteam.aequivaleo.compound.information.contribution;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProvider;
 import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProvider;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.Suppression;
-import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;

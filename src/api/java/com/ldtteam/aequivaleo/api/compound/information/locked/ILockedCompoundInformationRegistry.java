@@ -3,9 +3,8 @@ package com.ldtteam.aequivaleo.api.compound.information.locked;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,7 @@ public interface ILockedCompoundInformationRegistry
      * @param compounds The instances to assign to the given wrapper.
      * @return The registry with the locking assigned.
      */
-    ILockedCompoundInformationRegistry registerLocking(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<ICompoundInstance> compounds);
+    ILockedCompoundInformationRegistry registerLocking(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Registers a given set of compound instances to a given game object.
@@ -54,11 +53,11 @@ public interface ILockedCompoundInformationRegistry
      * @param <T> The type of the game object to assign the instances to.
      * @return The registry with the locking assigned.
      */
-    <T> ILockedCompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<ICompoundInstance> compounds);
+    <T> ILockedCompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Gives access to locking data.
      * @return The locking data.
      */
-    ImmutableMap<ICompoundContainer<?>, ImmutableSet<ICompoundInstance>> get();
+    ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> get();
 }

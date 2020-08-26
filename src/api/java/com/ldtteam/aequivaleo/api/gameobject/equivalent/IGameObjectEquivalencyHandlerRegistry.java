@@ -2,7 +2,6 @@ package com.ldtteam.aequivaleo.api.gameobject.equivalent;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;

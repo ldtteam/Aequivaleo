@@ -7,7 +7,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
@@ -17,7 +17,6 @@ import com.ldtteam.aequivaleo.recipe.equivalency.SimpleEquivalancyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.SmeltingEquivalancyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
@@ -73,7 +72,7 @@ public final class WorldBootstrapper
     private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
         final Collection<ICompoundContainer<?>> elementsOfTag = tag.getAllElements()
                                                                   .stream()
-                                                                  .map(stack -> CompoundContainerFactoryRegistry.getInstance().wrapInContainer(stack, 1d))
+                                                                  .map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d))
                                                                   .collect(Collectors.toList());
 
         elementsOfTag.forEach(inputStack -> elementsOfTag
@@ -135,18 +134,18 @@ public final class WorldBootstrapper
 
         final Set<ICompoundContainer<?>> wrappedInput = inputStacks
                                                                  .stream()
-                                                                 .map(stack -> CompoundContainerFactoryRegistry.getInstance()
+                                                                 .map(stack -> CompoundContainerFactoryManager.getInstance()
                                                                                  .wrapInContainer(stack, stack.getCount()))
                                                                  .collect(Collectors.toMap(wrapper -> wrapper, ICompoundContainer::getContentsCount, Double::sum))
                                                                  .entrySet()
                                                                  .stream()
-                                                                 .map(iCompoundContainerWrapperDoubleEntry -> CompoundContainerFactoryRegistry.getInstance()
+                                                                 .map(iCompoundContainerWrapperDoubleEntry -> CompoundContainerFactoryManager.getInstance()
                                                                                                                 .wrapInContainer(iCompoundContainerWrapperDoubleEntry.getKey()
                                                                                                                                    .getContents(),
                                                                                                                   iCompoundContainerWrapperDoubleEntry.getValue()))
                                                                  .collect(Collectors.toSet());
 
-        final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
+        final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryManager.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
           iRecipe.getRecipeOutput().getCount());
 
 
@@ -158,7 +157,7 @@ public final class WorldBootstrapper
     )
     {
         ForgeRegistries.BLOCKS.getValues().forEach(block -> {
-            final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(block, 1);
+            final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(block, 1);
             try {
                 final DropsEquivalency inputRecipe = new DropsEquivalency(compoundContainer, true, world);
                 final DropsEquivalency outputRecipe = new DropsEquivalency(compoundContainer, false, world);

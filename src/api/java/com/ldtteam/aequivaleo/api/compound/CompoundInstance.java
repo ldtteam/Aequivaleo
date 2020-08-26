@@ -1,20 +1,18 @@
-package com.ldtteam.aequivaleo.api.compound.implementation;
+package com.ldtteam.aequivaleo.api.compound;
 
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import org.jetbrains.annotations.NotNull;
 
-public class SimpleCompoundInstance implements ICompoundInstance
+public final class CompoundInstance implements Comparable<CompoundInstance>
 {
     private final ICompoundType type;
     private final Double amount;
 
-    public SimpleCompoundInstance(final ICompoundType type, final Integer amount) {
+    public CompoundInstance(final ICompoundType type, final Integer amount) {
         this.type = type;
         this.amount = Double.valueOf(amount);
     }
 
-    public SimpleCompoundInstance(final ICompoundType type, final Double amount) {
+    public CompoundInstance(final ICompoundType type, final Double amount) {
         this.type = type;
         this.amount = amount;
     }
@@ -25,7 +23,6 @@ public class SimpleCompoundInstance implements ICompoundInstance
      * @return The type.
      */
     @NotNull
-    @Override
     public ICompoundType getType()
     {
         return type;
@@ -37,7 +34,6 @@ public class SimpleCompoundInstance implements ICompoundInstance
      * @return The amount.
      */
     @NotNull
-    @Override
     public Double getAmount()
     {
         return amount;
@@ -84,7 +80,7 @@ public class SimpleCompoundInstance implements ICompoundInstance
      *                              from being compared to this object.
      */
     @Override
-    public int compareTo(@NotNull final ICompoundInstance o)
+    public int compareTo(@NotNull final CompoundInstance o)
     {
         if (o.getType() != getType())
             return getType().getRegistryName().toString().compareTo(o.getType().getRegistryName().toString());
@@ -99,12 +95,12 @@ public class SimpleCompoundInstance implements ICompoundInstance
         {
             return true;
         }
-        if (!(o instanceof SimpleCompoundInstance))
+        if (!(o instanceof CompoundInstance))
         {
             return false;
         }
 
-        final SimpleCompoundInstance that = (SimpleCompoundInstance) o;
+        final CompoundInstance that = (CompoundInstance) o;
 
         if (!getType().equals(that.getType()))
         {

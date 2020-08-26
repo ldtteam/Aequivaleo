@@ -1,12 +1,17 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.network.IContainerFactory;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryBuilder;
+import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,10 +25,15 @@ public final class CompoundTypesRegistrar
     public static void onRegisterNewRegistry(final RegistryEvent.NewRegistry event)
     {
         LOGGER.info("Registering the compound type registry with forge.");
-        new RegistryBuilder<ICompoundType>()
-          .setType(ICompoundType.class)
-          .setName(new ResourceLocation(Constants.MOD_ID, "compound_type"))
-          .allowModification()
-          .create();
+        makeRegistry("compound_type", ICompoundType.class).create();
+        ModRegistries.COMPOUND_TYPE = RegistryManager.ACTIVE.getRegistry(ICompoundType.class);
+    }
+
+    private static <T extends IForgeRegistryEntry<T>> RegistryBuilder<T> makeRegistry(String name, Class<T> type) {
+        return new RegistryBuilder<T>()
+                 .setName(new ResourceLocation(Constants.MOD_ID, name))
+                 .setIDRange(1, Integer.MAX_VALUE - 1)
+                 .disableSaving()
+                 .setType(type);
     }
 }

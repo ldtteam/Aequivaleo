@@ -4,9 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.api.util.Suppression;
 import com.ldtteam.aequivaleo.api.util.TypeUtils;
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -15,28 +17,28 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.Validate.notNull;
 
-public class CompoundContainerFactoryRegistry implements ICompoundContainerFactoryRegistry
+public class CompoundContainerFactoryManager implements ICompoundContainerFactoryManager
 {
 
-    private static final CompoundContainerFactoryRegistry INSTANCE = new CompoundContainerFactoryRegistry();
+    private static final CompoundContainerFactoryManager INSTANCE = new CompoundContainerFactoryManager();
 
-    public static CompoundContainerFactoryRegistry getInstance()
+    public static CompoundContainerFactoryManager getInstance()
     {
         return INSTANCE;
     }
 
+    @Override
+    public IForgeRegistry<ICompoundContainerFactory<?>> getRegistry()
+    {
+        return ModRegistries.CONTAINER_FACTORY;
+    }
+
     private final Set<ExactTypedRegistryEntry<?, ?>> typedRegistryEntries = Sets.newConcurrentHashSet();
 
-    private CompoundContainerFactoryRegistry()
+    private CompoundContainerFactoryManager()
     {
     }
 
-    @Override
-    public <T, R> ICompoundContainerFactoryRegistry register(@NotNull final ICompoundContainerFactory<T, R> factory)
-    {
-        this.typedRegistryEntries.add(new ExactTypedRegistryEntry<>(factory.getInputType(), factory.getOutputType(), factory));
-        return this;
-    }
 
     /**
      * Utility method to check if a given class of a compound container can be wrapped properly.

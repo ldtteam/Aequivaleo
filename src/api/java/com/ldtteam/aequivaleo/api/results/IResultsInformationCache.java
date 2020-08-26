@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.api.results;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public interface IResultsInformationCache
      * Returns the calculated and cached resulting information.
      * @return The calculated and cached data, if no information is available, then an empty map is returned.
      */
-    Map<ICompoundContainer<?>, Set<ICompoundInstance>> getAll();
+    Map<ICompoundContainer<?>, Set<CompoundInstance>> getAll();
 
     /**
      * Gives access to the calculation result of a single container.
@@ -40,9 +39,9 @@ public interface IResultsInformationCache
      * @return A sets containing the results if present, else an empty set is returned.
      */
     @NotNull
-    default Set<ICompoundInstance> getFor(@NotNull final ICompoundContainer<?> container) {
+    default Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container) {
        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
-                 IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryRegistry().wrapInContainer(container.getContents(), 1d);
+                 IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
 
        return getAll().getOrDefault(unitContainer, Collections.emptySet());
     }
@@ -54,8 +53,8 @@ public interface IResultsInformationCache
      * @return A sets containing the results if present, else an empty set is returned.
      */
     @NotNull
-    default <T> Set<ICompoundInstance> getFor(@NotNull final T object) throws IllegalArgumentException {
-        final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryRegistry().wrapInContainer(object, 1d);
+    default <T> Set<CompoundInstance> getFor(@NotNull final T object) throws IllegalArgumentException {
+        final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(object, 1d);
         return getAll().getOrDefault(unitContainer, Collections.emptySet());
     }
 }

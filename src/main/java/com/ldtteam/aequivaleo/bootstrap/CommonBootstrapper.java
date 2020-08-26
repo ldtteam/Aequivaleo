@@ -3,35 +3,26 @@ package com.ldtteam.aequivaleo.bootstrap;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnGlobalDataLoadedEvent;
 import com.ldtteam.aequivaleo.api.util.*;
-import com.ldtteam.aequivaleo.compound.container.blockstate.BlockContainer;
-import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
-import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerSerializerRegistry;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.gameobject.loottable.LootTableAnalyserRegistry;
 import com.ldtteam.aequivaleo.heat.Heat;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.loot.LootContext;
 import net.minecraft.loot.LootParameterSets;
 import net.minecraft.loot.LootParameters;
 import net.minecraft.loot.LootTable;
+import net.minecraft.state.Property;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.gen.GenerationStage;
-import net.minecraft.world.gen.feature.ReplaceBlockConfig;
-import net.minecraft.world.gen.placement.IPlacementConfig;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
-import net.minecraftforge.fml.DeferredWorkQueue;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,8 +38,6 @@ public final class CommonBootstrapper
     {
         LOGGER.info("Bootstrapping aequivaleo");
 
-        doBootstrapWrapperFactories();
-        doBootstrapSerializerFactories();
         doBootstrapEquivalencyHandler();
         doBootstrapTagNames();
         doBootstrapLootTableAnalyzers();
@@ -58,23 +47,56 @@ public final class CommonBootstrapper
         doPrepopulateTypeCache();
     }
 
-    private static void doBootstrapWrapperFactories()
+    private static void doBootstrapEquivalencyHandler()
     {
-        LOGGER.info("Registering wrapper factories");
-        CompoundContainerFactoryRegistry.getInstance().register(new ItemStackContainer.ItemStackFactory());
-        CompoundContainerFactoryRegistry.getInstance().register(new ItemStackContainer.ItemFactory());
-        CompoundContainerFactoryRegistry.getInstance().register(new HeatContainer.Factory());
-        CompoundContainerFactoryRegistry.getInstance().register(new BlockContainer.BlockStateFactory());
-        CompoundContainerFactoryRegistry.getInstance().register(new BlockContainer.BlockFactory());
+        LOGGER.info("Registering equivalency handlers.");
+        //Handle itemstack equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            ItemStack.class,
+            (left, right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents()))
+          );
+
+        //Handle item equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            Item.class,
+            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+                                                                                                                                                 .getRegistryName()).toString()))
+          );
+
+        //Handle block equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            Block.class,
+            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+                                                                                                                                                 .getRegistryName()).toString()))
+          );
+
+        //Handle blockstate equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            BlockState.class,
+            (left, right) -> {
+                if (left.getContents().getBlock() != right.getContents().getBlock())
+                    return Optional.of(false);
+
+                for (final Property<?> property : left.getContents().getProperties())
+                {
+                    if (!right.getContents().getProperties().contains(property))
+                        return Optional.of(false);
+
+                    final Object leftValue = left.getContents().get(property);
+                    final Object rightValue = right.getContents().get(property);
+
+                    if (leftValue != rightValue)
+                        return Optional.of(false);
+                }
+
+                return Optional.of(true);
+            });
     }
 
-    private static void doBootstrapSerializerFactories()
-    {
-        LOGGER.info("Registering serializers.");
-        CompoundContainerSerializerRegistry.getInstance().register(new ItemStackContainer.Serializer());
-        CompoundContainerSerializerRegistry.getInstance().register(new HeatContainer.Serializer());
-        CompoundContainerSerializerRegistry.getInstance().register(new BlockContainer.Serializer());
-    }
 
     private static void doBootstrapTagNames()
     {
@@ -249,25 +271,6 @@ public final class CommonBootstrapper
           .addTag(Tags.Items.STRING.getName());
     }
 
-    private static void doBootstrapEquivalencyHandler()
-    {
-        LOGGER.info("Registering equivalency handlers.");
-        //Handle itemstack equivalency:
-        GameObjectEquivalencyHandlerRegistry.getInstance()
-          .registerNewHandler(
-            ItemStack.class,
-            (left, right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents()))
-          );
-
-        //Handle block equivalency:
-        GameObjectEquivalencyHandlerRegistry.getInstance()
-          .registerNewHandler(
-            Block.class,
-            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
-                                                                                                                                                 .getRegistryName()).toString()))
-          );
-    }
-
     private static void doBootstrapLootTableAnalyzers()
     {
         LOGGER.info("Registering loot table analyzers");
@@ -281,7 +284,7 @@ public final class CommonBootstrapper
               final LootTable table = ServerLifecycleHooks.getCurrentServer().getLootTableManager().getLootTableFromLocation(blockWrapper.getContents().getLootTable());
               return table.generate(lootcontext$builder.build(LootParameterSets.BLOCK))
                        .stream()
-                       .map(itemStack -> CompoundContainerFactoryRegistry.getInstance().wrapInContainer(itemStack, 1))
+                       .map(itemStack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(itemStack, 1))
                        .collect(
                          Collectors.toSet());
           }

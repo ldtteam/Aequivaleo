@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.results;
 
 import com.google.common.collect.Maps;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import net.minecraft.util.RegistryKey;
@@ -14,8 +14,8 @@ import java.util.Set;
 public class ResultsInformationCache implements IResultsInformationCache
 {
 
-    private final        Map<ICompoundContainer<?>, Set<ICompoundInstance>> cacheData       = Maps.newConcurrentMap();
-    private static final Map<RegistryKey<World>, ResultsInformationCache>                WORLD_INSTANCES = Maps.newConcurrentMap();
+    private final        Map<ICompoundContainer<?>, Set<CompoundInstance>> cacheData       = Maps.newConcurrentMap();
+    private static final Map<RegistryKey<World>, ResultsInformationCache>  WORLD_INSTANCES = Maps.newConcurrentMap();
 
     private ResultsInformationCache()
     {
@@ -28,12 +28,12 @@ public class ResultsInformationCache implements IResultsInformationCache
     }
 
     @Override
-    public Map<ICompoundContainer<?>, Set<ICompoundInstance>> getAll()
+    public Map<ICompoundContainer<?>, Set<CompoundInstance>> getAll()
     {
         return cacheData;
     }
 
-    public void set(@NotNull final Map<ICompoundContainer<?>, Set<ICompoundInstance>> data)
+    public void set(@NotNull final Map<ICompoundContainer<?>, Set<CompoundInstance>> data)
     {
         cacheData.clear();
         cacheData.putAll(data);

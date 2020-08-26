@@ -3,8 +3,10 @@ package com.ldtteam.aequivaleo.compound.container.heat;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
+import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.heat.Heat;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -13,19 +15,17 @@ import java.util.HashMap;
 public class HeatContainer implements ICompoundContainer<Heat>
 {
 
-    public static final class Factory implements ICompoundContainerFactory<Heat, Heat>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Heat>
     {
 
-        @NotNull
-        @Override
-        public Class<Heat> getInputType()
+        public Factory()
         {
-            return Heat.class;
+            setRegistryName(Constants.MOD_ID, "heat");
         }
 
         @NotNull
         @Override
-        public Class<Heat> getOutputType()
+        public Class<Heat> getContainedType()
         {
             return Heat.class;
         }
@@ -35,15 +35,6 @@ public class HeatContainer implements ICompoundContainer<Heat>
         public ICompoundContainer<Heat> create(@NotNull final Heat instance, @NotNull final double count)
         {
             return new HeatContainer(instance, count);
-        }
-    }
-
-    public static final class Serializer implements ICompoundContainerSerializer<Heat>
-    {
-        @Override
-        public Class<Heat> getType()
-        {
-            return Heat.class;
         }
 
         @Override
@@ -56,6 +47,18 @@ public class HeatContainer implements ICompoundContainer<Heat>
         public JsonElement serialize(final ICompoundContainer<Heat> src, final Type typeOfSrc, final JsonSerializationContext context)
         {
             return new JsonPrimitive(src.getContentsCount());
+        }
+
+        @Override
+        public void write(final ICompoundContainer<Heat> object, final PacketBuffer buffer)
+        {
+            buffer.writeDouble(object.getContentsCount());
+        }
+
+        @Override
+        public ICompoundContainer<Heat> read(final PacketBuffer buffer)
+        {
+            return new HeatContainer(new Heat(), buffer.readDouble());
         }
     }
 
