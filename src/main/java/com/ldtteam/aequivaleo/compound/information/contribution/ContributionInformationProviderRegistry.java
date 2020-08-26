@@ -2,16 +2,12 @@ package com.ldtteam.aequivaleo.compound.information.contribution;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProvider;
 import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProvider;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.Suppression;
-import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +50,11 @@ public class ContributionInformationProviderRegistry implements IContributionInf
         return this;
     }
 
+    public RegistryKey<World> getWorldKey()
+    {
+        return worldKey;
+    }
+
     public void reset()
     {
         inputs.clear();
@@ -67,20 +68,7 @@ public class ContributionInformationProviderRegistry implements IContributionInf
       @NotNull final ICompoundType type
     )
     {
-       if (!inputs.containsKey(wrapper.getContents().getClass()))
-        {
-            return true;
-        }
-
-        return inputs
-                 .get(wrapper.getContents().getClass())
-                 .stream()
-                 .map(provider -> (IContributionInformationProvider<T>) provider)
-                 .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
-                 .filter(Optional::isPresent)
-                 .findFirst()
-                 .orElse(Optional.of(true))
-                 .orElse(true);
+        return checkDataMap(wrapper, recipe, type, inputs);
     }
 
     @SuppressWarnings(Suppression.UNCHECKED)
@@ -90,19 +78,36 @@ public class ContributionInformationProviderRegistry implements IContributionInf
       @NotNull final ICompoundType type
     )
     {
-        if (!outputs.containsKey(wrapper.getContents().getClass()))
+        return checkDataMap(wrapper, recipe, type, outputs);
+    }
+
+    @SuppressWarnings(Suppression.UNCHECKED)
+    private static <T> boolean checkDataMap(
+      final @NotNull ICompoundContainer<T> wrapper,
+      final @NotNull IEquivalencyRecipe recipe,
+      final @NotNull ICompoundType type,
+      final Map<Class<?>, Set<IContributionInformationProvider<?>>> dataMap)
+    {
+        if (!dataMap.containsKey(wrapper.getContents().getClass()) && !dataMap.containsKey(Object.class))
         {
             return true;
         }
 
-        return outputs
+        return dataMap
                  .get(wrapper.getContents().getClass())
                  .stream()
                  .map(provider -> (IContributionInformationProvider<T>) provider)
                  .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
                  .filter(Optional::isPresent)
                  .findFirst()
-                 .orElse(Optional.of(true))
+                 .orElseGet(() -> dataMap
+                                    .get(Object.class)
+                                    .stream()
+                                    .map(provider -> (IContributionInformationProvider<T>) provider)
+                                    .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .findFirst())
                  .orElse(true);
     }
 }
