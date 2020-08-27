@@ -12,6 +12,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -94,17 +95,35 @@ public class ContributionInformationProviderRegistry implements IContributionInf
         }
 
         return dataMap
-                 .get(wrapper.getContents().getClass())
+                 .getOrDefault(wrapper.getContents().getClass(), Collections.emptySet())
                  .stream()
                  .map(provider -> (IContributionInformationProvider<T>) provider)
                  .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
                  .filter(Optional::isPresent)
                  .findFirst()
                  .orElseGet(() -> dataMap
-                                    .get(Object.class)
+                                    .getOrDefault(Object.class, Collections.emptySet())
                                     .stream()
-                                    .map(provider -> (IContributionInformationProvider<T>) provider)
-                                    .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
+                                    .map(provider -> (IContributionInformationProvider<Object>) provider)
+                                    .map(provider -> provider.canWrapperProvideCompoundForRecipe(new ICompoundContainer<Object>() {
+                                        @Override
+                                        public Object getContents()
+                                        {
+                                            return wrapper.getContents();
+                                        }
+
+                                        @Override
+                                        public Double getContentsCount()
+                                        {
+                                            return wrapper.getContentsCount();
+                                        }
+
+                                        @Override
+                                        public int compareTo(@NotNull final ICompoundContainer<?> iCompoundContainer)
+                                        {
+                                            return wrapper.compareTo(iCompoundContainer);
+                                        }
+                                    }, recipe, type))
                                     .filter(Optional::isPresent)
                                     .map(Optional::get)
                                     .findFirst())
