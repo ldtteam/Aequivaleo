@@ -105,15 +105,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
             return;
         }
 
-        final Collection<ResourceLocation> tags = stack.getItem().getTags();
-        if (tags.size() > 0)
-        {
-            this.hashCode = tags.hashCode();
-        }
-        else
-        {
-            this.hashCode = stack.write(new CompoundNBT()).hashCode();
-        }
+        this.hashCode = stack.write(new CompoundNBT()).hashCode();
     }
 
     /**
@@ -153,9 +145,6 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         }
 
         final ItemStack otherStack = (ItemStack) contents;
-        if (stack.getItem().getTags().stream().anyMatch(r -> otherStack.getItem().getTags().contains(r)))
-            return 0;
-
         return Comparators.ID_COMPARATOR.compare(stack, otherStack);
     }
 

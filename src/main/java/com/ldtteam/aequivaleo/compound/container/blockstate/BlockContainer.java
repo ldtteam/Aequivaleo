@@ -90,16 +90,7 @@ public class BlockContainer implements ICompoundContainer<Block>
     public BlockContainer(final Block contents, final Double count) {
         this.contents = contents;
         this.count = count;
-
-        final Collection<ResourceLocation> tags = contents.getTags();
-        if (tags.size() > 0)
-        {
-            this.hashCode = tags.hashCode();
-        }
-        else
-        {
-            this.hashCode = contents.getRegistryName().hashCode();
-        }
+        this.hashCode = Objects.requireNonNull(contents.getRegistryName()).hashCode();
     }
 
     @Override
@@ -131,9 +122,6 @@ public class BlockContainer implements ICompoundContainer<Block>
         if (contents == otherBlock)
             return 0;
 
-        if (contents.getTags().stream().anyMatch(r -> otherBlock.getTags().contains(r)))
-            return 0;
-
         return ((ForgeRegistry<Block>) ForgeRegistries.BLOCKS).getID(contents) - ((ForgeRegistry<Block>) ForgeRegistries.BLOCKS).getID(otherBlock);
     }
 
@@ -156,10 +144,7 @@ public class BlockContainer implements ICompoundContainer<Block>
             return false;
         }
 
-        if (contents.getTags().stream().anyMatch(r -> that.getContents().getTags().contains(r)))
-            return true;
-
-        return contents.getRegistryName().equals(that.getContents().getRegistryName());
+        return Objects.equals(contents.getRegistryName(), that.contents.getRegistryName());
     }
 
     @Override

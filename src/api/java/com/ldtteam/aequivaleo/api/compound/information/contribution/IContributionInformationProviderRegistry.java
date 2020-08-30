@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 public interface IContributionInformationProviderRegistry
 {
@@ -47,6 +48,19 @@ public interface IContributionInformationProviderRegistry
         return this.registerNewInputProvider(new SimpleTriFunctionBasedContributionInformationProvider<>(clazz, decider));
     }
 
+    /**
+     * Registers an information provider used during analysis, when analyzing recipe inputs
+     * This information provider is build from the callback.
+     *
+     * @param decider The callback that determines if a given compound type is valid for a given game object.
+     * @param <T> The type of the game object.
+     * @return The registry with the provider, constructed from the callback, added.
+     */
+    default <T> IContributionInformationProviderRegistry registerNewGenericInputProvider(@NotNull final BiFunction<IEquivalencyRecipe, ICompoundType, Optional<Boolean>> decider)
+    {
+        return this.registerNewInputProvider(new SimpleTriFunctionBasedContributionInformationProvider<>(Object.class,
+          (objectICompoundContainer, recipe, iCompoundType) -> decider.apply(recipe, iCompoundType)));
+    }
 
     /**
      * Registers an information provider used during analysis directly, when analyzing recipe outputs.
@@ -68,5 +82,46 @@ public interface IContributionInformationProviderRegistry
     default <T> IContributionInformationProviderRegistry registerNewOutputProvider(@NotNull final Class<T> clazz, @NotNull final TriFunction<ICompoundContainer<T>, IEquivalencyRecipe, ICompoundType, Optional<Boolean>> decider)
     {
         return this.registerNewOutputProvider(new SimpleTriFunctionBasedContributionInformationProvider<>(clazz, decider));
+    }
+
+    /**
+     * Registers an information provider used during analysis, when analyzing recipes
+     * This information provider is build from the given class and callback.
+     *
+     * @param clazz The class of the game object for which the callback serves as a {@link IContributionInformationProvider}
+     * @param decider The callback that determines if a given compound type is valid for a given game object.
+     * @param <T> The type of the game object.
+     * @return The registry with the provider, constructed from the class and callback, added.
+     */
+    default <T> IContributionInformationProviderRegistry registerNewProvider(@NotNull final Class<T> clazz, @NotNull final TriFunction<ICompoundContainer<T>, IEquivalencyRecipe, ICompoundType, Optional<Boolean>> decider)
+    {
+        return this.registerNewInputProvider(clazz, decider).registerNewOutputProvider(clazz, decider);
+    }
+
+    /**
+     * Registers an information provider used during analysis, when analyzing recipe outputs
+     * This information provider is build from the callback.
+     *
+     * @param decider The callback that determines if a given compound type is valid for a given game object.
+     * @param <T> The type of the game object.
+     * @return The registry with the provider, constructed from the callback, added.
+     */
+    default <T> IContributionInformationProviderRegistry registerNewGenericOutputProvider(@NotNull final BiFunction<IEquivalencyRecipe, ICompoundType, Optional<Boolean>> decider)
+    {
+        return this.registerNewOutputProvider(new SimpleTriFunctionBasedContributionInformationProvider<>(Object.class,
+          (objectICompoundContainer, recipe, iCompoundType) -> decider.apply(recipe, iCompoundType)));
+    }
+
+    /**
+     * Registers an information provider used during analysis, when analyzing recipes
+     * This information provider is build from the callback.
+     *
+     * @param decider The callback that determines if a given compound type is valid for a given game object.
+     * @param <T> The type of the game object.
+     * @return The registry with the provider, constructed from the callback, added.
+     */
+    default <T> IContributionInformationProviderRegistry registerNewGenericProvider(@NotNull final BiFunction<IEquivalencyRecipe, ICompoundType, Optional<Boolean>> decider)
+    {
+        return this.registerNewGenericInputProvider(decider).registerNewGenericOutputProvider(decider);
     }
 }

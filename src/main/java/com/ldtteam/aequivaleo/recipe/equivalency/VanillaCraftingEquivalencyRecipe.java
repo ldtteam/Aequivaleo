@@ -1,17 +1,17 @@
 package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IVanillaCraftingEquivalencyRecipe;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SimpleEquivalancyRecipe implements IEquivalencyRecipe
+public class VanillaCraftingEquivalencyRecipe implements IVanillaCraftingEquivalencyRecipe
 {
     private final Set<ICompoundContainer<?>> inputs;
     private final Set<ICompoundContainer<?>> outputs;
 
-    public SimpleEquivalancyRecipe(
+    public VanillaCraftingEquivalencyRecipe(
       final Set<ICompoundContainer<?>> inputs,
       final Set<ICompoundContainer<?>> outputs) {
         this.inputs = inputs;
@@ -56,12 +56,12 @@ public class SimpleEquivalancyRecipe implements IEquivalencyRecipe
         {
             return true;
         }
-        if (!(o instanceof SimpleEquivalancyRecipe))
+        if (!(o instanceof VanillaCraftingEquivalencyRecipe))
         {
             return false;
         }
 
-        final SimpleEquivalancyRecipe that = (SimpleEquivalancyRecipe) o;
+        final VanillaCraftingEquivalencyRecipe that = (VanillaCraftingEquivalencyRecipe) o;
 
         if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
         {

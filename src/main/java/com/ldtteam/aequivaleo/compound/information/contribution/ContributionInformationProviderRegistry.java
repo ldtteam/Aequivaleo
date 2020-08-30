@@ -12,6 +12,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -50,6 +51,11 @@ public class ContributionInformationProviderRegistry implements IContributionInf
         return this;
     }
 
+    public RegistryKey<World> getWorldKey()
+    {
+        return worldKey;
+    }
+
     public void reset()
     {
         inputs.clear();
@@ -63,20 +69,7 @@ public class ContributionInformationProviderRegistry implements IContributionInf
       @NotNull final ICompoundType type
     )
     {
-       if (!inputs.containsKey(wrapper.getContents().getClass()))
-        {
-            return true;
-        }
-
-        return inputs
-                 .get(wrapper.getContents().getClass())
-                 .stream()
-                 .map(provider -> (IContributionInformationProvider<T>) provider)
-                 .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
-                 .filter(Optional::isPresent)
-                 .findFirst()
-                 .orElse(Optional.of(true))
-                 .orElse(true);
+        return checkDataMap(wrapper, recipe, type, inputs);
     }
 
     @SuppressWarnings(Suppression.UNCHECKED)
@@ -86,19 +79,54 @@ public class ContributionInformationProviderRegistry implements IContributionInf
       @NotNull final ICompoundType type
     )
     {
-        if (!outputs.containsKey(wrapper.getContents().getClass()))
+        return checkDataMap(wrapper, recipe, type, outputs);
+    }
+
+    @SuppressWarnings(Suppression.UNCHECKED)
+    private static <T> boolean checkDataMap(
+      final @NotNull ICompoundContainer<T> wrapper,
+      final @NotNull IEquivalencyRecipe recipe,
+      final @NotNull ICompoundType type,
+      final Map<Class<?>, Set<IContributionInformationProvider<?>>> dataMap)
+    {
+        if (!dataMap.containsKey(wrapper.getContents().getClass()) && !dataMap.containsKey(Object.class))
         {
             return true;
         }
 
-        return outputs
-                 .get(wrapper.getContents().getClass())
+        return dataMap
+                 .getOrDefault(wrapper.getContents().getClass(), Collections.emptySet())
                  .stream()
                  .map(provider -> (IContributionInformationProvider<T>) provider)
                  .map(provider -> provider.canWrapperProvideCompoundForRecipe(wrapper, recipe, type))
                  .filter(Optional::isPresent)
                  .findFirst()
-                 .orElse(Optional.of(true))
+                 .orElseGet(() -> dataMap
+                                    .getOrDefault(Object.class, Collections.emptySet())
+                                    .stream()
+                                    .map(provider -> (IContributionInformationProvider<Object>) provider)
+                                    .map(provider -> provider.canWrapperProvideCompoundForRecipe(new ICompoundContainer<Object>() {
+                                        @Override
+                                        public Object getContents()
+                                        {
+                                            return wrapper.getContents();
+                                        }
+
+                                        @Override
+                                        public Double getContentsCount()
+                                        {
+                                            return wrapper.getContentsCount();
+                                        }
+
+                                        @Override
+                                        public int compareTo(@NotNull final ICompoundContainer<?> iCompoundContainer)
+                                        {
+                                            return wrapper.compareTo(iCompoundContainer);
+                                        }
+                                    }, recipe, type))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get)
+                                    .findFirst())
                  .orElse(true);
     }
 }
