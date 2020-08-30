@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.AequivaleoAPI;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.config.Configuration;
+import com.ldtteam.aequivaleo.network.NetworkChannel;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -19,7 +20,8 @@ public class Aequivaleo
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Configuration configuration;
-    
+    private final NetworkChannel networkChannel;
+
     public Aequivaleo()
     {
         LOGGER.info("Aequivaleo is being instantiated.");
@@ -27,6 +29,7 @@ public class Aequivaleo
         INSTANCE = this;
         IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
+        networkChannel = new NetworkChannel(Constants.MOD_ID);
     }
 
     public static Aequivaleo getInstance()
@@ -37,5 +40,10 @@ public class Aequivaleo
     public Configuration getConfiguration()
     {
         return configuration;
+    }
+
+    public NetworkChannel getNetworkChannel()
+    {
+        return networkChannel;
     }
 }

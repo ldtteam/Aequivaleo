@@ -2,6 +2,8 @@ package com.ldtteam.aequivaleo.network;
 
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.network.messages.IMessage;
+import com.ldtteam.aequivaleo.network.messages.PartialSyncResultsMessage;
+import com.ldtteam.aequivaleo.network.messages.SyncCompletedMessage;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
@@ -41,6 +43,7 @@ public class NetworkChannel
     public NetworkChannel(final String channelName)
     {
         rawChannel = NetworkRegistry.newSimpleChannel(new ResourceLocation(Constants.MOD_ID, channelName), () -> LATEST_PROTO_VER, ACCEPTED_PROTO_VERS::equals, ACCEPTED_PROTO_VERS::equals);
+        registerCommonMessages();
     }
 
     /**
@@ -49,7 +52,8 @@ public class NetworkChannel
     public void registerCommonMessages()
     {
         int idx = 0;
-        registerMessage(++idx, MultiBlockChangeMessage.class, MultiBlockChangeMessage::new);
+        registerMessage(++idx, PartialSyncResultsMessage.class, PartialSyncResultsMessage::new);
+        registerMessage(++idx, SyncCompletedMessage.class, SyncCompletedMessage::new);
     }
 
     /**

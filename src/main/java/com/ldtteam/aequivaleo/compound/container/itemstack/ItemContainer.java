@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.ldtteam.aequivaleo.api.util.RegistryUtils;
 import net.minecraft.item.Item;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
@@ -24,7 +25,7 @@ public class ItemContainer implements ICompoundContainer<Item>
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "Item");
+            setRegistryName(Constants.MOD_ID, "item");
         }
 
         @NotNull
@@ -35,7 +36,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         }
 
         @Override
-        public ICompoundContainer<Item> create(@NotNull final Item instance, @NotNull final double count)
+        public ICompoundContainer<Item> create(@NotNull final Item instance, final double count)
         {
             return new ItemContainer(instance, count);
         }
@@ -58,7 +59,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         @Override
         public void write(final ICompoundContainer<Item> object, final PacketBuffer buffer)
         {
-            buffer.writeRegistryId(object.getContents());
+            buffer.writeVarInt(RegistryUtils.getFull(Item.class).getID(object.getContents()));
             buffer.writeDouble(object.getContentsCount());
         }
 
@@ -66,7 +67,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         public ICompoundContainer<Item> read(final PacketBuffer buffer)
         {
             return new ItemContainer(
-              buffer.readRegistryId(),
+              RegistryUtils.getFull(Item.class).getValue(buffer.readVarInt()),
               buffer.readDouble()
             );
         }
@@ -122,7 +123,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         if (item.getItem().getTags().stream().anyMatch(r -> otherItem.getItem().getTags().contains(r)))
             return 0;
 
-        return otherItem.getRegistryName().compareTo(item.getRegistryName());
+        return Objects.requireNonNull(otherItem.getRegistryName()).compareTo(item.getRegistryName());
     }
 
     @Override
@@ -143,7 +144,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         {
             return false;
         }
-        return item.getRegistryName().equals(that.getContents().getRegistryName());
+        return Objects.equals(item.getRegistryName(), that.getContents().getRegistryName());
     }
 
     @Override

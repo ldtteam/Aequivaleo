@@ -1,21 +1,20 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.api.util.RegistryUtils;
 import com.ldtteam.aequivaleo.compound.container.blockstate.BlockContainer;
 import com.ldtteam.aequivaleo.compound.container.blockstate.BlockStateContainer;
 import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
-import net.minecraft.util.ResourceLocation;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryEntry;
-import net.minecraftforge.registries.RegistryBuilder;
+import net.minecraftforge.registries.IForgeRegistryInternal;
 import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,16 +28,12 @@ public final class CompoundContainerFactoryRegistrar
     @SubscribeEvent
     public static void onRegisterRegistry(@NotNull RegistryEvent.NewRegistry event) {
         LOGGER.info("Registering the container factory registry with forge.");
-        makeRegistry("container_factory", ICompoundContainerFactory.class).create();
+        RegistryUtils.makeRegistry("container_factory", ICompoundContainerFactory.class)
+          .onBake((owner, stage) -> {
+              LOGGER.info("Received bake callback for the container factory registry. Triggering baking of type map on manager.");
+              CompoundContainerFactoryManager.getInstance().bake();
+          }).create();
         ModRegistries.CONTAINER_FACTORY = RegistryManager.ACTIVE.getRegistry(ICompoundContainerFactory.class);
-    }
-
-    private static <T extends IForgeRegistryEntry<T>> RegistryBuilder<T> makeRegistry(String name, Class<T> type) {
-        return new RegistryBuilder<T>()
-                 .setName(new ResourceLocation(Constants.MOD_ID, name))
-                 .setIDRange(1, Integer.MAX_VALUE - 1)
-                 .disableSaving()
-                 .setType(type);
     }
 
     @SubscribeEvent

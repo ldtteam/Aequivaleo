@@ -1,8 +1,11 @@
 package com.ldtteam.aequivaleo.api.compound.container.registry;
 
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * A manager type for factories that handle wrapping compound containers, like ItemStacks.
  * Making this a manager with {@link IForgeRegistry} combination instead of hardcoding allows for easier expansion of the compound system into new and several types, like entities and power.
  */
-public interface ICompoundContainerFactoryManager
+public interface ICompoundContainerFactoryManager extends JsonDeserializer<ICompoundContainer<?>>, JsonSerializer<ICompoundContainer<?>>, IPacketBufferSerializer<ICompoundContainer<?>>
 {
     /**
      * Gives access to the current instance of the factory registry.

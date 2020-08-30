@@ -113,19 +113,33 @@ public class BlockStateContainer implements ICompoundContainer<BlockState>
         }
 
         @Override
-        public void write(final ICompoundContainer<BlockState> object, final PacketBuffer buffer) throws IOException
+        public void write(final ICompoundContainer<BlockState> object, final PacketBuffer buffer)
         {
-            buffer.func_240629_a_(BlockState.BLOCKSTATE_CODEC, object.getContents());
+            try
+            {
+                buffer.func_240629_a_(BlockState.BLOCKSTATE_CODEC, object.getContents());
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException("Failed to write BlockState", e);
+            }
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<BlockState> read(final PacketBuffer buffer) throws IOException
+        public ICompoundContainer<BlockState> read(final PacketBuffer buffer)
         {
-            return new BlockStateContainer(
-              buffer.func_240628_a_(BlockState.BLOCKSTATE_CODEC),
-              buffer.readDouble()
-            );
+            try
+            {
+                return new BlockStateContainer(
+                  buffer.func_240628_a_(BlockState.BLOCKSTATE_CODEC),
+                  buffer.readDouble()
+                );
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException("Failed to read BlockState", e);
+            }
         }
     }
 

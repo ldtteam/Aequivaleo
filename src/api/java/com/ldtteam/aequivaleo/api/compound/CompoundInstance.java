@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound;
 
+import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundInstance implements Comparable<CompoundInstance>

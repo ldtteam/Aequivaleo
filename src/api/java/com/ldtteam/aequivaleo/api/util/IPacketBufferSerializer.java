@@ -16,7 +16,7 @@ public interface IPacketBufferSerializer<T>
      * @param object The object to write.
      * @param buffer The buffer.
      */
-    void write(final T object, final PacketBuffer buffer) throws IOException;
+    void write(final T object, final PacketBuffer buffer);
 
     /**
      * Reads the object from the buffer.
@@ -24,5 +24,5 @@ public interface IPacketBufferSerializer<T>
      * @param buffer The buffer to read from.
      * @return The object.
      */
-    T read(final PacketBuffer buffer) throws IOException;
+    T read(final PacketBuffer buffer);
 }
