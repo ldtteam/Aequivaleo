@@ -4,16 +4,17 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.compound.container.serialization.ICompoundContainerSerializer;
-import com.ldtteam.aequivaleo.api.util.Comparators;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.util.Comparators;
+import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,21 +24,19 @@ import java.util.Collection;
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
 
-    public static final class ItemStackFactory implements ICompoundContainerFactory<ItemStack, ItemStack>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ItemStack>
     {
 
-        @NotNull
-        @Override
-        public Class<ItemStack> getInputType()
+        public Factory()
         {
-            return ItemStack.class;
+            setRegistryName(Constants.MOD_ID, "itemstack");
         }
 
         @NotNull
         @Override
-        public Class<ItemStack> getOutputType()
+        public Class<ItemStack> getContainedType()
         {
-            return getInputType();
+            return ItemStack.class;
         }
 
         @Override
@@ -46,42 +45,6 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
             final ItemStack stack = instance.copy();
             stack.setCount(1);
             return new ItemStackContainer(stack, count);
-        }
-    }
-
-    public static final class ItemFactory implements ICompoundContainerFactory<Item, ItemStack>
-    {
-
-        @NotNull
-        @Override
-        public Class<Item> getInputType()
-        {
-            return Item.class;
-        }
-
-        @NotNull
-        @Override
-        public Class<ItemStack> getOutputType()
-        {
-            return ItemStack.class;
-        }
-
-        @Override
-        public ICompoundContainer<ItemStack> create(@NotNull final Item instance, @NotNull final double count)
-        {
-            final ItemStack stack = new ItemStack(instance, 1);
-            stack.setCount(1);
-            return new ItemStackContainer(stack, count);
-        }
-    }
-
-    public static final class Serializer implements ICompoundContainerSerializer<ItemStack>
-    {
-
-        @Override
-        public Class<ItemStack> getType()
-        {
-            return ItemStack.class;
         }
 
         @Override
@@ -107,9 +70,23 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
             object.addProperty("stack", src.getContents().write(new CompoundNBT()).toString());
             return object;
         }
+
+        @Override
+        public void write(final ICompoundContainer<ItemStack> object, final PacketBuffer buffer)
+        {
+            buffer.writeItemStack(object.getContents());
+            buffer.writeDouble(object.getContentsCount());
+        }
+
+        @Override
+        public ICompoundContainer<ItemStack> read(final PacketBuffer buffer)
+        {
+            return new ItemStackContainer(
+              buffer.readItemStack(),
+              buffer.readDouble()
+            );
+        }
     }
-
-
 
     private final ItemStack stack;
     private final double count;

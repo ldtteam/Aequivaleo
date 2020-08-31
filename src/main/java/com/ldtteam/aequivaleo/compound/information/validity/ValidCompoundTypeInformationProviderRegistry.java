@@ -2,7 +2,7 @@ package com.ldtteam.aequivaleo.compound.information.validity;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProvider;
 import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
@@ -51,7 +51,7 @@ public class ValidCompoundTypeInformationProviderRegistry implements IValidCompo
       @NotNull final ICompoundType type
     )
     {
-        final Set<ICompoundInstance> lockedInformation = LockedCompoundInformationRegistry.getInstance(worldKey).get().get(wrapper);
+        final Set<CompoundInstance> lockedInformation = LockedCompoundInformationRegistry.getInstance(worldKey).get().get(wrapper);
         if (lockedInformation != null)
         {
             return lockedInformation.stream().anyMatch(compoundInstance -> compoundInstance.getType().equals(type));

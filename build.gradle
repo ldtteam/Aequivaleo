@@ -161,6 +161,7 @@ dependencies {
     testCompile 'com.intellij:annotations:+@jar'
     compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
+    compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
 }
 
 task apiJar(type: Jar) {

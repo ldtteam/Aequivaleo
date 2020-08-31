@@ -8,9 +8,12 @@ import net.minecraftforge.common.ForgeConfigSpec;
  */
 public class ServerConfiguration extends AbstractConfiguration
 {
-    public ForgeConfigSpec.BooleanValue lowMemoryMode;
+    public ForgeConfigSpec.BooleanValue exportGraph;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
     {
+        createCategory(builder, "debugging");
+        exportGraph = defineBoolean(builder, "debugging.export.graph", false);
+        finishCategory(builder);
     }
 }

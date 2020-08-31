@@ -2,11 +2,13 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.google.common.collect.Lists;
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.api.event.OnAnalysisCompleted;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -66,33 +68,19 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
         LOGGER.info("Analyzing information");
         final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
         final AtomicInteger genericThreadCounter = new AtomicInteger();
-        final Executor aequivaleoReloadExecutor = Executors.newFixedThreadPool(worlds.size() + 4, new ThreadFactory()
-        {
-            @Override
-            public Thread newThread(@NotNull final Runnable runnable)
-            {
-                final Thread thread = new Thread(runnable);
-                thread.setContextClassLoader(classLoader);
-                thread.setName("Aequivaleo generic runner: " + genericThreadCounter.incrementAndGet());
-                return thread;
-            }
+        final Executor aequivaleoReloadExecutor = Executors.newFixedThreadPool(worlds.size() + 4, runnable -> {
+            final Thread thread = new Thread(runnable);
+            thread.setContextClassLoader(classLoader);
+            thread.setName("Aequivaleo analysis runner: " + genericThreadCounter.incrementAndGet());
+            return thread;
         });
 
-        final List<CompletableFuture<Void>> reloadExecutors = worlds.stream().map(world -> CompletableFuture.runAsync(
+        CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
           new AequivaleoWorldAnalysisRunner(world),
           aequivaleoReloadExecutor
-        ))
-                                                                .collect(Collectors.toList());
-
-        final CompletableFuture<Void> executingFuture = CompletableFuture.allOf(reloadExecutors.toArray(new CompletableFuture[reloadExecutors.size()]));
-        try
-        {
-            executingFuture.get();
-        }
-        catch (InterruptedException | ExecutionException e)
-        {
-            LOGGER.fatal("Failed to reload equivalency information.", e);
-        }
+        )).toArray(CompletableFuture[]::new))
+          .thenRunAsync(ResultsInformationCache::updateAllPlayers)
+          .thenRunAsync(() -> MinecraftForge.EVENT_BUS.post(new OnAnalysisCompleted()));
     }
 
     private static class AequivaleoWorldAnalysisRunner implements Runnable

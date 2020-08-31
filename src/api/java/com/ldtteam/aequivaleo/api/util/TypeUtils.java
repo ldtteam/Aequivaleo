@@ -46,7 +46,7 @@ public final class TypeUtils
     }
 
     private static Set<Class<?>> getAllSuperTypesExcludingObjectInternal(final Class<?> clz) {
-        final Set<Class<?>> result = Sets.newHashSet();
+        final Set<Class<?>> result = Sets.newLinkedHashSet();
         result.add(clz);
 
         final List<Class<?>> directSuperTypes = Lists.newArrayList();
@@ -57,7 +57,7 @@ public final class TypeUtils
             directSuperTypes.addAll(Arrays.asList(clz.getInterfaces()));
 
         directSuperTypes.remove(Object.class);
-        result.addAll(directSuperTypes.stream().map(TypeUtils::getAllSuperTypesExcludingObject).flatMap(Set::stream).collect(Collectors.toSet()));
+        result.addAll(directSuperTypes.stream().map(TypeUtils::getAllSuperTypesExcludingObject).flatMap(Set::stream).collect(Collectors.toCollection(Sets::newLinkedHashSet)));
 
         return result;
     }

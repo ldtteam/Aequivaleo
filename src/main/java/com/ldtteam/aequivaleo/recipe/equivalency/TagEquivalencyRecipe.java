@@ -83,10 +83,6 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     @Override
     public String toString()
     {
-        return "TagEquivalencyRecipe{" +
-                 "tagName='" + getTag().getName() + '\'' +
-                 ", inputs=" + inputs +
-                 ", outputs=" + outputs +
-                 '}';
+        return String.format("Equivalent via Tag: %s", tag.getName());
     }
 }

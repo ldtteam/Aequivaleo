@@ -17,7 +17,7 @@ public interface ICompoundStorage
      *
      * @return The amount that would have been / is filled into this storage.
      */
-    Double fill(ICompoundInstance compoundInstance, boolean simulate);
+    Double fill(CompoundInstance compoundInstance, boolean simulate);
 
     /**
      * Drains the storage with the given amount.
@@ -29,5 +29,5 @@ public interface ICompoundStorage
      * @return The instance that was drained.
      */
     @Nullable
-    ICompoundInstance drain(Double amount, boolean simulate);
+    CompoundInstance drain(Double amount, boolean simulate);
 }

@@ -2,23 +2,21 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.ContainerWrapperGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.RecipeGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.SourceGraphNode;
-import com.ldtteam.aequivaleo.api.compound.ICompoundInstance;
+import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.*;
+import com.ldtteam.aequivaleo.api.AequivaleoAPI;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.implementation.SimpleCompoundInstance;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
-import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -32,15 +30,15 @@ public class JGraphTBasedCompoundAnalyzer
 
     private final World world;
 
-    private Map<ICompoundContainer<?>, Set<ICompoundInstance>> results = Collections.emptyMap();
+    private Map<ICompoundContainer<?>, Set<CompoundInstance>> results = Collections.emptyMap();
 
     public JGraphTBasedCompoundAnalyzer(final World world) {this.world = world;}
 
     public void calculate()
     {
-        final Map<ICompoundContainer<?>, Set<ICompoundInstance>> resultingCompounds = new ConcurrentSkipListMap<>();
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new ConcurrentSkipListMap<>();
 
-        final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph = new DefaultDirectedWeightedGraph<>(DefaultWeightedEdge.class);
+        final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
 
         final Map<ICompoundContainer<?>, IAnalysisGraphNode> nodes = Maps.newConcurrentMap();
 
@@ -92,11 +90,14 @@ public class JGraphTBasedCompoundAnalyzer
             }
             else
             {
-                final Set<DefaultWeightedEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(new ContainerWrapperGraphNode(lockedWrapper)));
+                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(new ContainerWrapperGraphNode(lockedWrapper)));
                 recipeGraph.removeAllEdges(incomingEdgesToRemove);
             }
 
         });
+
+        if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
+            GraphIOHandler.getInstance().export(world.func_234923_W_().func_240901_a_().toString().replace(":", "_").concat(".json"), recipeGraph);
 
         final Set<ContainerWrapperGraphNode> rootNodes = findRootNodes(recipeGraph);
 
@@ -164,13 +165,13 @@ public class JGraphTBasedCompoundAnalyzer
         this.results = resultingCompounds;
     }
 
-    public Map<ICompoundContainer<?>, Set<ICompoundInstance>> calculateAndGet() {
+    public Map<ICompoundContainer<?>, Set<CompoundInstance>> calculateAndGet() {
         calculate();
         return results;
     }
 
     @SuppressWarnings("SuspiciousMethodCalls")
-    private void removeDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph,
+    private void removeDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       @NotNull final Set<ContainerWrapperGraphNode> rootNodes)
     {
         @NotNull Set<IAnalysisGraphNode> danglingNodesToDelete = findDanglingNodes(recipeGraph)
@@ -190,7 +191,7 @@ public class JGraphTBasedCompoundAnalyzer
         }
     }
 
-    private void processRecipeGraphUsingBreathFirstSearch(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph)
+    private void processRecipeGraphUsingBreathFirstSearch(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph)
     {
         final LinkedHashSet<IAnalysisGraphNode> processingQueue = new LinkedHashSet<>();
         processingQueue.add(new SourceGraphNode());
@@ -198,7 +199,7 @@ public class JGraphTBasedCompoundAnalyzer
         processRecipeGraphFromNodeUsingBreathFirstSearch(recipeGraph, processingQueue);
     }
 
-    private void processRecipeGraphFromNodeUsingBreathFirstSearch(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph, final LinkedHashSet<IAnalysisGraphNode> processingQueue)
+    private void processRecipeGraphFromNodeUsingBreathFirstSearch(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph, final LinkedHashSet<IAnalysisGraphNode> processingQueue)
     {
         final Set<IAnalysisGraphNode> visitedNodes = new LinkedHashSet<>();
 
@@ -212,7 +213,7 @@ public class JGraphTBasedCompoundAnalyzer
         }
     }
 
-    private void processRecipeGraphForNodeWithBFS(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> recipeGraph, final LinkedHashSet<IAnalysisGraphNode> processingQueue, final Set<IAnalysisGraphNode> visitedNodes, final IAnalysisGraphNode node)
+    private void processRecipeGraphForNodeWithBFS(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph, final LinkedHashSet<IAnalysisGraphNode> processingQueue, final Set<IAnalysisGraphNode> visitedNodes, final IAnalysisGraphNode node)
     {
         visitedNodes.add(node);
         final Class<? extends IAnalysisGraphNode> clazz = node.getClass();
@@ -276,7 +277,7 @@ public class JGraphTBasedCompoundAnalyzer
                                                                      .map(v -> (ContainerWrapperGraphNode) v)
                                                                      .collect(Collectors.toSet());
 
-            final Set<ICompoundInstance> summedCompoundInstances = inputNeightbors
+            final Set<CompoundInstance> summedCompoundInstances = inputNeightbors
                                                                      .stream()
                                                                      .flatMap(inputNeighbor-> inputNeighbor
                                                                                                 .getCompoundInstances()
@@ -287,7 +288,7 @@ public class JGraphTBasedCompoundAnalyzer
                                                                      .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue, Double::sum))
                                                                      .entrySet()
                                                                      .stream()
-                                                                     .map(entry -> new SimpleCompoundInstance(entry.getKey(), entry.getValue()))
+                                                                     .map(entry -> new CompoundInstance(entry.getKey(), entry.getValue()))
                                                                      .collect(Collectors.toSet());
 
             final Set<IAnalysisGraphNode> nextNodes = new HashSet<>();
@@ -298,7 +299,7 @@ public class JGraphTBasedCompoundAnalyzer
                   if (!neighbor.getCompoundInstances().isEmpty())
                       return;
 
-                  final Set<ICompoundInstance> compoundInstances = getLockedInformationInstances(neighbor.getWrapper());
+                  final Set<CompoundInstance> compoundInstances = getLockedInformationInstances(neighbor.getWrapper());
 
                   if (compoundInstances.isEmpty())
                   {
@@ -307,7 +308,7 @@ public class JGraphTBasedCompoundAnalyzer
                         .addAll(
                           summedCompoundInstances
                             .stream()
-                            .map(compoundInstance -> new SimpleCompoundInstance(compoundInstance.getType(), Math.floor(compoundInstance.getAmount() / recipeGraph.getEdgeWeight(recipeGraph.getEdge(node, neighbor)))))
+                            .map(compoundInstance -> new CompoundInstance(compoundInstance.getType(), Math.floor(compoundInstance.getAmount() / recipeGraph.getEdgeWeight(recipeGraph.getEdge(node, neighbor)))))
                             .filter(simpleCompoundInstance -> simpleCompoundInstance.getAmount() > 0)
                             .filter(simpleCompoundInstance -> ValidCompoundTypeInformationProviderRegistry.getInstance(world.func_234923_W_()).isCompoundTypeValidForWrapper(neighbor.getWrapper(), simpleCompoundInstance.getType()))
                             .filter(simpleCompoundInstance -> ContributionInformationProviderRegistry.getInstance(world.func_234923_W_()).canCompoundTypeContributeAsOutput(neighbor.getWrapper(), recipeGraphNode.getRecipe(),
@@ -337,10 +338,10 @@ public class JGraphTBasedCompoundAnalyzer
         if (wrapper.getContentsCount() == 1d)
             return wrapper;
 
-        return CompoundContainerFactoryRegistry.getInstance().wrapInContainer(wrapper.getContents(), 1d);
+        return CompoundContainerFactoryManager.getInstance().wrapInContainer(wrapper.getContents(), 1d);
     }
 
-    private Set<ContainerWrapperGraphNode> findRootNodes(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> graph)
+    private Set<ContainerWrapperGraphNode> findRootNodes(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> graph)
     {
         return findDanglingNodes(graph)
           .stream()
@@ -349,7 +350,7 @@ public class JGraphTBasedCompoundAnalyzer
           .collect(Collectors.toSet());
     }
 
-    private Set<IAnalysisGraphNode> findDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, DefaultWeightedEdge> graph)
+    private Set<IAnalysisGraphNode> findDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> graph)
     {
         return graph
                  .vertexSet()
@@ -358,9 +359,9 @@ public class JGraphTBasedCompoundAnalyzer
                  .collect(Collectors.toSet());
     }
 
-    private Set<ICompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
+    private Set<CompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<ICompoundInstance> lockedInstances = LockedCompoundInformationRegistry.getInstance(world.func_234923_W_())
+        final Set<CompoundInstance> lockedInstances = LockedCompoundInformationRegistry.getInstance(world.func_234923_W_())
                                                          .get()
                                                          .get(createUnitWrapper(wrapper));
 
@@ -375,7 +376,7 @@ public class JGraphTBasedCompoundAnalyzer
         return world;
     }
 
-    public Map<ICompoundContainer<?>, Set<ICompoundInstance>> getResults()
+    public Map<ICompoundContainer<?>, Set<CompoundInstance>> getResults()
     {
         return results;
     }

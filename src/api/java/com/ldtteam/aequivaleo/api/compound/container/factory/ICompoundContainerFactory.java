@@ -1,30 +1,29 @@
 package com.ldtteam.aequivaleo.api.compound.container.factory;
 
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a object that converts a certain game object into a wrapped counter part which can
  * then carry compound information.
  */
-public interface ICompoundContainerFactory<T, R>
+public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundContainer<T>>,
+                                                           JsonDeserializer<ICompoundContainer<T>>,
+                                                           IPacketBufferSerializer<ICompoundContainer<T>>,
+                                                           IForgeRegistryEntry<ICompoundContainerFactory<?>>
 {
 
     /**
-     * The class of the type that this factory can use as an input to produce a given compound container that contains the output type.
+     * The class of the type that this factory produces a container for from a given instance of the returned type.
      *
-     * @return The input type of the factory.
+     * @return The type a factory can produce a container for.
      */
     @NotNull
-    Class<T> getInputType();
-
-    /**
-     * The class of the type that this factory produces from a given instance of the given input type.
-     *
-     * @return The output type of the factory.
-     */
-    @NotNull
-    Class<R> getOutputType();
+    Class<T> getContainedType();
 
     /**
      * Method used to wrap an instance of the input type and a given count of that instance into a given container.
@@ -36,6 +35,6 @@ public interface ICompoundContainerFactory<T, R>
      * @return A compound container that will contain the given instance of the game object in unit size with the given count.
      */
     @NotNull
-    ICompoundContainer<R> create(@NotNull final T inputInstance, final double count);
+    ICompoundContainer<T> create(@NotNull final T inputInstance, final double count);
 
 }

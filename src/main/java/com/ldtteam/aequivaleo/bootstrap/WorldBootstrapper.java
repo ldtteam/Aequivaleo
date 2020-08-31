@@ -1,22 +1,24 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.ContainerWrapperGraphNode;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryRegistry;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.recipe.equivalency.DropsEquivalencyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
+import com.ldtteam.aequivaleo.gameobject.loottable.LootTableAnalyserRegistry;
+import com.ldtteam.aequivaleo.recipe.equivalency.*;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -51,7 +54,8 @@ public final class WorldBootstrapper
 
         doBootstrapTagInformation(world);
         doBootstrapDefaultCraftingRecipes(world);
-        doBootstrapBlockDropEquivalencies(world);
+        doBootstrapBlockDropRelatedEquivalencies(world);
+        doBootstrapItemStackItemEquivalencies(world);
 
         doFireDataLoadEvent(world);
     }
@@ -72,7 +76,7 @@ public final class WorldBootstrapper
     private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
         final Collection<ICompoundContainer<?>> elementsOfTag = tag.getAllElements()
                                                                   .stream()
-                                                                  .map(stack -> CompoundContainerFactoryRegistry.getInstance().wrapInContainer(stack, 1d))
+                                                                  .map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d))
                                                                   .collect(Collectors.toList());
 
         elementsOfTag.forEach(inputStack -> elementsOfTag
@@ -102,12 +106,12 @@ public final class WorldBootstrapper
 
     private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, FurnaceEquivalencyRecipe::new);
+        processIRecipe(world, iRecipe, (inputs, outputs) -> new FurnaceEquivalencyRecipe(iRecipe.getId(), inputs, outputs));
     }
 
     private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, VanillaCraftingEquivalencyRecipe::new);
+        processIRecipe(world, iRecipe, (inputs, outputs) -> new VanillaCraftingEquivalencyRecipe(iRecipe.getId(), inputs, outputs));
     }
 
     private static void processIRecipe(
@@ -134,44 +138,104 @@ public final class WorldBootstrapper
 
         final Set<ICompoundContainer<?>> wrappedInput = inputStacks
                                                                  .stream()
-                                                                 .map(stack -> CompoundContainerFactoryRegistry.getInstance()
+                                                                 .map(stack -> CompoundContainerFactoryManager.getInstance()
                                                                                  .wrapInContainer(stack, stack.getCount()))
                                                                  .collect(Collectors.toMap(wrapper -> wrapper, ICompoundContainer::getContentsCount, Double::sum))
                                                                  .entrySet()
                                                                  .stream()
-                                                                 .map(iCompoundContainerWrapperDoubleEntry -> CompoundContainerFactoryRegistry.getInstance()
+                                                                 .map(iCompoundContainerWrapperDoubleEntry -> CompoundContainerFactoryManager.getInstance()
                                                                                                                 .wrapInContainer(iCompoundContainerWrapperDoubleEntry.getKey()
                                                                                                                                    .getContents(),
                                                                                                                   iCompoundContainerWrapperDoubleEntry.getValue()))
                                                                  .collect(Collectors.toSet());
 
-        final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
+        final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryManager.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
           iRecipe.getRecipeOutput().getCount());
 
 
         EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipeProducer.apply(wrappedInput, Sets.newHashSet(outputWrapped)));
     }
 
-    private static void doBootstrapBlockDropEquivalencies(
+    private static void doBootstrapBlockDropRelatedEquivalencies(
       @NotNull final ServerWorld world
     )
     {
-        ForgeRegistries.BLOCKS.getValues().forEach(block -> {
-            final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryRegistry.getInstance().wrapInContainer(block, 1);
-            try {
-                final DropsEquivalencyRecipe inputRecipe = new DropsEquivalencyRecipe(compoundContainer, true, world);
-                final DropsEquivalencyRecipe outputRecipe = new DropsEquivalencyRecipe(compoundContainer, false, world);
-                EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
-            } catch (Exception ex) {
-                if (Aequivaleo.getInstance().getConfiguration().getCommon().writeExceptionOnBlockDropFailure.get()) {
-                    LOGGER.warn(String.format("Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required.",
-                      block.getRegistryName()), ex);
-                }
-                else
+        for (Block block : ForgeRegistries.BLOCKS.getValues())
+        {
+            final ICompoundContainer<?> blockContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(block, 1);
+            final Set<ICompoundContainer<?>> initialContainers = Sets.newHashSet();
+            boolean hasTheSameDrop = true;
+
+            for (BlockState blockState : block.getStateContainer().getValidStates())
+            {
+                final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(blockState, 1);
+                try
                 {
-                    LOGGER.warn(String.format("Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required. Turn the config value for block drop exceptions on to see more details.",
-                      block.getRegistryName()));
+                    final Set<ICompoundContainer<?>> drops = LootTableAnalyserRegistry.getInstance().calculateOutputs(blockState, world);
+                    if (initialContainers.isEmpty()) {
+                        initialContainers.addAll(drops);
+                    } else if (hasTheSameDrop && !initialContainers.equals(drops)) {
+                        hasTheSameDrop = false;
+                    }
+
+                    final DropsEquivalencyRecipe inputRecipe = new DropsEquivalencyRecipe(compoundContainer, true, drops);
+                    final DropsEquivalencyRecipe outputRecipe = new DropsEquivalencyRecipe(compoundContainer, false, drops);
+                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
                 }
+                catch (Exception ex)
+                {
+                    if (Aequivaleo.getInstance().getConfiguration().getCommon().writeExceptionOnBlockDropFailure.get())
+                    {
+                        LOGGER.warn(String.format(
+                          "Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required.",
+                          block.getRegistryName()), ex);
+                    }
+                    else
+                    {
+                        LOGGER.warn(String.format(
+                          "Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required. Turn the config value for block drop exceptions on to see more details.",
+                          block.getRegistryName()));
+                    }
+                }
+            }
+
+            if (hasTheSameDrop) {
+                for (final BlockState blockState : block.getStateContainer().getValidStates())
+                {
+                    final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(blockState, 1);
+                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                      .register(
+                        new InstancedEquivalency(true, blockContainer, compoundContainer)
+                      )
+                      .register(
+                        new InstancedEquivalency(true, compoundContainer, blockContainer)
+                      );
+                }
+            }
+        }
+    }
+
+    private static void doBootstrapItemStackItemEquivalencies(
+      @NotNull final ServerWorld world
+    ) {
+        ForgeRegistries.ITEMS.forEach(item -> {
+            final NonNullList<ItemStack> group = NonNullList.create();
+            if(item.getGroup() == null)
+                return;
+
+            item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
+
+            if (group.size() == 1) {
+                final ICompoundContainer<?> itemContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
+                final ICompoundContainer<?> itemStackContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(group.get(0), group.get(0).getCount());
+
+                EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                  .register(new InstancedEquivalency(
+                  false, itemContainer, itemStackContainer
+                  ))
+                  .register(new InstancedEquivalency(
+                  false, itemStackContainer, itemContainer
+                  ));
             }
         });
     }
