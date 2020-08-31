@@ -14,10 +14,9 @@ public final class BlockUtils
         throw new IllegalStateException("Tried to initialize: BlockUtils but this is a Utility class.");
     }
 
-    public static ItemStack getHarvestingToolForBlock(@NotNull final Block block)
+    public static ItemStack getHarvestingToolForBlock(@NotNull final BlockState blockState  )
     {
-        final BlockState defaultState = block.getDefaultState();
-        final ToolType toolType = defaultState.getHarvestTool();
+        final ToolType toolType = blockState.getHarvestTool();
         if (toolType == null)
             return ItemStack.EMPTY;
 

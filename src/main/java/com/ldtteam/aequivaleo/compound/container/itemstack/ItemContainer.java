@@ -120,9 +120,6 @@ public class ItemContainer implements ICompoundContainer<Item>
         }
 
         final Item otherItem = (Item) contents;
-        if (item.getItem().getTags().stream().anyMatch(r -> otherItem.getItem().getTags().contains(r)))
-            return 0;
-
         return Objects.requireNonNull(otherItem.getRegistryName()).compareTo(item.getRegistryName());
     }
 

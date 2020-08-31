@@ -2,18 +2,21 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IFurnaceEquivalencyRecipe;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FurnaceEquivalencyRecipe implements IFurnaceEquivalencyRecipe
 {
+    private final ResourceLocation recipeName;
     private final Set<ICompoundContainer<?>> inputs;
     private final Set<ICompoundContainer<?>> outputs;
 
     public FurnaceEquivalencyRecipe(
-      final Set<ICompoundContainer<?>> inputs,
+      final ResourceLocation recipeName, final Set<ICompoundContainer<?>> inputs,
       final Set<ICompoundContainer<?>> outputs) {
+        this.recipeName = recipeName;
         this.inputs = inputs;
         this.outputs = outputs;
     }
@@ -49,6 +52,11 @@ public class FurnaceEquivalencyRecipe implements IFurnaceEquivalencyRecipe
         return 1D;
     }
 
+    public ResourceLocation getRecipeName()
+    {
+        return recipeName;
+    }
+
     @Override
     public boolean equals(final Object o)
     {
@@ -81,9 +89,6 @@ public class FurnaceEquivalencyRecipe implements IFurnaceEquivalencyRecipe
     @Override
     public String toString()
     {
-        return "SmeltingEquivalancyRecipe{" +
-                 "inputs=" + inputs.stream().map(w -> w == null ? "<NULL>" : w.toString()).collect(Collectors.joining(",")) +
-                 ", outputs=" + outputs.stream().map(w -> w == null ? "<NULL>" : w.toString()).collect(Collectors.joining(",")) +
-                 '}';
+        return String.format("Equivalent via smelting: %s", recipeName);
     }
 }

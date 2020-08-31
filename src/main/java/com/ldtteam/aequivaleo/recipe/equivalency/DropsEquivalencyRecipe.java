@@ -16,10 +16,10 @@ public class DropsEquivalencyRecipe
 
     private final Set<ICompoundContainer<?>> outputs;
 
-    public DropsEquivalencyRecipe(final ICompoundContainer<?> lootTableSource, final boolean isInput, final ServerWorld world) {
+    public DropsEquivalencyRecipe(final ICompoundContainer<?> lootTableSource, final boolean isInput, final Set<ICompoundContainer<?>> drops) {
         this.lootTableSource = lootTableSource;
         this.isInput = isInput;
-        this.outputs = LootTableAnalyserRegistry.getInstance().calculateOutputs(lootTableSource, world);
+        this.outputs = drops;
     }
 
     @Override
@@ -56,5 +56,14 @@ public class DropsEquivalencyRecipe
     public boolean isInput()
     {
         return isInput;
+    }
+
+    @Override
+    public String toString()
+    {
+        if (isInput)
+            return String.format("Equivalent via placement of: %s", getLootTableSource().getContents());
+
+        return String.format("Equivalent via drops of: %s", getLootTableSource().getContents());
     }
 }

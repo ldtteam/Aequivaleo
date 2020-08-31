@@ -57,7 +57,7 @@ public class NetworkSplittingManager
         final int messageCount = (int) Math.ceil(source.size() / (double) batchSize);
         for (int listIndex = 0; listIndex < messageCount; listIndex++)
         {
-            List<T> subSource = source.subList(communicationId * listIndex, Math.min(source.size(), batchSize * (listIndex + 1)));
+            List<T> subSource = source.subList(batchSize * listIndex, Math.min(source.size(), batchSize * (listIndex + 1)));
             messageSender.accept(messageBuilder.apply(communicationId, subSource));
         }
         messageSender.accept(terminationMessageProducer.apply(communicationId));

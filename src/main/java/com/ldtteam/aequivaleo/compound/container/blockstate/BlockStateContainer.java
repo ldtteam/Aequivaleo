@@ -18,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BlockStateContainer implements ICompoundContainer<BlockState>
@@ -145,12 +144,15 @@ public class BlockStateContainer implements ICompoundContainer<BlockState>
 
     private final BlockState contents;
     private final Double count;
+    private final List<Comparable<?>> propertyValues;
     private final int hashCode;
+
 
     public BlockStateContainer(final BlockState contents, final Double count) {
         this.contents = contents;
         this.count = count;
-        this.hashCode = contents.hashCode();
+        this.propertyValues = contents.getProperties().stream().map(contents::get).collect(Collectors.toList());
+        this.hashCode = Objects.hash(contents.getBlock(), contents.getProperties(), this.propertyValues.hashCode());
     }
 
     @Override
@@ -204,7 +206,20 @@ public class BlockStateContainer implements ICompoundContainer<BlockState>
             return false;
         }
 
-        return contents.getBlock().getRegistryName().equals(that.getContents().getBlock().getRegistryName());
+        if (!Objects.equals(that.contents.getBlock(), contents.getBlock()))
+        {
+            return false;
+        }
+
+        if (!Objects.deepEquals(that.contents.getProperties(), contents.getProperties()))
+        {
+            return false;
+        }
+
+        return Objects.deepEquals(
+          that.propertyValues,
+          this.propertyValues
+        );
     }
 
     @Override

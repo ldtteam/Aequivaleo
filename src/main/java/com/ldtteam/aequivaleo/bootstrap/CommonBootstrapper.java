@@ -18,6 +18,7 @@ import net.minecraft.loot.LootParameters;
 import net.minecraft.loot.LootTable;
 import net.minecraft.state.Property;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
@@ -276,13 +277,18 @@ public final class CommonBootstrapper
         LOGGER.info("Registering loot table analyzers");
         LootTableAnalyserRegistry.getInstance().register(
           Block.class,
-          (ICompoundContainer<? extends Block> blockWrapper, ServerWorld world) -> {
-              final ItemStack harvester = BlockUtils.getHarvestingToolForBlock(blockWrapper.getContents());
-              final LootContext.Builder lootcontext$builder = (new LootContext.Builder(world)).withParameter(LootParameters.POSITION, BlockPos.ZERO)
+          ( blockState, world) -> {
+              final ItemStack harvester = BlockUtils.getHarvestingToolForBlock(blockState);
+              LootContext.Builder builder = (new LootContext.Builder(world)).withParameter(LootParameters.POSITION, BlockPos.ZERO)
                                                                 .withParameter(LootParameters.TOOL, harvester)
-                                                                .withParameter(LootParameters.BLOCK_STATE, blockWrapper.getContents().getDefaultState());
-              final LootTable table = ServerLifecycleHooks.getCurrentServer().getLootTableManager().getLootTableFromLocation(blockWrapper.getContents().getLootTable());
-              return table.generate(lootcontext$builder.build(LootParameterSets.BLOCK))
+                                                                .withParameter(LootParameters.BLOCK_STATE, blockState);
+
+              final TileEntity entity = blockState.createTileEntity(new SingleBlockBlockReader(blockState));
+              if (entity != null) {
+                  builder = builder.withParameter(LootParameters.BLOCK_ENTITY, entity);
+              }
+              final LootTable table = ServerLifecycleHooks.getCurrentServer().getLootTableManager().getLootTableFromLocation(blockState.getBlock().getLootTable());
+              return table.generate(builder.build(LootParameterSets.BLOCK))
                        .stream()
                        .map(itemStack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(itemStack, 1))
                        .collect(

@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
 import com.ldtteam.aequivaleo.api.util.TypeUtils;
+import net.minecraft.block.BlockState;
 import net.minecraft.world.server.ServerWorld;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +35,7 @@ public class LootTableAnalyserRegistry implements ILootTableAnalyserRegistry
     @NotNull
     public <T> ILootTableAnalyserRegistry register(
       @NotNull final Class<T> lootTableType,
-      @NotNull final BiFunction<ICompoundContainer<? extends T>, ServerWorld, Set<ICompoundContainer<?>>> handlerCallback
+      @NotNull final BiFunction<BlockState, ServerWorld, Set<ICompoundContainer<?>>> handlerCallback
     )
     {
         if(handlers.stream().anyMatch(l -> l.getInputType() == lootTableType))
@@ -48,9 +49,9 @@ public class LootTableAnalyserRegistry implements ILootTableAnalyserRegistry
     }
 
     @NotNull
-    public <T> Set<ICompoundContainer<?>> calculateOutputs(@NotNull final ICompoundContainer<T> input, @NotNull final ServerWorld world)
+    public <T> Set<ICompoundContainer<?>> calculateOutputs(@NotNull final BlockState input, @NotNull final ServerWorld world)
     {
-        final Set<Class<?>> superTypes = TypeUtils.getAllSuperTypesExcludingObject(input.getContents().getClass());
+        final Set<Class<?>> superTypes = TypeUtils.getAllSuperTypesExcludingObject(input.getBlock().getClass());
         final List<Class<?>> indexedSuperTypes = Lists.newLinkedList(superTypes);
 
         return handlers
@@ -68,11 +69,11 @@ public class LootTableAnalyserRegistry implements ILootTableAnalyserRegistry
         @NotNull
         private final Class<T>                                                                inputType;
         @NotNull
-        private final BiFunction<ICompoundContainer<? extends T>, ServerWorld, Set<ICompoundContainer<?>>> lootTableHandler;
+        private final BiFunction<BlockState, ServerWorld, Set<ICompoundContainer<?>>> lootTableHandler;
 
         private LootTableAnalyserEntry(
           @NotNull final Class<T> inputType,
-          @NotNull final BiFunction<ICompoundContainer<? extends T>, ServerWorld, Set<ICompoundContainer<?>>> lootTableHandler
+          @NotNull final BiFunction<BlockState, ServerWorld, Set<ICompoundContainer<?>>> lootTableHandler
         ) {
             this.inputType = inputType;
             this.lootTableHandler = lootTableHandler;
@@ -85,7 +86,7 @@ public class LootTableAnalyserRegistry implements ILootTableAnalyserRegistry
         }
 
         @NotNull
-        public Set<ICompoundContainer<?>> calculateOutputs(@NotNull final ICompoundContainer<? extends T> input, @NotNull final ServerWorld world)
+        public Set<ICompoundContainer<?>> calculateOutputs(@NotNull final BlockState input, @NotNull final ServerWorld world)
         {
             return lootTableHandler.apply(input, world);
         }
