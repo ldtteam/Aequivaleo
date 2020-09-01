@@ -153,9 +153,6 @@ public class ItemContainer implements ICompoundContainer<Item>
     @Override
     public String toString()
     {
-        return "ItemWrapper{" +
-                 "stack=" + item +
-                 ", count=" + count +
-                 '}';
+        return String.format("%s x Item: %s", count, item.getRegistryName());
     }
 }

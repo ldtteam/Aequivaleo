@@ -231,9 +231,6 @@ public class BlockStateContainer implements ICompoundContainer<BlockState>
     @Override
     public String toString()
     {
-        return "BlockContainer{" +
-                 "contents=" + contents.getBlock().getRegistryName() +
-                 ", count=" + count +
-                 '}';
+        return String.format("%s x BlockState: %s", count, contents);
     }
 }

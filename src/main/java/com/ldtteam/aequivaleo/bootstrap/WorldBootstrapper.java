@@ -19,6 +19,7 @@ import com.ldtteam.aequivaleo.recipe.equivalency.*;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
@@ -31,12 +32,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public final class WorldBootstrapper
 {
@@ -70,25 +69,36 @@ public final class WorldBootstrapper
 
     private static void doBootstrapTagInformation(final World world)
     {
-        TagEquivalencyRegistry.getInstance().get().forEach((ITag.INamedTag<?> tag) -> doBootstrapSingleTagInformation(world, tag));
+        for (ITag.INamedTag<?> tag : TagEquivalencyRegistry.getInstance().get())
+        {
+            doBootstrapSingleTagInformation(world, tag);
+        }
     }
 
     private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
-        final Collection<ICompoundContainer<?>> elementsOfTag = tag.getAllElements()
-                                                                  .stream()
-                                                                  .map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d))
-                                                                  .collect(Collectors.toList());
+        final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>();
+        for (T stack : tag.getAllElements())
+        {
+            ICompoundContainer<T> tiCompoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d);
+            elementsOfTag.add(tiCompoundContainer);
+        }
 
-        elementsOfTag.forEach(inputStack -> elementsOfTag
-          .stream()
-          .filter(outputStack -> !GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
-          .forEach(outputStack -> EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
-            .register(
-              new TagEquivalencyRecipe<>(
-                tag,
-                Sets.newHashSet(inputStack),
-                Sets.newHashSet(outputStack)
-              ))));
+        for (ICompoundContainer<?> inputStack : elementsOfTag)
+        {
+            for (ICompoundContainer<?> outputStack : elementsOfTag)
+            {
+                if (!GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
+                {
+                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                      .register(
+                        new TagEquivalencyRecipe<>(
+                          tag,
+                          Sets.newHashSet(inputStack),
+                          Sets.newHashSet(outputStack)
+                        ));
+                }
+            }
+        }
     }
 
     private static void doBootstrapDefaultCraftingRecipes(@NotNull final World world)
@@ -126,28 +136,43 @@ public final class WorldBootstrapper
         }
 
         final NonNullList<Ingredient> ingredients = iRecipe.getIngredients();
-        final List<Ingredient> withOutEmptyIngredients = ingredients.stream()
-                                                           .filter(ingredient -> !ingredient.test(ItemStack.EMPTY) && ingredient.getMatchingStacks().length > 0
-                                                                                   && !ItemStackUtils.isEmpty(ingredient.getMatchingStacks()[0]))
-                                                           .collect(Collectors.toList());
+        final List<Ingredient> withOutEmptyIngredients = new ArrayList<>();
+        for (Ingredient ingredient1 : ingredients)
+        {
+            if (!ingredient1.test(ItemStack.EMPTY) && ingredient1.getMatchingStacks().length > 0
+                  && !ItemStackUtils.isEmpty(ingredient1.getMatchingStacks()[0]))
+            {
+                withOutEmptyIngredients.add(ingredient1);
+            }
+        }
 
-        final List<ItemStack> inputStacks = withOutEmptyIngredients.stream()
-                                              .map(ingredient -> ingredient.getMatchingStacks()[0])
-                                              .filter(itemStack -> !itemStack.isEmpty())
-                                              .collect(Collectors.toList());
+        final List<ItemStack> inputStacks = new ArrayList<>();
+        for (Ingredient ingredient : withOutEmptyIngredients)
+        {
+            ItemStack itemStack = ingredient.getMatchingStacks()[0];
+            if (!itemStack.isEmpty())
+            {
+                inputStacks.add(itemStack);
+            }
+        }
 
-        final Set<ICompoundContainer<?>> wrappedInput = inputStacks
-                                                                 .stream()
-                                                                 .map(stack -> CompoundContainerFactoryManager.getInstance()
-                                                                                 .wrapInContainer(stack, stack.getCount()))
-                                                                 .collect(Collectors.toMap(wrapper -> wrapper, ICompoundContainer::getContentsCount, Double::sum))
-                                                                 .entrySet()
-                                                                 .stream()
-                                                                 .map(iCompoundContainerWrapperDoubleEntry -> CompoundContainerFactoryManager.getInstance()
-                                                                                                                .wrapInContainer(iCompoundContainerWrapperDoubleEntry.getKey()
-                                                                                                                                   .getContents(),
-                                                                                                                  iCompoundContainerWrapperDoubleEntry.getValue()))
-                                                                 .collect(Collectors.toSet());
+        final Set<ICompoundContainer<?>> wrappedInput = new HashSet<>();
+        Map<ICompoundContainer<ItemStack>, Double> map = new HashMap<>();
+        for (ItemStack stack : inputStacks)
+        {
+            ICompoundContainer<ItemStack> wrapper = CompoundContainerFactoryManager.getInstance()
+                                                      .wrapInContainer(stack, stack.getCount());
+            map.merge(wrapper, wrapper.getContentsCount(), Double::sum);
+        }
+        for (Map.Entry<ICompoundContainer<ItemStack>, Double> iCompoundContainerWrapperDoubleEntry : map
+                                                                                                       .entrySet())
+        {
+            ICompoundContainer<ItemStack> itemStackICompoundContainer = CompoundContainerFactoryManager.getInstance()
+                                                                          .wrapInContainer(iCompoundContainerWrapperDoubleEntry.getKey()
+                                                                                             .getContents(),
+                                                                            iCompoundContainerWrapperDoubleEntry.getValue());
+            wrappedInput.add(itemStackICompoundContainer);
+        }
 
         final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryManager.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
           iRecipe.getRecipeOutput().getCount());
@@ -218,23 +243,24 @@ public final class WorldBootstrapper
     private static void doBootstrapItemStackItemEquivalencies(
       @NotNull final ServerWorld world
     ) {
-        ForgeRegistries.ITEMS.forEach(item -> {
+        StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> {
             final NonNullList<ItemStack> group = NonNullList.create();
-            if(item.getGroup() == null)
+            if (item.getGroup() == null)
                 return;
 
             item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
 
-            if (group.size() == 1) {
+            if (group.size() == 1)
+            {
                 final ICompoundContainer<?> itemContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
                 final ICompoundContainer<?> itemStackContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(group.get(0), group.get(0).getCount());
 
                 EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
                   .register(new InstancedEquivalency(
-                  false, itemContainer, itemStackContainer
+                    false, itemContainer, itemStackContainer
                   ))
                   .register(new InstancedEquivalency(
-                  false, itemStackContainer, itemContainer
+                    false, itemStackContainer, itemContainer
                   ));
             }
         });

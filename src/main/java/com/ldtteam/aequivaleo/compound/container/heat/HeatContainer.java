@@ -240,8 +240,6 @@ public class HeatContainer implements ICompoundContainer<Heat>
     @Override
     public String toString()
     {
-        return "HeatWrapper{" +
-                 "count=" + count +
-                 '}';
+        return String.format("%s x Heat", count);
     }
 }
