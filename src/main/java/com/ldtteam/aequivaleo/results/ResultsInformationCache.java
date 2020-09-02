@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -36,7 +37,7 @@ public class ResultsInformationCache implements IResultsInformationCache
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final        Map<ICompoundContainer<?>, Set<CompoundInstance>> cacheData       = Maps.newConcurrentMap();
+    private        Map<ICompoundContainer<?>, Set<CompoundInstance>> cacheData       = Maps.newConcurrentMap();
     private static final Map<RegistryKey<World>, ResultsInformationCache>  WORLD_INSTANCES = Maps.newConcurrentMap();
 
     private ResultsInformationCache()
@@ -67,8 +68,8 @@ public class ResultsInformationCache implements IResultsInformationCache
 
     public void set(@NotNull final Map<ICompoundContainer<?>, Set<CompoundInstance>> data)
     {
-        cacheData.clear();
-        cacheData.putAll(data);
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> internalCopy = new ConcurrentHashMap<>(data);
+        this.cacheData = internalCopy;
     }
 
     public static void updateAllPlayers() {

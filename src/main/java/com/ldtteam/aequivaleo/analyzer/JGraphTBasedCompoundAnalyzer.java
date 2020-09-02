@@ -21,6 +21,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     public void calculate()
     {
-        final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new ConcurrentSkipListMap<>();
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new ConcurrentHashMap<>();
 
         final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
 

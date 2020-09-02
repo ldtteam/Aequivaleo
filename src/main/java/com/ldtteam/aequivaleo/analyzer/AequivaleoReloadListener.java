@@ -68,10 +68,11 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
         LOGGER.info("Analyzing information");
         final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
         final AtomicInteger genericThreadCounter = new AtomicInteger();
-        final Executor aequivaleoReloadExecutor = Executors.newFixedThreadPool(worlds.size() + 4, runnable -> {
+        final int maxThreadCount = Math.max(4, Runtime.getRuntime().availableProcessors() - 2);
+        final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
             final Thread thread = new Thread(runnable);
             thread.setContextClassLoader(classLoader);
-            thread.setName("Aequivaleo analysis runner: " + genericThreadCounter.incrementAndGet());
+            thread.setName(String.format("Aequivaleo analysis runner: %s", genericThreadCounter.incrementAndGet()));
             return thread;
         });
 
@@ -80,7 +81,8 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
-          .thenRunAsync(() -> MinecraftForge.EVENT_BUS.post(new OnAnalysisCompleted()));
+          .thenRunAsync(() -> MinecraftForge.EVENT_BUS.post(new OnAnalysisCompleted()))
+          .thenRunAsync(aequivaleoReloadExecutor::shutdown);
     }
 
     private static class AequivaleoWorldAnalysisRunner implements Runnable
@@ -98,10 +100,14 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
 
         private void reloadEquivalencyData()
         {
-            LOGGER.info("Starting equivalency data reload for world: " + serverWorld.func_234923_W_().func_240901_a_().toString());
-
-            JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(serverWorld);
-            ResultsInformationCache.getInstance(serverWorld.func_234923_W_()).set(analyzer.calculateAndGet());
+            LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
+            try {
+                JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
+                ResultsInformationCache.getInstance(getServerWorld().func_234923_W_()).set(analyzer.calculateAndGet());
+            } catch (Throwable t) {
+                LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().func_234923_W_().func_240901_a_()), t);
+            }
+            LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
         }
 
         public ServerWorld getServerWorld()
