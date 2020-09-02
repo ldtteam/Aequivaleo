@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer.debug;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.ldtteam.aequivaleo.analyzer.io.JSONGraphExporter;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.IAnalysisGraphNode;
 import org.apache.logging.log4j.LogManager;
@@ -37,25 +38,11 @@ public class GraphIOHandler
       @NotNull final String name,
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph
     ) {
-        final JSONExporter<IAnalysisGraphNode, AccessibleWeightEdge> exporter = new JSONExporter<>();
-        exporter.setVertexAttributeProvider(this::extractVertexData);
-        exporter.setEdgeAttributeProvider(this::extractEdgeData);
+        final JSONGraphExporter exporter = new JSONGraphExporter();
 
         exporter.exportGraph(recipeGraph, Paths.get(".", name).toFile());
 
         LOGGER.warn(String.format("Exported: %s as recipe graph.", name));
-    }
-
-    @NotNull
-    private Map<String, Attribute> extractVertexData(@NotNull final IAnalysisGraphNode node) {
-        final Map<String, Attribute> results = Maps.newHashMap();
-        results.put("display", new DefaultAttribute<>(node.toString(), AttributeType.STRING));
-        return results;
-    }
-
-    @NotNull
-    private Map<String, Attribute> extractEdgeData(@NotNull final AccessibleWeightEdge edge) {
-        return ImmutableMap.of("weight", new DefaultAttribute<>(edge.getWeight(), AttributeType.DOUBLE));
     }
 
 }

@@ -8,8 +8,4 @@ import java.util.Map;
 //Marker interface indicating that this is a possible component of a graph.
 public interface IAnalysisGraphNode
 {
-
-    default Map<String, Attribute> exportData() {
-        return Collections.emptyMap();
-    }
 }
