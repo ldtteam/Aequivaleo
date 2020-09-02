@@ -278,6 +278,7 @@ curseforge {
             addArtifact sourceJar
             addArtifact apiJar
             addArtifact packageJavadoc
+
             mainArtifact(shadowJar)
         }
     }
@@ -417,7 +418,7 @@ pluginManager.withPlugin("com.jfrog.artifactory") {
                 publications ('mavenJava')
                 publishBuildInfo = true   //Publish build-info to Artifactory (true by default)
                 publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
-                publishPom = false   //Publish generated POM files to Artifactory (true by default).
+                publishPom = true    //Publish generated POM files to Artifactory (true by default).
                 publishIvy = false   //Publish generated Ivy descriptor files to Artifactory (true by default).
             }
         }
