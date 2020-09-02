@@ -245,6 +245,7 @@ shadowJar {
     dependencies {
         include dependency("org.jgrapht:jgrapht-core:${project.jgraphtVersion}")
         include dependency("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}")
+        include dependency("org.jgrapht:jgrapht-io:${project.jgraphtVersion}")
     }
     // Relocate apache commons-math3 to prevent conflicts with other mods that include it
     relocate 'org.jgrapht', 'com.ldtteam.shaded.jgrapht'
