@@ -478,7 +478,7 @@ public class JGraphTBasedCompoundAnalyzer
 
         private final ResourceLocation worldName;
         private final long totalNodes;
-        private int  lastPercentageReported = 0;
+        private long lastReportingTime = 0;
         private long visitedNodes = 0;
         private long sourceNodesVisited;
         private long compoundNodesVisited;
@@ -505,18 +505,19 @@ public class JGraphTBasedCompoundAnalyzer
 
         private void onVisitNode() {
             visitedNodes++;
-            final int newPercentage = (int) Math.floorDiv(visitedNodes * 10, totalNodes);
-            if (newPercentage > lastPercentageReported) {
-                lastPercentageReported = newPercentage;
-            }
+            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
+            final long now = System.currentTimeMillis();
+            if (now >= lastReportingTime + (5*1000)) {
+                lastReportingTime = now;
 
-            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d of %d)",
-              newPercentage * 10,
-              worldName,
-              sourceNodesVisited,
-              compoundNodesVisited,
-              recipeNodesVisited,
-              totalNodes));
+                LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d of %d)",
+                  newPercentage * 10,
+                  worldName,
+                  sourceNodesVisited,
+                  compoundNodesVisited,
+                  recipeNodesVisited,
+                  totalNodes));
+            }
         }
     }
 }
