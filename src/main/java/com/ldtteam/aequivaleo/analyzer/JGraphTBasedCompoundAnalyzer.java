@@ -505,13 +505,13 @@ public class JGraphTBasedCompoundAnalyzer
 
         private void onVisitNode() {
             visitedNodes++;
-            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
+            final int newPercentage = (int) Math.floorDiv(visitedNodes * 10, totalNodes);
             if (newPercentage > lastPercentageReported) {
                 lastPercentageReported = newPercentage;
             }
 
             LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d of %d)",
-              newPercentage,
+              newPercentage * 10,
               worldName,
               sourceNodesVisited,
               compoundNodesVisited,
