@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 
 /**
  * A registry that manages handlers that control if two game objects (in their wrappers) are equivalent.
@@ -28,12 +29,12 @@ public interface IGameObjectEquivalencyHandlerRegistry
      * Registers a handler that can validate if two game objects contained in wrapper are actually equal to one another.
      * The callback should not check the wrapper or the internal size of the game object.
      *
-     * @param gameObjectClass The class of the game object which is handled by the handler.
+     * @param canHandlePredicate Invoked by the system to figure out if a given compound container can be handled by this handler.
      * @param handler The callback to add to the registry, which can help with equivalency checking for game objects.
      * @param <T> The type of game object that the handler can check.
      * @return The registry with the handler added.
      */
     <T> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
-      @NotNull final Class<T> gameObjectClass,
+      @NotNull final Predicate<ICompoundContainer<?>> canHandlePredicate,
       @NotNull final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler);
 }

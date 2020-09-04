@@ -62,9 +62,6 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
 
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
-        LOGGER.info("Reloading world information");
-        worlds.forEach(WorldBootstrapper::onWorldReload);
-
         LOGGER.info("Analyzing information");
         final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
         final AtomicInteger genericThreadCounter = new AtomicInteger();
@@ -102,6 +99,7 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
         {
             LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
             try {
+                WorldBootstrapper.onWorldReload(getServerWorld());
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
                 ResultsInformationCache.getInstance(getServerWorld().func_234923_W_()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {

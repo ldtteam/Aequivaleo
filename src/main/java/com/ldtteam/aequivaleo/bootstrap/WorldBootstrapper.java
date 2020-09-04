@@ -27,6 +27,7 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.extensions.IForgeItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -156,29 +157,41 @@ public final class WorldBootstrapper
             }
         }
 
+        final Set<ICompoundContainer<?>> wrappedInputs = getCompressedStacks(inputStacks);
+
+        final List<ItemStack> outputStacks = inputStacks.stream()
+          .map(IForgeItemStack::getContainerItem)
+          .filter(stack -> !stack.isEmpty())
+          .collect(Collectors.toList());
+
+        outputStacks.add(iRecipe.getRecipeOutput());
+        final Set<ICompoundContainer<?>> wrappedOutputs = getCompressedStacks(outputStacks);
+
+        EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipeProducer.apply(wrappedInputs, wrappedOutputs));
+    }
+
+    private static Set<ICompoundContainer<?>> getCompressedStacks(
+      final List<ItemStack> sources
+    ) {
         final Set<ICompoundContainer<?>> wrappedInput = new HashSet<>();
-        Map<ICompoundContainer<ItemStack>, Double> map = new HashMap<>();
-        for (ItemStack stack : inputStacks)
+        Map<ICompoundContainer<ItemStack>, Double> summedContents = new HashMap<>();
+        for (ItemStack stack : sources)
         {
             ICompoundContainer<ItemStack> wrapper = CompoundContainerFactoryManager.getInstance()
                                                       .wrapInContainer(stack, stack.getCount());
-            map.merge(wrapper, wrapper.getContentsCount(), Double::sum);
+            summedContents.merge(wrapper, wrapper.getContentsCount(), Double::sum);
         }
-        for (Map.Entry<ICompoundContainer<ItemStack>, Double> iCompoundContainerWrapperDoubleEntry : map
-                                                                                                       .entrySet())
+        for (Map.Entry<ICompoundContainer<ItemStack>, Double> summedEntry : summedContents
+                                                                              .entrySet())
         {
             ICompoundContainer<ItemStack> itemStackICompoundContainer = CompoundContainerFactoryManager.getInstance()
-                                                                          .wrapInContainer(iCompoundContainerWrapperDoubleEntry.getKey()
+                                                                          .wrapInContainer(summedEntry.getKey()
                                                                                              .getContents(),
-                                                                            iCompoundContainerWrapperDoubleEntry.getValue());
+                                                                            summedEntry.getValue());
             wrappedInput.add(itemStackICompoundContainer);
         }
 
-        final ICompoundContainer<?> outputWrapped = CompoundContainerFactoryManager.getInstance().wrapInContainer(iRecipe.getRecipeOutput(),
-          iRecipe.getRecipeOutput().getCount());
-
-
-        EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipeProducer.apply(wrappedInput, Sets.newHashSet(outputWrapped)));
+        return wrappedInput;
     }
 
     private static void doBootstrapBlockDropRelatedEquivalencies(

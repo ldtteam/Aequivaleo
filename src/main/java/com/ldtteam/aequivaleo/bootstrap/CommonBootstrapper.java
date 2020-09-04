@@ -44,8 +44,6 @@ public final class CommonBootstrapper
         doBootstrapLootTableAnalyzers();
 
         doFireDataLoadedEvent();
-
-        doPrepopulateTypeCache();
     }
 
     private static void doBootstrapEquivalencyHandler()
@@ -54,31 +52,31 @@ public final class CommonBootstrapper
         //Handle itemstack equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
-            ItemStack.class,
-            (left, right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents()))
+            (container) -> container.getContents() instanceof ItemStack,
+            (ICompoundContainer<ItemStack> left, ICompoundContainer<ItemStack> right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents()))
           );
 
         //Handle item equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
-            Item.class,
-            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+            (container) -> container.getContents() instanceof Item,
+            (ICompoundContainer<Item> left, ICompoundContainer<Item> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
                                                                                                                                                  .getRegistryName()).toString()))
           );
 
         //Handle block equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
-            Block.class,
-            (left, right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+            (container) -> container.getContents() instanceof Block,
+            (ICompoundContainer<Block> left, ICompoundContainer<Block> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
                                                                                                                                                  .getRegistryName()).toString()))
           );
 
         //Handle blockstate equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
-            BlockState.class,
-            (left, right) -> {
+            (container) -> container.getContents() instanceof BlockState,
+            (ICompoundContainer<BlockState> left, ICompoundContainer<BlockState> right) -> {
                 if (left.getContents().getBlock() != right.getContents().getBlock())
                     return Optional.of(false);
 
@@ -276,7 +274,7 @@ public final class CommonBootstrapper
     {
         LOGGER.info("Registering loot table analyzers");
         LootTableAnalyserRegistry.getInstance().register(
-          Block.class,
+          (block -> true),
           ( blockState, world) -> {
               final ItemStack harvester = BlockUtils.getHarvestingToolForBlock(blockState);
               LootContext.Builder builder = (new LootContext.Builder(world)).withParameter(LootParameters.POSITION, BlockPos.ZERO)
@@ -300,13 +298,5 @@ public final class CommonBootstrapper
     private static void doFireDataLoadedEvent() {
         LOGGER.info("Firing global data loaded event.");
         MinecraftForge.EVENT_BUS.post(new OnGlobalDataLoadedEvent());
-    }
-
-    private static void doPrepopulateTypeCache() {
-        LOGGER.info("Pre-populating the super types of common classes.");
-        TypeUtils.getAllSuperTypesExcludingObject(ItemStack.class);
-        TypeUtils.getAllSuperTypesExcludingObject(Block.class);
-        TypeUtils.getAllSuperTypesExcludingObject(BlockState.class);
-        TypeUtils.getAllSuperTypesExcludingObject(Heat.class);
     }
 }
