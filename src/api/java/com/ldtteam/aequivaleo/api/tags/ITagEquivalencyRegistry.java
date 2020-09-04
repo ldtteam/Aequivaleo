@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.api.tags;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
 import com.ldtteam.aequivaleo.api.util.TagUtils;
-import net.minecraft.tags.*;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 

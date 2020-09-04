@@ -2,34 +2,22 @@ package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnGlobalDataLoadedEvent;
-import com.ldtteam.aequivaleo.api.util.*;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.gameobject.loottable.LootTableAnalyserRegistry;
-import com.ldtteam.aequivaleo.heat.Heat;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
-import net.minecraft.loot.LootParameterSets;
-import net.minecraft.loot.LootParameters;
-import net.minecraft.loot.LootTable;
 import net.minecraft.state.Property;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
-import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public final class CommonBootstrapper
 {
@@ -41,7 +29,6 @@ public final class CommonBootstrapper
 
         doBootstrapEquivalencyHandler();
         doBootstrapTagNames();
-        doBootstrapLootTableAnalyzers();
 
         doFireDataLoadedEvent();
     }
@@ -268,31 +255,6 @@ public final class CommonBootstrapper
           .addTag(Tags.Items.STORAGE_BLOCKS_QUARTZ.getName())
           .addTag(Tags.Items.STORAGE_BLOCKS_REDSTONE.getName())
           .addTag(Tags.Items.STRING.getName());
-    }
-
-    private static void doBootstrapLootTableAnalyzers()
-    {
-        LOGGER.info("Registering loot table analyzers");
-        LootTableAnalyserRegistry.getInstance().register(
-          (block -> true),
-          ( blockState, world) -> {
-              final ItemStack harvester = BlockUtils.getHarvestingToolForBlock(blockState);
-              LootContext.Builder builder = (new LootContext.Builder(world)).withParameter(LootParameters.POSITION, BlockPos.ZERO)
-                                                                .withParameter(LootParameters.TOOL, harvester)
-                                                                .withParameter(LootParameters.BLOCK_STATE, blockState);
-
-              final TileEntity entity = blockState.createTileEntity(new SingleBlockBlockReader(blockState));
-              if (entity != null) {
-                  builder = builder.withParameter(LootParameters.BLOCK_ENTITY, entity);
-              }
-              final LootTable table = ServerLifecycleHooks.getCurrentServer().getLootTableManager().getLootTableFromLocation(blockState.getBlock().getLootTable());
-              return table.generate(builder.build(LootParameterSets.BLOCK))
-                       .stream()
-                       .map(itemStack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(itemStack, 1))
-                       .collect(
-                         Collectors.toSet());
-          }
-        );
     }
 
     private static void doFireDataLoadedEvent() {

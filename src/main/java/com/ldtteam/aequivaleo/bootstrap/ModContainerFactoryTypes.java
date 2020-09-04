@@ -21,6 +21,4 @@ public final class ModContainerFactoryTypes
     public static ICompoundContainerFactory<Item> ITEM;
     public static ICompoundContainerFactory<ItemStack> ITEMSTACK;
     public static ICompoundContainerFactory<Heat> HEAT;
-    public static ICompoundContainerFactory<Block> BLOCK;
-    public static ICompoundContainerFactory<BlockState> BLOCKSTATE;
 }

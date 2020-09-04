@@ -1,10 +1,7 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.ContainerWrapperGraphNode;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
@@ -14,12 +11,11 @@ import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInfo
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.gameobject.loottable.LootTableAnalyserRegistry;
-import com.ldtteam.aequivaleo.recipe.equivalency.*;
+import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
+import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.*;
 import net.minecraft.tags.ITag;
@@ -54,7 +50,6 @@ public final class WorldBootstrapper
 
         doBootstrapTagInformation(world);
         doBootstrapDefaultCraftingRecipes(world);
-        doBootstrapBlockDropRelatedEquivalencies(world);
         doBootstrapItemStackItemEquivalencies(world);
 
         doFireDataLoadEvent(world);
@@ -192,65 +187,6 @@ public final class WorldBootstrapper
         }
 
         return wrappedInput;
-    }
-
-    private static void doBootstrapBlockDropRelatedEquivalencies(
-      @NotNull final ServerWorld world
-    )
-    {
-        for (Block block : ForgeRegistries.BLOCKS.getValues())
-        {
-            final ICompoundContainer<?> blockContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(block, 1);
-            final Set<ICompoundContainer<?>> initialContainers = Sets.newHashSet();
-            boolean hasTheSameDrop = true;
-
-            for (BlockState blockState : block.getStateContainer().getValidStates())
-            {
-                final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(blockState, 1);
-                try
-                {
-                    final Set<ICompoundContainer<?>> drops = LootTableAnalyserRegistry.getInstance().calculateOutputs(blockState, world);
-                    if (initialContainers.isEmpty()) {
-                        initialContainers.addAll(drops);
-                    } else if (hasTheSameDrop && !initialContainers.equals(drops)) {
-                        hasTheSameDrop = false;
-                    }
-
-                    final DropsEquivalencyRecipe inputRecipe = new DropsEquivalencyRecipe(compoundContainer, true, drops);
-                    final DropsEquivalencyRecipe outputRecipe = new DropsEquivalencyRecipe(compoundContainer, false, drops);
-                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(inputRecipe).register(outputRecipe);
-                }
-                catch (Exception ex)
-                {
-                    if (Aequivaleo.getInstance().getConfiguration().getCommon().writeExceptionOnBlockDropFailure.get())
-                    {
-                        LOGGER.warn(String.format(
-                          "Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required.",
-                          block.getRegistryName()), ex);
-                    }
-                    else
-                    {
-                        LOGGER.warn(String.format(
-                          "Could not determine blockdrops for: %s it was not possible to calculate the drops. Potentially a TileEntity or proper world is required. Turn the config value for block drop exceptions on to see more details.",
-                          block.getRegistryName()));
-                    }
-                }
-            }
-
-            if (hasTheSameDrop) {
-                for (final BlockState blockState : block.getStateContainer().getValidStates())
-                {
-                    final ICompoundContainer<?> compoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(blockState, 1);
-                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
-                      .register(
-                        new InstancedEquivalency(true, blockContainer, compoundContainer)
-                      )
-                      .register(
-                        new InstancedEquivalency(true, compoundContainer, blockContainer)
-                      );
-                }
-            }
-        }
     }
 
     private static void doBootstrapItemStackItemEquivalencies(

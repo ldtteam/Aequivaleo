@@ -5,7 +5,6 @@ import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributio
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
@@ -42,13 +41,6 @@ public interface IAequivaleoAPI
      * @return The registry which handles callbacks for equivalency checks.
      */
     IGameObjectEquivalencyHandlerRegistry getGameObjectEquivalencyHandlerRegistry();
-
-    /**
-     * Gives access to a registry which handles analysers for equivalencies based on loottables.
-     *
-     * @return The loot table analyser registry.
-     */
-    ILootTableAnalyserRegistry getLootTableAnalyserRegistry();
 
     /**
      * Gives access to a registry which handles equivalencies via tags.

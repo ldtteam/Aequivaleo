@@ -1,12 +1,9 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.gameobject.loottable.ILootTableAnalyserRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
-
-import java.security.Key;
 
 /**
  * A registry containing recipes which the analysis engine uses to determine how compounds are passed from inputs to outputs.

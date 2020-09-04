@@ -4,8 +4,6 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import com.ldtteam.aequivaleo.compound.container.blockstate.BlockContainer;
-import com.ldtteam.aequivaleo.compound.container.blockstate.BlockStateContainer;
 import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
@@ -43,15 +41,11 @@ public final class CompoundContainerFactoryRegistrar
         ModContainerFactoryTypes.ITEM = new ItemContainer.Factory();
         ModContainerFactoryTypes.ITEMSTACK = new ItemStackContainer.Factory();
         ModContainerFactoryTypes.HEAT = new HeatContainer.Factory();
-        ModContainerFactoryTypes.BLOCK = new BlockContainer.Factory();
-        ModContainerFactoryTypes.BLOCKSTATE = new BlockStateContainer.Factory();
 
         registry.registerAll(
           ModContainerFactoryTypes.ITEM,
           ModContainerFactoryTypes.ITEMSTACK,
-          ModContainerFactoryTypes.HEAT,
-          ModContainerFactoryTypes.BLOCK,
-          ModContainerFactoryTypes.BLOCKSTATE
+          ModContainerFactoryTypes.HEAT
         );
     }
 }
