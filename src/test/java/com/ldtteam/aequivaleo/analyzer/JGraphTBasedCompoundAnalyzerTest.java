@@ -17,6 +17,7 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
+import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
 import junit.framework.TestCase;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
@@ -54,6 +55,8 @@ public class JGraphTBasedCompoundAnalyzerTest extends TestCase {
 	RegistryKey<net.minecraft.world.World> key;
 	net.minecraft.world.World world;
 	JGraphTBasedCompoundAnalyzer analyzer;
+
+	ICompoundType type = mock(ICompoundType.class);
 	@Before
 	public void setUp() {
 		//Prevent »Cannot run program "infocmp"« Error
@@ -88,18 +91,56 @@ public class JGraphTBasedCompoundAnalyzerTest extends TestCase {
 	@After
 	public void tearDown() {
 		LockedCompoundInformationRegistry.getInstance(key).reset();
+		EquivalencyRecipeRegistry.getInstance(key).reset();
 	}
 
 	@Test
 	public void testSetSimpleValue() {
-		ICompoundType type = mock(ICompoundType.class);
-
 		ILockedCompoundInformationRegistry lockedCInfoRegistry = LockedCompoundInformationRegistry.getInstance(key);
 		lockedCInfoRegistry.registerLocking("A", ImmutableSet.of(new CompoundInstance(type, 1.0)));
 		final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
-		System.out.println(result);
-		assertEquals(ImmutableSet.of(new CompoundInstance(type, 1.0)), result.getOrDefault(new StringCompoundContainer("A", 1), null));
+		assertEquals(ImmutableSet.of(new CompoundInstance(type, 1.0)), result.get(cc("A")));
+	}
+
+	@Test
+	public void simpleCraftingBenchRecipe() {
+		ILockedCompoundInformationRegistry lockedCInfoRegistry = LockedCompoundInformationRegistry.getInstance(key);
+		lockedCInfoRegistry.registerLocking("log", ImmutableSet.of(new CompoundInstance(type, 32.0)));
+
+		registerRecipe(s(cc("log", 1)), s(cc("plank", 4)));
+		registerRecipe(s(cc("plank", 4)), s(cc("workbench", 1)));
+
+		final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+		assertEquals(s(ci(32)), result.get(cc("log")));
+		assertEquals(s(ci(8)), result.get(cc( "plank")));
+		assertEquals(s(ci(32)), result.get(cc("workbench")));
+
+	}
+
+	public void registerRecipe(Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs) {
+		EquivalencyRecipeRegistry.getInstance(key).register(
+				new VanillaCraftingEquivalencyRecipe(null,
+				                                     inputs,
+				                                     outputs
+				)
+		);
+	}
+
+	public ICompoundContainer<?> cc(String s) {
+		return cc(s, 1);
+	}
+
+	public ICompoundContainer<?> cc(String s, double count) {
+		return new StringCompoundContainer(s, count);
+	}
+
+	public <T> Set<T> s(T ... args) {
+		return ImmutableSet.copyOf((T[])args);
+	}
+
+	public CompoundInstance ci(double amount) {
+		return new CompoundInstance(type, amount);
 	}
 
 	static class StringCompoundContainerFactory implements ICompoundContainerFactory<String> {
