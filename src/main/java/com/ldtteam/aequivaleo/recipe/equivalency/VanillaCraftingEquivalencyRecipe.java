@@ -2,54 +2,47 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IVanillaCraftingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.util.ResourceLocation;
+import org.apache.commons.lang3.Validate;
 
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class VanillaCraftingEquivalencyRecipe implements IVanillaCraftingEquivalencyRecipe
 {
     private final ResourceLocation           recipeName;
-    private final Set<ICompoundContainer<?>> inputs;
-    private final Set<ICompoundContainer<?>> outputs;
+    private final SortedSet<IRecipeIngredient> inputs;
+    private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
+    private final SortedSet<ICompoundContainer<?>> outputs;
 
     public VanillaCraftingEquivalencyRecipe(
-      final ResourceLocation recipeName, final Set<ICompoundContainer<?>> inputs,
+      final ResourceLocation recipeName, final Set<IRecipeIngredient> inputs,
+      final Set<ICompoundContainer<?>> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs) {
         this.recipeName = recipeName;
-        this.inputs = inputs;
-        this.outputs = outputs;
+        this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
+        this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
+        this.outputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(outputs)));
     }
 
-    /**
-     * The compound containers that are the input for this recipe.
-     *
-     * @return The inputs.
-     */
     @Override
-    public Set<ICompoundContainer<?>> getInputs()
+    public SortedSet<IRecipeIngredient> getInputs()
     {
         return inputs;
     }
 
-    /**
-     * The compound containers that are the output for this recipe.
-     *
-     * @return The output.
-     */
     @Override
-    public Set<ICompoundContainer<?>> getOutputs()
+    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
     {
-        return outputs;
+        return requiredKnownOutputs;
     }
 
-    /**
-     * Returns the offset factor between inputs and outputs.
-     */
     @Override
-    public Double getOffsetFactor()
+    public SortedSet<ICompoundContainer<?>> getOutputs()
     {
-        return 1D;
+        return outputs;
     }
 
     public ResourceLocation getRecipeName()

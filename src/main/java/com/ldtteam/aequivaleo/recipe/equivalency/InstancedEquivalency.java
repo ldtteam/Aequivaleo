@@ -2,20 +2,25 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import org.apache.commons.lang3.Validate;
 
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class InstancedEquivalency implements IInstancedEquivalency
 {
     private final boolean isBlock;
-    private final ICompoundContainer<?> source;
-    private final ICompoundContainer<?> target;
+    private final SortedSet<IRecipeIngredient> source;
+    private final SortedSet<ICompoundContainer<?>> target;
 
     public InstancedEquivalency(final boolean isBlock, final ICompoundContainer<?> source, final ICompoundContainer<?> target) {
         this.isBlock = isBlock;
-        this.source = source;
-        this.target = target;
+        this.source = new TreeSet<>();
+        this.target = new TreeSet<>();
+
+        this.source.add(new SimpleIngredientBuilder().from(Validate.notNull(source)).createSimpleIngredient());
+        this.target.add(Validate.notNull(target));
     }
 
     @Override
@@ -27,31 +32,31 @@ public class InstancedEquivalency implements IInstancedEquivalency
     @Override
     public ICompoundContainer<?> getSource()
     {
-        return source;
+        return source.first().getCandidates().first();
     }
 
     @Override
     public ICompoundContainer<?> getTarget()
     {
+        return target.first();
+    }
+
+    @Override
+    public SortedSet<IRecipeIngredient> getInputs()
+    {
+        return source;
+    }
+
+    @Override
+    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    {
+        return Collections.emptySortedSet();
+    }
+
+    @Override
+    public SortedSet<ICompoundContainer<?>> getOutputs()
+    {
         return target;
-    }
-
-    @Override
-    public Set<ICompoundContainer<?>> getInputs()
-    {
-        return Sets.newHashSet(getSource());
-    }
-
-    @Override
-    public Set<ICompoundContainer<?>> getOutputs()
-    {
-        return Sets.newHashSet(getTarget());
-    }
-
-    @Override
-    public Double getOffsetFactor()
-    {
-        return 1d;
     }
 
     @Override

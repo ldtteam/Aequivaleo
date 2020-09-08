@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
 {
@@ -47,8 +49,10 @@ public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
     }
 
     @NotNull
-    public Set<IEquivalencyRecipe> get()
+    public SortedSet<IEquivalencyRecipe> get()
     {
-        return recipes;
+        //We need to sort here, to ensure ordering is properly guaranteed.
+        //Makes analysis predictable.
+        return new TreeSet<>(recipes);
     }
 }

@@ -2,17 +2,13 @@ package com.ldtteam.aequivaleo.api;
 
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
@@ -64,20 +60,8 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public IValidCompoundTypeInformationProviderRegistry getValidCompoundTypeInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey)
-    {
-        return ValidCompoundTypeInformationProviderRegistry.getInstance(worldKey);
-    }
-
-    @Override
     public IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey)
     {
         return ResultsInformationCache.getInstance(worldKey);
-    }
-
-    @Override
-    public IContributionInformationProviderRegistry getContributionInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey)
-    {
-        return ContributionInformationProviderRegistry.getInstance(worldKey);
     }
 }

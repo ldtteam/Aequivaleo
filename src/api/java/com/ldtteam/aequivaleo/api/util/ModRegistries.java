@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import com.ldtteam.aequivaleo.api.compound.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import net.minecraftforge.registries.IForgeRegistry;
 

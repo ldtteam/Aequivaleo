@@ -6,6 +6,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ContainerWrapperGraphNode implements IAnalysisGraphNode
 {
@@ -13,7 +14,7 @@ public class ContainerWrapperGraphNode implements IAnalysisGraphNode
     private final ICompoundContainer<?> wrapper;
 
     @NotNull
-    private final Set<CompoundInstance> compoundInstances = Sets.newConcurrentHashSet();
+    private final Set<CompoundInstance> compoundInstances = new TreeSet<>();
 
     public ContainerWrapperGraphNode(@NotNull final ICompoundContainer<?> wrapper) {this.wrapper = wrapper;}
 

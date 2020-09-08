@@ -2,24 +2,33 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ITagEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import net.minecraft.tags.ITag;
+import org.apache.commons.lang3.Validate;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
 {
     private final ITag.INamedTag<T>          tag;
-    private final Set<ICompoundContainer<?>> inputs;
-    private final Set<ICompoundContainer<?>> outputs;
+    private final SortedSet<IRecipeIngredient> inputs;
+    private final SortedSet<ICompoundContainer<?>> outputs;
 
     public TagEquivalencyRecipe(
       final ITag.INamedTag<T> tag,
-      final Set<ICompoundContainer<?>> inputs,
-      final Set<ICompoundContainer<?>> outputs)
+      final ICompoundContainer<?> inputs,
+      final ICompoundContainer<?> outputs)
     {
         this.tag = tag;
-        this.inputs = inputs;
-        this.outputs = outputs;
+        this.inputs = new TreeSet<>();
+        this.outputs = new TreeSet<>();
+
+        this.inputs.add(new SimpleIngredientBuilder().from(Validate.notNull(inputs)).createSimpleIngredient());
+        this.outputs.add(Validate.notNull(outputs));
     }
 
     @Override
@@ -29,13 +38,19 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     }
 
     @Override
-    public Set<ICompoundContainer<?>> getInputs()
+    public SortedSet<IRecipeIngredient> getInputs()
     {
         return inputs;
     }
 
     @Override
-    public Set<ICompoundContainer<?>> getOutputs()
+    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    {
+        return Collections.emptySortedSet();
+    }
+
+    @Override
+    public SortedSet<ICompoundContainer<?>> getOutputs()
     {
         return outputs;
     }
@@ -43,7 +58,7 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     @Override
     public Double getOffsetFactor()
     {
-        return 1D;
+        return getOutputs().size() / (double) getInputs().size();
     }
 
     @Override

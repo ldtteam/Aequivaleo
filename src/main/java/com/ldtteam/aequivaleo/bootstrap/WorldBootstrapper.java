@@ -1,36 +1,36 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
-import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
-import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.information.contribution.ContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.compound.information.validity.ValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
+import com.ldtteam.aequivaleo.utils.RecipeUtils;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.*;
+import net.minecraft.item.crafting.FurnaceRecipe;
+import net.minecraft.item.crafting.ICraftingRecipe;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.extensions.IForgeItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -58,9 +58,7 @@ public final class WorldBootstrapper
     private static void resetDataForWorld(final World world)
     {
         LockedCompoundInformationRegistry.getInstance(world.func_234923_W_()).reset();
-        ValidCompoundTypeInformationProviderRegistry.getInstance(world.func_234923_W_()).reset();
         EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).reset();
-        ContributionInformationProviderRegistry.getInstance(world.func_234923_W_()).reset();
     }
 
     private static void doBootstrapTagInformation(final World world)
@@ -89,8 +87,8 @@ public final class WorldBootstrapper
                       .register(
                         new TagEquivalencyRecipe<>(
                           tag,
-                          Sets.newHashSet(inputStack),
-                          Sets.newHashSet(outputStack)
+                          inputStack,
+                          outputStack
                         ));
                 }
             }
@@ -112,18 +110,18 @@ public final class WorldBootstrapper
 
     private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, (inputs, outputs) -> new FurnaceEquivalencyRecipe(iRecipe.getId(), inputs, outputs));
+        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new FurnaceEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, (inputs, outputs) -> new VanillaCraftingEquivalencyRecipe(iRecipe.getId(), inputs, outputs));
+        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new VanillaCraftingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processIRecipe(
       @NotNull final World world,
       IRecipe<?> iRecipe,
-      BiFunction<Set<ICompoundContainer<?>>, Set<ICompoundContainer<?>>, IEquivalencyRecipe> recipeProducer
+      TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     )
     {
         if (iRecipe.getRecipeOutput().isEmpty())
@@ -131,62 +129,14 @@ public final class WorldBootstrapper
             return;
         }
 
-        final NonNullList<Ingredient> ingredients = iRecipe.getIngredients();
-        final List<Ingredient> withOutEmptyIngredients = new ArrayList<>();
-        for (Ingredient ingredient1 : ingredients)
-        {
-            if (!ingredient1.test(ItemStack.EMPTY) && ingredient1.getMatchingStacks().length > 0
-                  && !ItemStackUtils.isEmpty(ingredient1.getMatchingStacks()[0]))
-            {
-                withOutEmptyIngredients.add(ingredient1);
-            }
-        }
+        final List<IEquivalencyRecipe> variants = RecipeUtils.getAllVariants(
+          iRecipe,
+          recipeFactory
+        ).collect(Collectors.toList());
 
-        final List<ItemStack> inputStacks = new ArrayList<>();
-        for (Ingredient ingredient : withOutEmptyIngredients)
-        {
-            ItemStack itemStack = ingredient.getMatchingStacks()[0];
-            if (!itemStack.isEmpty())
-            {
-                inputStacks.add(itemStack);
-            }
-        }
-
-        final Set<ICompoundContainer<?>> wrappedInputs = getCompressedStacks(inputStacks);
-
-        final List<ItemStack> outputStacks = inputStacks.stream()
-          .map(IForgeItemStack::getContainerItem)
-          .filter(stack -> !stack.isEmpty())
-          .collect(Collectors.toList());
-
-        outputStacks.add(iRecipe.getRecipeOutput());
-        final Set<ICompoundContainer<?>> wrappedOutputs = getCompressedStacks(outputStacks);
-
-        EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipeProducer.apply(wrappedInputs, wrappedOutputs));
-    }
-
-    private static Set<ICompoundContainer<?>> getCompressedStacks(
-      final List<ItemStack> sources
-    ) {
-        final Set<ICompoundContainer<?>> wrappedInput = new HashSet<>();
-        Map<ICompoundContainer<ItemStack>, Double> summedContents = new HashMap<>();
-        for (ItemStack stack : sources)
-        {
-            ICompoundContainer<ItemStack> wrapper = CompoundContainerFactoryManager.getInstance()
-                                                      .wrapInContainer(stack, stack.getCount());
-            summedContents.merge(wrapper, wrapper.getContentsCount(), Double::sum);
-        }
-        for (Map.Entry<ICompoundContainer<ItemStack>, Double> summedEntry : summedContents
-                                                                              .entrySet())
-        {
-            ICompoundContainer<ItemStack> itemStackICompoundContainer = CompoundContainerFactoryManager.getInstance()
-                                                                          .wrapInContainer(summedEntry.getKey()
-                                                                                             .getContents(),
-                                                                            summedEntry.getValue());
-            wrappedInput.add(itemStackICompoundContainer);
-        }
-
-        return wrappedInput;
+        variants.forEach(recipe -> {
+            EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipe);
+        });
     }
 
     private static void doBootstrapItemStackItemEquivalencies(

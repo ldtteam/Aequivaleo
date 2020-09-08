@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.registries.ForgeRegistry;
 import org.jetbrains.annotations.NotNull;

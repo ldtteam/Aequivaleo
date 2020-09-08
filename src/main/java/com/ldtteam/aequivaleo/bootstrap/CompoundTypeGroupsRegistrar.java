@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.util.ResourceLocation;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public final class CompoundTypesRegistrar
+public final class CompoundTypeGroupsRegistrar
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -22,8 +23,8 @@ public final class CompoundTypesRegistrar
     @SubscribeEvent
     public static void onRegisterNewRegistry(final RegistryEvent.NewRegistry event)
     {
-        LOGGER.info("Registering the compound type registry with forge.");
-        makeRegistry("compound_type", ICompoundType.class).create();
+        LOGGER.info("Registering the compound type group registry with forge.");
+        makeRegistry("compound_type_group", ICompoundTypeGroup.class).create();
         ModRegistries.COMPOUND_TYPE = RegistryManager.ACTIVE.getRegistry(ICompoundType.class);
     }
 

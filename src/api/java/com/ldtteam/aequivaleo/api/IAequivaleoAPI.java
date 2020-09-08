@@ -1,9 +1,7 @@
 package com.ldtteam.aequivaleo.api;
 
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.compound.information.contribution.IContributionInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.validity.IValidCompoundTypeInformationProviderRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
@@ -64,28 +62,12 @@ public interface IAequivaleoAPI
     ILockedCompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey);
 
     /**
-     * Gives access to the registry that contains the information providers that handle the compound validation logic during analysis for a given world.
-     *
-     * @param worldKey The world key.
-     * @return The registry containing information providers that handle the compound validation logic for a given world.
-     */
-    IValidCompoundTypeInformationProviderRegistry getValidCompoundTypeInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey);
-
-    /**
      * Gives access to the cache that contains the equivalency information after calculation.
      *
      * @param worldKey The world key to get the equivalency cache for.
      * @return The equivalency cache for a given dimension.
      */
     IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey);
-
-    /**
-     * Gives access to the registry that contains the information providers that handle the compound contribution logic during analysis for a given world.
-     *
-     * @param worldKey The world key.
-     * @return The registry containing information providers that handle the compound contribution logic for a given world.
-     */
-    IContributionInformationProviderRegistry getContributionInformationProviderRegistry(@NotNull final RegistryKey<World> worldKey);
 
     class Holder {
         private static IAequivaleoAPI apiInstance;
