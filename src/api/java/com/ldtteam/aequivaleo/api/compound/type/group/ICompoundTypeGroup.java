@@ -4,8 +4,10 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -59,4 +61,8 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      */
     boolean isValidFor(ICompoundContainer<?> wrapper, CompoundInstance simpleCompoundInstance);
 
+    @Override
+    default int compareTo(@NotNull ICompoundTypeGroup iCompoundTypeGroup) {
+        return Objects.requireNonNull(getRegistryName()).compareTo(iCompoundTypeGroup.getRegistryName());
+    }
 }

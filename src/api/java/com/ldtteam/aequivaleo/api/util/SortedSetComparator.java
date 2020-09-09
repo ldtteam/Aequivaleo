@@ -21,7 +21,7 @@ public final class SortedSetComparator<T extends Comparable<T>> implements Compa
     {
         Comparator<? super T> comparator = ts.comparator();
 
-        if (comparator != t1.comparator())
+        if (comparator != t1.comparator() || comparator == null)
             comparator = Comparator.naturalOrder();
 
         comparator = Comparator.nullsLast(comparator);
