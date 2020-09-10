@@ -55,7 +55,7 @@ public class JGraphTBasedCompoundAnalyzer
             //Process inputs
             for (IRecipeIngredient input : recipe.getInputs())
             {
-                final IAnalysisGraphNode inputNode = new IngredientGraphNode(input);
+                final IAnalysisGraphNode inputNode = new IngredientCandidateGraphNode(input.getCandidates());
                 recipeGraph.addVertex(inputNode);
 
                 recipeGraph.addEdge(inputNode, recipeGraphNode);
@@ -250,16 +250,16 @@ public class JGraphTBasedCompoundAnalyzer
     {
         final LinkedHashSet<IAnalysisGraphNode> processingQueue = new LinkedHashSet<>();
         processingQueue.add(new SourceGraphNode());
-        final LinkedHashSet<IngredientGraphNode> noneCompleteIngredientNodes = new LinkedHashSet<>();
+        final LinkedHashSet<IngredientCandidateGraphNode> noneCompleteIngredientNodes = new LinkedHashSet<>();
 
         processRecipeGraphFromNodeUsingBreathFirstSearch(recipeGraph, processingQueue, noneCompleteIngredientNodes, statCollector);
 
-        final Set<Set<IngredientGraphNode>> previousIterations = new HashSet<>();
+        final Set<Set<IngredientCandidateGraphNode>> previousIterations = new HashSet<>();
 
-        LinkedHashSet<IngredientGraphNode> workingSet = new LinkedHashSet<>(noneCompleteIngredientNodes);
+        LinkedHashSet<IngredientCandidateGraphNode> workingSet = new LinkedHashSet<>(noneCompleteIngredientNodes);
         while(!previousIterations.contains(workingSet) && !workingSet.isEmpty()) {
             previousIterations.add(workingSet);
-            final IngredientGraphNode newTarget = workingSet.iterator().next();
+            final IngredientCandidateGraphNode newTarget = workingSet.iterator().next();
             workingSet.remove(newTarget);
 
             handleIngredientNodeCompounds(
@@ -287,7 +287,7 @@ public class JGraphTBasedCompoundAnalyzer
     private void processRecipeGraphFromNodeUsingBreathFirstSearch(
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       final LinkedHashSet<IAnalysisGraphNode> processingQueue,
-      final Set<IngredientGraphNode> noneCompleteIngredientNodes,
+      final Set<IngredientCandidateGraphNode> noneCompleteIngredientNodes,
       final StatCollector statCollector)
     {
         final Set<IAnalysisGraphNode> visitedNodes = new LinkedHashSet<>();
@@ -306,7 +306,7 @@ public class JGraphTBasedCompoundAnalyzer
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       final LinkedHashSet<IAnalysisGraphNode> processingQueue,
       final Set<IAnalysisGraphNode> visitedNodes,
-      final Set<IngredientGraphNode> noneCompleteIngredients,
+      final Set<IngredientCandidateGraphNode> noneCompleteIngredients,
       final IAnalysisGraphNode node,
       final StatCollector statCollector)
     {
@@ -344,7 +344,7 @@ public class JGraphTBasedCompoundAnalyzer
         if (clazz == ContainerWrapperGraphNode.class)
         {
             statCollector.onVisitCompoundNode();
-            final Set<IngredientGraphNode> ingredientNeighbors = new HashSet<>();
+            final Set<IngredientCandidateGraphNode> ingredientNeighbors = new HashSet<>();
             final Set<RecipeGraphNode> recipeNeighbors = new HashSet<>();
             for (AccessibleWeightEdge accessibleWeightEdge : recipeGraph
                                                                .outgoingEdgesOf(node))
@@ -355,9 +355,9 @@ public class JGraphTBasedCompoundAnalyzer
                     RecipeGraphNode graphNode = (RecipeGraphNode) v;
                     recipeNeighbors.add(graphNode);
                 }
-                else if (v instanceof IngredientGraphNode)
+                else if (v instanceof IngredientCandidateGraphNode)
                 {
-                    IngredientGraphNode graphNode = (IngredientGraphNode) v;
+                    IngredientCandidateGraphNode graphNode = (IngredientCandidateGraphNode) v;
                     ingredientNeighbors.add(graphNode);
                 }
             }
@@ -367,7 +367,7 @@ public class JGraphTBasedCompoundAnalyzer
                 neighbor.getAnalyzedInputNodes().add(node);
             }
 
-            for (IngredientGraphNode neighbor : ingredientNeighbors)
+            for (IngredientCandidateGraphNode neighbor : ingredientNeighbors)
             {
                 neighbor.getAnalyzedInputNodes().add(node);
             }
@@ -380,7 +380,7 @@ public class JGraphTBasedCompoundAnalyzer
                     set.add(recipeGraphNode);
                 }
             }
-            for (IngredientGraphNode ingredientGraphNode : ingredientNeighbors)
+            for (IngredientCandidateGraphNode ingredientGraphNode : ingredientNeighbors)
             {
                 if (ingredientGraphNode.getAnalyzedInputNodes().size() == recipeGraph.incomingEdgesOf(ingredientGraphNode).size())
                 {
@@ -395,10 +395,10 @@ public class JGraphTBasedCompoundAnalyzer
 
             nextIterationNodes = set;
         }
-        if (clazz == IngredientGraphNode.class)
+        if (clazz == IngredientCandidateGraphNode.class)
         {
             statCollector.onVisitIngredientNode();
-            final IngredientGraphNode ingredientGraphNode = (IngredientGraphNode) node;
+            final IngredientCandidateGraphNode ingredientGraphNode = (IngredientCandidateGraphNode) node;
             noneCompleteIngredients.remove(ingredientGraphNode);
             handleIngredientNodeCompounds(recipeGraph, ingredientGraphNode, false);
 
@@ -460,14 +460,14 @@ public class JGraphTBasedCompoundAnalyzer
                 }
             }
 
-            final Set<IngredientGraphNode> inputNeightbors = new HashSet<>();
+            final Set<IngredientCandidateGraphNode> inputNeightbors = new HashSet<>();
             for (AccessibleWeightEdge accessibleWeightEdge : recipeGraph
                                                                .incomingEdgesOf(node))
             {
                 IAnalysisGraphNode v = recipeGraph.getEdgeSource(accessibleWeightEdge);
-                if (v instanceof IngredientGraphNode)
+                if (v instanceof IngredientCandidateGraphNode)
                 {
-                    IngredientGraphNode ingredientGraphNode = (IngredientGraphNode) v;
+                    IngredientCandidateGraphNode ingredientGraphNode = (IngredientCandidateGraphNode) v;
                     inputNeightbors.add(ingredientGraphNode);
                 }
             }
@@ -561,7 +561,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     private static void handleIngredientNodeCompounds(
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
-      final IngredientGraphNode ingredientGraphNode, final boolean incomplete)
+      final IngredientCandidateGraphNode ingredientGraphNode, final boolean incomplete)
     {
         final Set<ContainerWrapperGraphNode> candidates = new HashSet<>();
         for (final AccessibleWeightEdge accessibleWeightEdge : recipeGraph.incomingEdgesOf(ingredientGraphNode))

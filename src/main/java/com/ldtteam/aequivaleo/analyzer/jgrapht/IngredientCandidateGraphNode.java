@@ -2,13 +2,14 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht;
 
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.TreeSet;
 
-public class IngredientGraphNode implements IAnalysisGraphNode
+public class IngredientCandidateGraphNode implements IAnalysisGraphNode
 {
 
     @NotNull
@@ -18,14 +19,14 @@ public class IngredientGraphNode implements IAnalysisGraphNode
     private final Set<CompoundInstance> compoundInstances = new TreeSet<>();
 
     @NotNull
-    private final IRecipeIngredient ingredient;
+    private final Set<ICompoundContainer<?>> candidates;
 
-    public IngredientGraphNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
+    public IngredientCandidateGraphNode(@NotNull final Set<ICompoundContainer<?>> candidates) {this.candidates = candidates;}
 
     @NotNull
-    public IRecipeIngredient getIngredient()
+    public Set<ICompoundContainer<?>> getCandidates()
     {
-        return ingredient;
+        return candidates;
     }
 
     @NotNull
@@ -41,33 +42,25 @@ public class IngredientGraphNode implements IAnalysisGraphNode
         {
             return true;
         }
-        if (!(o instanceof IngredientGraphNode))
+        if (!(o instanceof IngredientCandidateGraphNode))
         {
             return false;
         }
 
-        final IngredientGraphNode that = (IngredientGraphNode) o;
+        final IngredientCandidateGraphNode that = (IngredientCandidateGraphNode) o;
 
-        return getIngredient().equals(that.getIngredient());
+        return getCandidates().equals(that.getCandidates());
     }
 
     @Override
     public int hashCode()
     {
-        return getIngredient().hashCode();
+        return getCandidates().hashCode();
     }
 
     @NotNull
     public Set<IAnalysisGraphNode> getAnalyzedInputNodes()
     {
         return analyzedInputNodes;
-    }
-
-    @Override
-    public String toString()
-    {
-        return "IngredientGraphNode{" +
-                 "recipe=" + ingredient +
-                 '}';
     }
 }
