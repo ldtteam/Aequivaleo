@@ -1,11 +1,13 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -16,7 +18,7 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     private final Set<IAnalysisGraphNode> analyzedInputNodes = Sets.newConcurrentHashSet();
 
     @NotNull
-    private final Set<CompoundInstance> compoundInstances = new TreeSet<>();
+    private ImmutableSet<CompoundInstance> compoundInstances = ImmutableSet.of();
 
     @NotNull
     private final Set<ICompoundContainer<?>> candidates;
@@ -30,9 +32,16 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     }
 
     @NotNull
-    public Set<CompoundInstance> getCompoundInstances()
+    public ImmutableSet<CompoundInstance> getCompoundInstances()
     {
         return compoundInstances;
+    }
+
+    public void addCompound(final CompoundInstance instance) {
+        final Set<CompoundInstance> instances = new HashSet<>(getCompoundInstances());
+        instances.add(instance);
+
+        this.compoundInstances = ImmutableSet.copyOf(instances);
     }
 
     @Override
@@ -67,6 +76,6 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     @Override
     public String toString()
     {
-        return String.format("Ingredient variants with candidates: %s", getCandidates().toString());
+        return "Ingredient variants with candidates: " + getCandidates().toString();
     }
 }

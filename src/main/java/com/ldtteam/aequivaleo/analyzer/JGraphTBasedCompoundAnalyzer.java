@@ -589,11 +589,11 @@ public class JGraphTBasedCompoundAnalyzer
         candidateMaps.forEach(
           (group, data) -> {
               if (data.size() == 1 && !incomplete) {
-                  data.values().iterator().next().forEach(ingredientGraphNode.getCompoundInstances()::add);
+                  data.values().iterator().next().forEach(ingredientGraphNode::addCompound);
               }
               else if (data.size() > 1 || incomplete) {
                   final Set<CompoundInstance> handledData = group.handleIngredient(data, incomplete);
-                  handledData.forEach(ingredientGraphNode.getCompoundInstances()::add);
+                  handledData.forEach(ingredientGraphNode::addCompound);
               }
           }
         );
