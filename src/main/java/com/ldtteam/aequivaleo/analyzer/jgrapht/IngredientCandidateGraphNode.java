@@ -63,4 +63,10 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     {
         return analyzedInputNodes;
     }
+
+    @Override
+    public String toString()
+    {
+        return String.format("Ingredient variants with candidates: %s", getCandidates().toString());
+    }
 }
