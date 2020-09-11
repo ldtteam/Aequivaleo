@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 public class IngredientCandidateGraphNode implements IAnalysisGraphNode
 {
@@ -21,14 +20,14 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     private ImmutableSet<CompoundInstance> compoundInstances = ImmutableSet.of();
 
     @NotNull
-    private final Set<ICompoundContainer<?>> candidates;
+    private final IRecipeIngredient ingredient;
 
-    public IngredientCandidateGraphNode(@NotNull final Set<ICompoundContainer<?>> candidates) {this.candidates = candidates;}
+    public IngredientCandidateGraphNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
 
     @NotNull
-    public Set<ICompoundContainer<?>> getCandidates()
+    public IRecipeIngredient getIngredient()
     {
-        return candidates;
+        return ingredient;
     }
 
     @NotNull
@@ -58,13 +57,13 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
 
         final IngredientCandidateGraphNode that = (IngredientCandidateGraphNode) o;
 
-        return getCandidates().equals(that.getCandidates());
+        return getIngredient().equals(that.getIngredient());
     }
 
     @Override
     public int hashCode()
     {
-        return getCandidates().hashCode();
+        return getIngredient().hashCode();
     }
 
     @NotNull
@@ -76,6 +75,8 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     @Override
     public String toString()
     {
-        return "Ingredient variants with candidates: " + getCandidates().toString();
+        return "IngredientCandidateGraphNode{" +
+                 "ingredient=" + ingredient +
+                 '}';
     }
 }

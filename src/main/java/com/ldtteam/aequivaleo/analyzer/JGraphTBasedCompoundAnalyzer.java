@@ -11,6 +11,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
@@ -43,7 +44,8 @@ public class JGraphTBasedCompoundAnalyzer
 
         final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
 
-        final Map<ICompoundContainer<?>, IAnalysisGraphNode> nodes = new TreeMap<>();
+        final Map<ICompoundContainer<?>, IAnalysisGraphNode> compoundNodes = new TreeMap<>();
+        final Map<IRecipeIngredient, IAnalysisGraphNode> ingredientNodes = new TreeMap<>();
 
         for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
                                            .get())
@@ -55,7 +57,10 @@ public class JGraphTBasedCompoundAnalyzer
             //Process inputs
             for (IRecipeIngredient input : recipe.getInputs())
             {
-                final IAnalysisGraphNode inputNode = new IngredientCandidateGraphNode(input.getCandidates());
+                final IRecipeIngredient unitIngredient = new SimpleIngredientBuilder().from(input).withCount(1).createIngredient();
+                ingredientNodes.putIfAbsent(unitIngredient, new IngredientCandidateGraphNode(unitIngredient));
+
+                final IAnalysisGraphNode inputNode = ingredientNodes.get(unitIngredient);
                 recipeGraph.addVertex(inputNode);
 
                 recipeGraph.addEdge(inputNode, recipeGraphNode);
@@ -63,23 +68,23 @@ public class JGraphTBasedCompoundAnalyzer
 
                 for (final ICompoundContainer<?> candidate : input.getCandidates())
                 {
-                    handleCompoundContainerAsInput(resultingCompounds, recipeGraph, nodes, inputNode, candidate);
+                    handleCompoundContainerAsInput(resultingCompounds, recipeGraph, compoundNodes, inputNode, candidate);
                 }
             }
 
             //Process outputs
             for (ICompoundContainer<?> output : recipe.getRequiredKnownOutputs())
             {
-                handleCompoundContainerAsInput(resultingCompounds, recipeGraph, nodes, recipeGraphNode, output);
+                handleCompoundContainerAsInput(resultingCompounds, recipeGraph, compoundNodes, recipeGraphNode, output);
             }
 
             //Process outputs
             for (ICompoundContainer<?> output : recipe.getOutputs())
             {
                 final ICompoundContainer<?> unitOutputWrapper = createUnitWrapper(output);
-                nodes.putIfAbsent(unitOutputWrapper, new ContainerWrapperGraphNode(unitOutputWrapper));
+                compoundNodes.putIfAbsent(unitOutputWrapper, new ContainerWrapperGraphNode(unitOutputWrapper));
 
-                final IAnalysisGraphNode outputWrapperGraphNode = nodes.get(unitOutputWrapper);
+                final IAnalysisGraphNode outputWrapperGraphNode = compoundNodes.get(unitOutputWrapper);
 
                 resultingCompounds.putIfAbsent(unitOutputWrapper, new ConcurrentSkipListSet<>());
                 recipeGraph.addVertex(outputWrapperGraphNode);
@@ -93,9 +98,9 @@ public class JGraphTBasedCompoundAnalyzer
         {
             if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(lockedWrapper)))
             {
-                nodes.putIfAbsent(lockedWrapper, new ContainerWrapperGraphNode(lockedWrapper));
+                compoundNodes.putIfAbsent(lockedWrapper, new ContainerWrapperGraphNode(lockedWrapper));
 
-                final IAnalysisGraphNode inputWrapperGraphNode = nodes.get(lockedWrapper);
+                final IAnalysisGraphNode inputWrapperGraphNode = compoundNodes.get(lockedWrapper);
 
                 resultingCompounds.putIfAbsent(lockedWrapper, new ConcurrentSkipListSet<>());
                 recipeGraph.addVertex(inputWrapperGraphNode);
