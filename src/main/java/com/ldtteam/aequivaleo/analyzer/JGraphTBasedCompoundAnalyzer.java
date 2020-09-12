@@ -587,6 +587,10 @@ public class JGraphTBasedCompoundAnalyzer
               ))
               .forEach((group, instances) -> {
                   candidateMaps.putIfAbsent(group, new HashMap<>());
+                  if (candidateMaps.get(group).containsKey(candidate.getWrapper())) {
+                      System.out.println("Hello");
+                  }
+
                   candidateMaps.get(group).put(candidate.getWrapper(), new TreeSet<>(instances));
               });
         }
