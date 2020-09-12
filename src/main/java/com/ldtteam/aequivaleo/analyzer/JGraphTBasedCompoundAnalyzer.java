@@ -597,6 +597,10 @@ public class JGraphTBasedCompoundAnalyzer
 
         candidateMaps.forEach(
           (group, data) -> {
+              if (data.size() != ingredientGraphNode.getAnalyzedInputNodes().size()) {
+                  System.out.println("Next");
+              }
+
               if (data.size() == 1 && !incomplete) {
                   data.values().iterator().next().forEach(ingredientGraphNode::addCompound);
               }
