@@ -271,7 +271,6 @@ public class JGraphTBasedCompoundAnalyzer
             workingSet.remove(newTarget);
 
             handleIngredientNodeCompounds(
-              recipeGraph,
               newTarget,
               true
             );
@@ -408,7 +407,7 @@ public class JGraphTBasedCompoundAnalyzer
             statCollector.onVisitIngredientNode();
             final IngredientCandidateGraphNode ingredientGraphNode = (IngredientCandidateGraphNode) node;
             noneCompleteIngredients.remove(ingredientGraphNode);
-            handleIngredientNodeCompounds(recipeGraph, ingredientGraphNode, false);
+            handleIngredientNodeCompounds(ingredientGraphNode, false);
 
             if (!ingredientGraphNode.getCompoundInstances().isEmpty()) {
                 final Set<RecipeGraphNode> recipeNeighbors = new HashSet<>();
@@ -568,13 +567,11 @@ public class JGraphTBasedCompoundAnalyzer
     }
 
     private static void handleIngredientNodeCompounds(
-      @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       final IngredientCandidateGraphNode ingredientGraphNode, final boolean incomplete)
     {
         Map<ICompoundTypeGroup, List<Triple<ICompoundTypeGroup, ICompoundContainer<?>, Set<CompoundInstance>>>> map = new HashMap<>();
-        for (AccessibleWeightEdge accessibleWeightEdge : recipeGraph.incomingEdgesOf(ingredientGraphNode))
+        for (IAnalysisGraphNode edgeSource : ingredientGraphNode.getAnalyzedInputNodes())
         {
-            IAnalysisGraphNode edgeSource = recipeGraph.getEdgeSource(accessibleWeightEdge);
             if (edgeSource instanceof ContainerWrapperGraphNode)
             {
                 ContainerWrapperGraphNode n = (ContainerWrapperGraphNode) edgeSource;
