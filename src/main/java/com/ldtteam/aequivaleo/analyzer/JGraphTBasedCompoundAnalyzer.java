@@ -394,7 +394,7 @@ public class JGraphTBasedCompoundAnalyzer
                     noneCompleteIngredients.remove(ingredientGraphNode);
                     set.add(ingredientGraphNode);
                 }
-                else
+                else if (ingredientGraphNode.getCompoundInstances().isEmpty())
                 {
                     noneCompleteIngredients.add(ingredientGraphNode);
                 }
