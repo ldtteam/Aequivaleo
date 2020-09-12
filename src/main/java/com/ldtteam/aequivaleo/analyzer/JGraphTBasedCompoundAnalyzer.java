@@ -570,18 +570,27 @@ public class JGraphTBasedCompoundAnalyzer
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       final IngredientCandidateGraphNode ingredientGraphNode, final boolean incomplete)
     {
-        recipeGraph.incomingEdgesOf(ingredientGraphNode)
-          .stream()
-          .map(recipeGraph::getEdgeSource)
-          .filter(ContainerWrapperGraphNode.class::isInstance)
-          .map(ContainerWrapperGraphNode.class::cast)
-          .map(n -> Pair.of(n.getWrapper(), n.getCompoundInstances()))
-          .map(p -> Pair.of(p.getLeft(), p.getRight().stream().collect(Collectors.groupingBy(i -> i.getType().getGroup())).values()))
-          .flatMap(p -> p.getRight()
-                          .stream()
-                          .map(l -> Triple.of(l.get(0).getType().getGroup(), p.getLeft(), (Set<CompoundInstance>) new HashSet<>(l)))
-          )
-          .collect(Collectors.groupingBy(Triple::getLeft))
+        Map<ICompoundTypeGroup, List<Triple<ICompoundTypeGroup, ICompoundContainer<?>, Set<CompoundInstance>>>> map = new HashMap<>();
+        for (AccessibleWeightEdge accessibleWeightEdge : recipeGraph.incomingEdgesOf(ingredientGraphNode))
+        {
+            IAnalysisGraphNode edgeSource = recipeGraph.getEdgeSource(accessibleWeightEdge);
+            if (edgeSource instanceof ContainerWrapperGraphNode)
+            {
+                ContainerWrapperGraphNode n = (ContainerWrapperGraphNode) edgeSource;
+                Pair<? extends ICompoundContainer<?>, Set<CompoundInstance>> of = Pair.of(n.getWrapper(), n.getCompoundInstances());
+                Pair<? extends ICompoundContainer<?>, Collection<List<CompoundInstance>>> collectionPair =
+                  Pair.of(of.getLeft(), of.getRight().stream().collect(Collectors.groupingBy(i -> i.getType().getGroup())).values());
+                for (List<CompoundInstance> l : collectionPair.getRight())
+                {
+                    Triple<ICompoundTypeGroup, ICompoundContainer<?>, Set<CompoundInstance>> iCompoundTypeGroupSetTriple =
+                      Triple.of(l.get(0).getType().getGroup(), collectionPair.getLeft(), new HashSet<>(l));
+                    map.computeIfAbsent(iCompoundTypeGroupSetTriple.getLeft(), k -> new ArrayList<>()).add(iCompoundTypeGroupSetTriple);
+                }
+            }
+        }
+
+
+        map
           .entrySet()
           .stream()
           .map(e -> Pair.of(e.getKey(), e.getValue()
