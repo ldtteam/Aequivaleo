@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represents a simple ingredient for a recipe.
@@ -50,5 +51,11 @@ public class SimpleIngredient implements IRecipeIngredient
     public int hashCode()
     {
         return Objects.hash(getCandidates(), count);
+    }
+
+    @Override
+    public String toString()
+    {
+        return candidates.stream().map(Object::toString).collect(Collectors.joining(", "));
     }
 }
