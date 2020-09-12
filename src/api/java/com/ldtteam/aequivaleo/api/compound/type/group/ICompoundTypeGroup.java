@@ -28,7 +28,7 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      *
      * @return The set of chosen compound instances. Or an empty set, to indicate that this node should not be processed.
      */
-    Set<CompoundInstance> handleIngredient(Map<ICompoundContainer<?>, Set<CompoundInstance>> data, boolean inComplete);
+    Set<CompoundInstance> handleIngredient(Map<? extends ICompoundContainer<?>, Set<CompoundInstance>> data, boolean inComplete);
 
     /**
      * Indicates if the given instance is allowed to contribute to a given recipe.

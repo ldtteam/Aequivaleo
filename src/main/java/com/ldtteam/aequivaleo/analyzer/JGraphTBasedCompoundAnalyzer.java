@@ -17,6 +17,8 @@ import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformat
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -568,35 +570,28 @@ public class JGraphTBasedCompoundAnalyzer
       @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
       final IngredientCandidateGraphNode ingredientGraphNode, final boolean incomplete)
     {
-        final Set<ContainerWrapperGraphNode> candidates = new HashSet<>();
-        for (final AccessibleWeightEdge accessibleWeightEdge : recipeGraph.incomingEdgesOf(ingredientGraphNode))
-        {
-            final IAnalysisGraphNode v = recipeGraph.getEdgeSource(accessibleWeightEdge);
-            if (v instanceof ContainerWrapperGraphNode)
-            {
-                candidates.add((ContainerWrapperGraphNode) v);
-            }
-        }
+        recipeGraph.incomingEdgesOf(ingredientGraphNode)
+          .stream()
+          .map(recipeGraph::getEdgeSource)
+          .filter(ContainerWrapperGraphNode.class::isInstance)
+          .map(ContainerWrapperGraphNode.class::cast)
+          .map(n -> Pair.of(n.getWrapper(), n.getCompoundInstances()))
+          .map(p -> Pair.of(p.getLeft(), p.getRight().stream().collect(Collectors.groupingBy(i -> i.getType().getGroup())).values()))
+          .flatMap(p -> p.getRight()
+                          .stream()
+                          .map(l -> Triple.of(l.get(0).getType().getGroup(), p.getLeft(), (Set<CompoundInstance>) new HashSet<>(l)))
+          )
+          .collect(Collectors.groupingBy(Triple::getLeft))
+          .entrySet()
+          .stream()
+          .map(e -> Pair.of(e.getKey(), e.getValue()
+            .stream()
+            .map(t -> Pair.of(t.getMiddle(), t.getRight()))
+            .collect(Collectors.toMap(Pair::getLeft, Pair::getRight))))
+          .forEach(p -> {
+              final ICompoundTypeGroup group = p.getKey();
+              final Map<? extends ICompoundContainer<?>, Set<CompoundInstance>> data = p.getRight();
 
-        Map<ICompoundTypeGroup, Map<ICompoundContainer<?>, Set<CompoundInstance>>> candidateMaps = Maps.newHashMap();
-        for (final ContainerWrapperGraphNode candidate : candidates)
-        {
-            candidate.getCompoundInstances().stream()
-              .collect(Collectors.groupingBy(
-                compoundInstance -> compoundInstance.getType().getGroup()
-              ))
-              .forEach((group, instances) -> {
-                  candidateMaps.putIfAbsent(group, new HashMap<>());
-                  if (candidateMaps.get(group).containsKey(candidate.getWrapper())) {
-                      System.out.println("Hello");
-                  }
-
-                  candidateMaps.get(group).put(candidate.getWrapper(), new TreeSet<>(instances));
-              });
-        }
-
-        candidateMaps.forEach(
-          (group, data) -> {
               if (data.size() != ingredientGraphNode.getAnalyzedInputNodes().size()) {
                   System.out.println("Next");
               }
@@ -608,8 +603,7 @@ public class JGraphTBasedCompoundAnalyzer
                   final Set<CompoundInstance> handledData = group.handleIngredient(data, incomplete);
                   handledData.forEach(ingredientGraphNode::addCompound);
               }
-          }
-        );
+          });
     }
 
     private ICompoundContainer<?> createUnitWrapper(@NotNull final ICompoundContainer<?> wrapper)
