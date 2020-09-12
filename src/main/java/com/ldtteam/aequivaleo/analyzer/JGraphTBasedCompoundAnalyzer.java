@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraft.util.ResourceLocation;
@@ -578,12 +579,12 @@ public class JGraphTBasedCompoundAnalyzer
             {
                 ContainerWrapperGraphNode n = (ContainerWrapperGraphNode) edgeSource;
                 Pair<? extends ICompoundContainer<?>, Set<CompoundInstance>> of = Pair.of(n.getWrapper(), n.getCompoundInstances());
-                Pair<? extends ICompoundContainer<?>, Collection<List<CompoundInstance>>> collectionPair =
-                  Pair.of(of.getLeft(), of.getRight().stream().collect(Collectors.groupingBy(i -> i.getType().getGroup())).values());
-                for (List<CompoundInstance> l : collectionPair.getRight())
+                Pair<? extends ICompoundContainer<?>, Collection<Collection<CompoundInstance>>> collectionPair =
+                  Pair.of(of.getLeft(), GroupingUtils.groupBy(of.getValue(), i -> i.getType().getGroup()));
+                for (Collection<CompoundInstance> l : collectionPair.getRight())
                 {
                     Triple<ICompoundTypeGroup, ICompoundContainer<?>, Set<CompoundInstance>> iCompoundTypeGroupSetTriple =
-                      Triple.of(l.get(0).getType().getGroup(), collectionPair.getLeft(), new HashSet<>(l));
+                      Triple.of(l.iterator().next().getType().getGroup(), collectionPair.getLeft(), new HashSet<>(l));
                     map.computeIfAbsent(iCompoundTypeGroupSetTriple.getLeft(), k -> new ArrayList<>()).add(iCompoundTypeGroupSetTriple);
                 }
             }
