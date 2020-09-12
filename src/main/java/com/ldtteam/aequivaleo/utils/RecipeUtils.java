@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.utils;
 
+import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
@@ -77,7 +78,7 @@ public final class RecipeUtils
 
     public static List<SortedSet<IRecipeIngredient>> getAllInputVariants(final List<Ingredient> mcIngredients, final boolean checkSimple)
     {
-        if (mcIngredients.isEmpty() || (checkSimple && mcIngredients.stream().anyMatch(ingredient -> !ingredient.isSimple())))
+        if (mcIngredients.isEmpty() || (checkSimple && !Aequivaleo.getInstance().getConfiguration().getServer().allowNoneSimpleIngredients.get() && mcIngredients.stream().anyMatch(ingredient -> !ingredient.isSimple())))
         {
             return Collections.emptyList();
         }
@@ -142,37 +143,6 @@ public final class RecipeUtils
         final SortedSet<ICompoundContainer<?>> result =
           stacks.stream().map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, stack.getCount())).collect(Collectors.toCollection(TreeSet::new));
         return result;
-    }
-
-    private static final class RecipeData
-    {
-        private final SortedSet<IRecipeIngredient>     ingredients;
-        private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
-        private final SortedSet<ICompoundContainer<?>> outputs;
-
-        private RecipeData(
-          final SortedSet<IRecipeIngredient> ingredients,
-          final SortedSet<ICompoundContainer<?>> requiredKnownOutputs, final SortedSet<ICompoundContainer<?>> outputs)
-        {
-            this.ingredients = ingredients;
-            this.requiredKnownOutputs = requiredKnownOutputs;
-            this.outputs = outputs;
-        }
-
-        public SortedSet<IRecipeIngredient> getIngredients()
-        {
-            return ingredients;
-        }
-
-        public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
-        {
-            return requiredKnownOutputs;
-        }
-
-        public SortedSet<ICompoundContainer<?>> getOutputs()
-        {
-            return outputs;
-        }
     }
 
     private static final class ItemStackEqualityWrapper
