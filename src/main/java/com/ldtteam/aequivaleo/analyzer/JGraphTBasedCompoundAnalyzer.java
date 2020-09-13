@@ -498,7 +498,7 @@ public class JGraphTBasedCompoundAnalyzer
                     for (final CompoundInstance compoundInstance : requiredKnownOutput.getCompoundInstances())
                     {
                         if (compoundInstance.getType().equals(entry.getKey()))
-                            amount = Math.max(0, amount - compoundInstance.getAmount());
+                            amount = Math.max(0, amount - (compoundInstance.getAmount() * recipeGraph.getEdgeWeight(recipeGraph.getEdge(requiredKnownOutput, recipeGraphNode))));
                     }
                 }
 
