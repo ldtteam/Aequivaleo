@@ -60,7 +60,7 @@ public final class RecipeUtils
                   iRecipeIngredients.stream()
                     .map(iRecipeIngredient -> iRecipeIngredient.getCandidates()
                       .stream()
-                      .map(container -> Pair.of(container.getContents(), container.getContentsCount().intValue()))
+                      .map(container -> Pair.of(container.getContents(), iRecipeIngredient.getRequiredCount().intValue() * container.getContentsCount().intValue()))
                       .filter(integerPair -> integerPair.first instanceof ItemStack)
                       .map(integerPair -> Pair.of((ItemStack) integerPair.first, integerPair.second))
                       .filter(itemStackIntegerPair -> !itemStackIntegerPair.first.isEmpty())

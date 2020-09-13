@@ -27,7 +27,7 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      *
      * @return The required count.
      */
-    double getRequiredCount();
+    Double getRequiredCount();
 
 
     @Override

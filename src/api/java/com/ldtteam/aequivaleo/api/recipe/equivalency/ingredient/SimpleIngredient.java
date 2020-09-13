@@ -26,7 +26,7 @@ public class SimpleIngredient implements IRecipeIngredient
     }
 
     @Override
-    public double getRequiredCount()
+    public Double getRequiredCount()
     {
         return count;
     }
