@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraft.item.ItemStack;
@@ -144,8 +145,20 @@ public final class RecipeUtils
     }
 
     private static SortedSet<ICompoundContainer<?>> mapStacks(final List<ItemStack> stacks) {
+        final List<ICompoundContainer<?>> wrappedStacks =
+          stacks.stream().map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, stack.getCount())).collect(Collectors.toList());
+
+        final Collection<Collection<ICompoundContainer<?>>> groupedStacks = GroupingUtils.groupBy(
+          wrappedStacks,
+          s -> CompoundContainerFactoryManager.getInstance().wrapInContainer(s.getContents(), 1)
+        );
+
         final SortedSet<ICompoundContainer<?>> result =
-          stacks.stream().map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, stack.getCount())).collect(Collectors.toCollection(TreeSet::new));
+          groupedStacks
+          .stream()
+          .map(c -> CompoundContainerFactoryManager.getInstance().wrapInContainer(c.iterator().next(), c.stream().mapToDouble(ICompoundContainer::getContentsCount).sum()))
+          .collect(Collectors.toCollection(TreeSet::new));
+
         return result;
     }
 
