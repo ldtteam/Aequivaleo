@@ -156,7 +156,7 @@ public final class RecipeUtils
         final SortedSet<ICompoundContainer<?>> result =
           groupedStacks
           .stream()
-          .map(c -> CompoundContainerFactoryManager.getInstance().wrapInContainer(c.iterator().next(), c.stream().mapToDouble(ICompoundContainer::getContentsCount).sum()))
+          .map(c -> CompoundContainerFactoryManager.getInstance().wrapInContainer(c.iterator().next().getContents(), c.stream().mapToDouble(ICompoundContainer::getContentsCount).sum()))
           .collect(Collectors.toCollection(TreeSet::new));
 
         return result;
