@@ -8,6 +8,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
@@ -59,16 +60,17 @@ public final class RecipeUtils
                   iRecipeIngredients.stream()
                     .map(iRecipeIngredient -> iRecipeIngredient.getCandidates()
                       .stream()
-                      .map(ICompoundContainer::getContents)
-                      .filter(ItemStack.class::isInstance)
-                      .map(ItemStack.class::cast)
-                      .filter(stack -> !stack.isEmpty())
-                      .map(stack1 -> {
-                          final ItemStack containerStack = stack1.getContainerItem();
-                          containerStack.setCount(stack1.getCount());
-                          return containerStack;
-                      })
-                      .filter(stack -> !stack.isEmpty())
+                                                .map(wrapper -> {
+                                                    if (wrapper.getContents() instanceof ItemStack) {
+                                                        final ItemStack source = (ItemStack) wrapper.getContents();
+                                                        final ItemStack container = source.getContainerItem();
+                                                        container.setCount((int) Math.floor(wrapper.getContentsCount()));
+                                                        return container;
+                                                    }
+
+                                                    return null;
+                                                })
+                                                .filter(Objects::nonNull)
                       .collect(Collectors.toList())
                     )
                   .filter(stacks -> !stacks.isEmpty())
