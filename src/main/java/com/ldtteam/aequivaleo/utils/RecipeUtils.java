@@ -63,7 +63,11 @@ public final class RecipeUtils
                       .filter(ItemStack.class::isInstance)
                       .map(ItemStack.class::cast)
                       .filter(stack -> !stack.isEmpty())
-                      .map(ItemStack::getContainerItem)
+                      .map(stack1 -> {
+                          final ItemStack containerStack = stack1.getContainerItem();
+                          containerStack.setCount(stack1.getCount());
+                          return containerStack;
+                      })
                       .filter(stack -> !stack.isEmpty())
                       .collect(Collectors.toList())
                     )
