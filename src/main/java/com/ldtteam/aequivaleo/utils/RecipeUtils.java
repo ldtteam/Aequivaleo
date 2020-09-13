@@ -43,7 +43,11 @@ public final class RecipeUtils
         final SortedSet<ICompoundContainer<?>> resultSet = new TreeSet<>();
         resultSet.add(result);
 
-        final List<SortedSet<IRecipeIngredient>> variants = getAllInputVariants(recipe.getIngredients(), true);
+        final List<SortedSet<IRecipeIngredient>> variants = getAllInputVariants(recipe.getIngredients()
+          .stream()
+          .filter(i -> i.getMatchingStacks().length > 0)
+          .collect(Collectors.toList()),
+      true);
 
         return variants
              .stream()
