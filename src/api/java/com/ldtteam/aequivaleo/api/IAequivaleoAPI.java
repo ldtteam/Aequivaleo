@@ -3,7 +3,10 @@ package com.ldtteam.aequivaleo.api;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import net.minecraft.util.RegistryKey;
@@ -68,6 +71,20 @@ public interface IAequivaleoAPI
      * @return The equivalency cache for a given dimension.
      */
     IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey);
+
+    /**
+     * Gives access to the aequivaleo plugin manager.
+     *
+     * @return The plugin manager.
+     */
+    IAequivaleoPluginManager getPluginManager();
+
+    /**
+     * Gives access to the recipe calculator.
+     *
+     * @return The recipe calculator.
+     */
+    IRecipeCalculator getRecipeCalculator();
 
     class Holder {
         private static IAequivaleoAPI apiInstance;

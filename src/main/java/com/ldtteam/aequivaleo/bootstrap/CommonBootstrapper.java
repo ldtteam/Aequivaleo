@@ -1,9 +1,10 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.event.OnGlobalDataLoadedEvent;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -11,7 +12,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.Property;
 import net.minecraft.tags.ItemTags;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.Tags;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +30,7 @@ public final class CommonBootstrapper
         doBootstrapEquivalencyHandler();
         doBootstrapTagNames();
 
-        doFireDataLoadedEvent();
+        doHandlePluginLoad();
     }
 
     private static void doBootstrapEquivalencyHandler()
@@ -257,8 +257,10 @@ public final class CommonBootstrapper
           .addTag(Tags.Items.STRING.getName());
     }
 
-    private static void doFireDataLoadedEvent() {
-        LOGGER.info("Firing global data loaded event.");
-        MinecraftForge.EVENT_BUS.post(new OnGlobalDataLoadedEvent());
+    private static void doHandlePluginLoad() {
+        LOGGER.info("Loading plugins.");
+
+        PluginManger.getInstance().detect();
+        PluginManger.getInstance().getPlugins().parallelStream().forEach(IAequivaleoPlugin::onCommonSetup);
     }
 }

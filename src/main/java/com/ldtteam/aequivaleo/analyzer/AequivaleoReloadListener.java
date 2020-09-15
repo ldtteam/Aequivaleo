@@ -2,32 +2,27 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.google.common.collect.Lists;
 import com.ldtteam.aequivaleo.Aequivaleo;
-import com.ldtteam.aequivaleo.api.event.OnAnalysisCompleted;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IFutureReloadListener;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
-import net.minecraftforge.resource.IResourceType;
-import net.minecraftforge.resource.ISelectiveResourceReloadListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
 public class AequivaleoReloadListener extends ReloadListener<Object>
@@ -87,7 +82,12 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
-          .thenRunAsync(() -> MinecraftForge.EVENT_BUS.post(new OnAnalysisCompleted()))
+          .thenRunAsync(() -> {
+              worlds.stream().forEach(world -> {
+                  PluginManger.getInstance().getPlugins().parallelStream().forEach(plugin -> plugin.onReloadFinishedFor(world));
+                }
+              );
+          })
           .thenRunAsync(aequivaleoReloadExecutor::shutdown);
     }
 

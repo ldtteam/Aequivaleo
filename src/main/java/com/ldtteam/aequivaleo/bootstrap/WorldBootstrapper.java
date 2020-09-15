@@ -2,13 +2,13 @@ package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.event.OnWorldDataReloadedEvent;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
@@ -24,7 +24,6 @@ import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,7 +51,7 @@ public final class WorldBootstrapper
         doBootstrapDefaultCraftingRecipes(world);
         doBootstrapItemStackItemEquivalencies(world);
 
-        doFireDataLoadEvent(world);
+        doHandlePluginLoad(world);
     }
 
     private static void resetDataForWorld(final World world)
@@ -165,9 +164,10 @@ public final class WorldBootstrapper
         });
     }
 
-    private static void doFireDataLoadEvent(
+    private static void doHandlePluginLoad(
       @NotNull final ServerWorld world) {
-        LOGGER.info(String.format("Firing data loaded event for world: %s", world.func_234923_W_().func_240901_a_()));
-        MinecraftForge.EVENT_BUS.post(new OnWorldDataReloadedEvent(world));
+        LOGGER.info(String.format("Invoking plugin callbacks: %s", world.func_234923_W_().func_240901_a_()));
+
+        PluginManger.getInstance().getPlugins().parallelStream().forEach(plugin -> plugin.onReloadStartedFor(world));
     }
 }

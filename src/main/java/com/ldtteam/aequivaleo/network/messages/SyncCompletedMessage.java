@@ -2,21 +2,19 @@ package com.ldtteam.aequivaleo.network.messages;
 
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.event.OnAnalysisSyncedOver;
-import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,6 +76,6 @@ public class SyncCompletedMessage implements IMessage
           )
         ));
 
-        MinecraftForge.EVENT_BUS.post(new OnAnalysisSyncedOver());
+        PluginManger.getInstance().getPlugins().parallelStream().forEach(IAequivaleoPlugin::onDataSynced);
     }
 }
