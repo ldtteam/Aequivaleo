@@ -262,13 +262,13 @@ public class JGraphTBasedCompoundAnalyzer
 
         processRecipeGraphFromNodeUsingBreathFirstSearch(recipeGraph, processingQueue, noneCompleteIngredientNodes, statCollector);
 
-        final Set<Set<IngredientCandidateGraphNode>> previousIterations = new HashSet<>();
+        final Set<IngredientCandidateGraphNode> alreadyProcessedIncompleteNodes = new HashSet<>();
 
         LinkedHashSet<IngredientCandidateGraphNode> workingSet = new LinkedHashSet<>(noneCompleteIngredientNodes);
-        while(!previousIterations.contains(workingSet) && !workingSet.isEmpty()) {
-            previousIterations.add(workingSet);
+        while(!workingSet.isEmpty()) {
             final IngredientCandidateGraphNode newTarget = workingSet.iterator().next();
             workingSet.remove(newTarget);
+            alreadyProcessedIncompleteNodes.add(newTarget);
 
             handleIngredientNodeCompounds(
               newTarget,
@@ -288,6 +288,8 @@ public class JGraphTBasedCompoundAnalyzer
               workingSet,
               statCollector
             );
+
+            workingSet.removeAll(alreadyProcessedIncompleteNodes);
         }
     }
 
