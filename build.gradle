@@ -48,6 +48,32 @@ sourceSets {
         }
         compileClasspath += configurations.getByName("minecraft")
     }
+    vanillaApi {
+        java {
+            srcDir 'src/vanilla-api/java'
+        }
+        resources {
+            srcDir 'src/vanilla-api/resources'
+        }
+
+        compileClasspath += sourceSets.api.output
+        runtimeClasspath += sourceSets.api.output
+        compileClasspath += configurations.getByName("minecraft")
+    }
+    vanilla {
+        java {
+            srcDir 'src/vanilla/java'
+        }
+        resources {
+            srcDir 'src/vanilla/resources'
+        }
+
+        compileClasspath += sourceSets.api.output
+        runtimeClasspath += sourceSets.api.output
+        compileClasspath += sourceSets.vanillaApi.output
+        runtimeClasspath += sourceSets.vanillaApi.output
+        compileClasspath += configurations.getByName("minecraft")
+    }
     //noinspection GroovyAssignabilityCheck
     main {
         java {
@@ -58,6 +84,10 @@ sourceSets {
         }
         compileClasspath += sourceSets.api.output
         runtimeClasspath += sourceSets.api.output
+        compileClasspath += sourceSets.vanilla.output
+        runtimeClasspath += sourceSets.vanilla.output
+        compileClasspath += sourceSets.vanillaApi.output
+        runtimeClasspath += sourceSets.vanillaApi.output
     }
     test {
         java {
@@ -96,6 +126,8 @@ minecraft {
                 equivalency {
                     source sourceSets.main
                     source sourceSets.api
+                    source sourceSets.vanilla
+                    source sourceSets.vanillaApi
                 }
             }
         }
@@ -113,6 +145,8 @@ minecraft {
                 equivalency {
                     source sourceSets.main
                     source sourceSets.api
+                    source sourceSets.vanilla
+                    source sourceSets.vanillaApi
                 }
             }
         }
@@ -132,6 +166,8 @@ minecraft {
                 equivalency {
                     source sourceSets.main
                     source sourceSets.api
+                    source sourceSets.vanilla
+                    source sourceSets.vanillaApi
                 }
             }
         }
@@ -157,6 +193,8 @@ dependencies {
 
     //Utilities
     apiCompile 'com.intellij:annotations:+@jar'
+    vanillaCompile 'com.intellij:annotations:+@jar'
+    vanillaApiCompile 'com.intellij:annotations:+@jar'
     compile 'com.intellij:annotations:+@jar'
     testCompile 'com.intellij:annotations:+@jar'
     compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
@@ -170,8 +208,17 @@ task apiJar(type: Jar) {
     baseName project.name
 }
 
+
+task vanillaApiJar(type: Jar) {
+    from sourceSets.vanilla.output
+    classifier 'vanilla-api'
+    baseName project.name
+}
+
 jar {
     from sourceSets.api.output
+    from sourceSets.vanillaApi.output
+    from sourceSets.vanilla.output
     from sourceSets.main.output
 
     manifest {
@@ -191,6 +238,8 @@ jar {
 
 javadoc {
     source += sourceSets.api.allSource
+    source += sourceSets.vanillaApi.allSource
+    source += sourceSets.vanilla.allSource
 }
 
 task packageJavadoc(type: Jar) {
@@ -203,20 +252,37 @@ task apiJavadocs(type: Javadoc) {
     classpath = sourceSets.api.compileClasspath
 }
 
+task vanillaApiJavadocs(type: Javadoc) {
+    source = sourceSets.vanillaApi.allJava
+    classpath = sourceSets.vanillaApi.compileClasspath
+}
+
 task packageApiJavadoc(type: Jar) {
     from apiJavadocs
     classifier = 'javadoc-api'
+}
+
+task packageVanillaApiJavadoc(type: Jar) {
+    from vanillaApiJavadocs
+    classifier = 'javadoc-vanilla-api'
 }
 
 task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.allJava
     from sourceSets.api.allJava
+    from sourceSets.vanillaApi.allJava
+    from sourceSets.vanilla.allJava
 }
 
 task apiSourceJar(type: Jar) {
     classifier = 'api-sources'
     from sourceSets.api.allJava
+}
+
+task vanillaApiSourceJar(type: Jar){
+    classifier = 'vanilla-api-sources'
+    from sourceSets.vanillaApi.allJava
 }
 
 idea {
@@ -239,6 +305,8 @@ task setupCIWorkspace {
 
 shadowJar {
     from sourceSets.main.output
+    from sourceSets.vanillaApi.output
+    from sourceSets.vanilla.output
     from sourceSets.api.output
 
     // Only shadow apache commons-math3
@@ -259,6 +327,9 @@ reobf {
     apiJar {
         classpath = sourceSets.api.compileClasspath
     }
+    vanillaApiJar {
+        classpath = sourceSets.vanillaApi.compileClasspath
+    }
 }
 
 curseforge {
@@ -278,6 +349,9 @@ curseforge {
             addArtifact sourceJar
             addArtifact apiJar
             addArtifact packageJavadoc
+            addArtifact packageVanillaApiJavadoc
+            addArtifact vanillaApiSourceJar
+            addArtifact vanilaApiSourceJar
 
             mainArtifact(shadowJar)
         }
@@ -340,6 +414,9 @@ publishing {
             artifact apiJar
             artifact packageApiJavadoc
             artifact apiSourceJar
+            artifact vanillaApiJar
+            artifact packageVanillaApiJavadoc
+            artifact vanillaApiSourceJar
 
             pom {
                 url = 'https://github.com/ldtteam/Aequivaleo'

@@ -9,8 +9,11 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
+import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -85,6 +88,16 @@ public interface IAequivaleoAPI
      * @return The recipe calculator.
      */
     IRecipeCalculator getRecipeCalculator();
+
+    /**
+     * Returns the aequivaleo mod container.
+     * Allows for the creation of configurations in the name of aequivaleo by its plugins.
+     *
+     * @return The aequivaleo mod container.
+     */
+    default ModContainer getAequivaleoContainer() {
+        return ModList.get().getModContainerById(Constants.MOD_ID).orElseThrow(()->new RuntimeException("Where is Aequivaleo???!"));
+    }
 
     class Holder {
         private static IAequivaleoAPI apiInstance;

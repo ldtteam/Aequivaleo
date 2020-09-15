@@ -76,6 +76,6 @@ public class SyncCompletedMessage implements IMessage
           )
         ));
 
-        PluginManger.getInstance().getPlugins().parallelStream().forEach(IAequivaleoPlugin::onDataSynced);
+        PluginManger.getInstance().run(IAequivaleoPlugin::onDataSynced);
     }
 }

@@ -6,20 +6,21 @@ import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInf
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
+import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
-public final class
-AequivaleoAPI implements IAequivaleoAPI
+public final class AequivaleoAPI implements IAequivaleoAPI
 {
     private static AequivaleoAPI ourInstance = new AequivaleoAPI();
 
@@ -72,5 +73,11 @@ AequivaleoAPI implements IAequivaleoAPI
     public IAequivaleoPluginManager getPluginManager()
     {
         return PluginManger.getInstance();
+    }
+
+    @Override
+    public IRecipeCalculator getRecipeCalculator()
+    {
+        return RecipeCalculator.getInstance();
     }
 }

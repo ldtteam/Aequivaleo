@@ -1,8 +1,9 @@
 package com.ldtteam.aequivaleo.config;
 
+import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import net.minecraftforge.common.ForgeConfigSpec;
 
-public class CommonConfiguration extends AbstractConfiguration
+public class CommonConfiguration extends AbstractAequivaleoConfiguration
 {
 
     public ForgeConfigSpec.BooleanValue jsonPrettyPrint;

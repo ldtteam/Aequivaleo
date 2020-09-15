@@ -24,28 +24,33 @@ public interface IAequivaleoPlugin
     String getId();
 
     /**
+     * Invoked when the plugin is constructed.
+     */
+    default void onConstruction() {};
+
+    /**
      * Called after Aequivaleos common setup completes.
      * Allows for the registration of static (none world specific) data.
      */
-    void onCommonSetup();
+    default void onCommonSetup() {};
 
     /**
      * Called when the data for a world is being reloaded.
      * Allows for the registration of recipes.
      * @param world The world in question for which the data has been reloaded.
      */
-    void onReloadStartedFor(final ServerWorld world);
+    default void onReloadStartedFor(final ServerWorld world) {};
 
     /**
      * Called when the data has been recalculated on the server side.
      * @param world The world in question for which the data has been reloaded.
      */
-    void onReloadFinishedFor(final ServerWorld world);
+    default void onReloadFinishedFor(final ServerWorld world) {};
 
     /**
      * Called on the client side to indicate that the data for all worlds
      * has been synced over from the client.
      */
     @OnlyIn(Dist.CLIENT)
-    void onDataSynced();
+    default void onDataSynced() {};
 }

@@ -83,8 +83,8 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
           .thenRunAsync(() -> {
-              worlds.stream().forEach(world -> {
-                  PluginManger.getInstance().getPlugins().parallelStream().forEach(plugin -> plugin.onReloadFinishedFor(world));
+              worlds.forEach(world -> {
+                  PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world));
                 }
               );
           })

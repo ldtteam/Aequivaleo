@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.config;
+package com.ldtteam.aequivaleo.api.config;
 
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraftforge.common.ForgeConfigSpec.*;
@@ -7,7 +7,7 @@ import net.minecraftforge.fml.ForgeI18n;
 import java.util.List;
 import java.util.function.Predicate;
 
-public abstract class AbstractConfiguration
+public abstract class AbstractAequivaleoConfiguration
 {
     protected void createCategory(final Builder builder, final String key)
     {

@@ -1,7 +1,7 @@
-package com.ldtteam.aequivaleo.recipe.equivalency;
+package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IFurnaceEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.IFurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.Validate;

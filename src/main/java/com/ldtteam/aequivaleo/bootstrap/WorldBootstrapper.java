@@ -9,12 +9,8 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import com.ldtteam.aequivaleo.recipe.equivalency.FurnaceEquivalencyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
-import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
-import com.ldtteam.aequivaleo.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.recipe.equivalency.*;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
-import com.ldtteam.aequivaleo.utils.RecipeUtils;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipe;
 import net.minecraft.item.crafting.ICraftingRecipe;
@@ -96,46 +92,6 @@ public final class WorldBootstrapper
 
     private static void doBootstrapDefaultCraftingRecipes(@NotNull final World world)
     {
-        final List<ICraftingRecipe> craftingRecipes = world.getRecipeManager().func_241447_a_(IRecipeType.CRAFTING);
-        craftingRecipes
-          .parallelStream()
-          .forEach(recipe -> processCraftingRecipe(world, recipe));
-
-        final List<FurnaceRecipe> smeltingRecipe = world.getRecipeManager().func_241447_a_(IRecipeType.SMELTING);
-        smeltingRecipe
-          .parallelStream()
-          .forEach(recipe -> processSmeltingRecipe(world, recipe));
-    }
-
-    private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
-    {
-        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new FurnaceEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
-    }
-
-    private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
-    {
-        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new VanillaCraftingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
-    }
-
-    private static void processIRecipe(
-      @NotNull final World world,
-      IRecipe<?> iRecipe,
-      TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
-    )
-    {
-        if (iRecipe.getRecipeOutput().isEmpty())
-        {
-            return;
-        }
-
-        final List<IEquivalencyRecipe> variants = RecipeUtils.getAllVariants(
-          iRecipe,
-          recipeFactory
-        ).collect(Collectors.toList());
-
-        variants.forEach(recipe -> {
-            EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipe);
-        });
     }
 
     private static void doBootstrapItemStackItemEquivalencies(
@@ -167,7 +123,6 @@ public final class WorldBootstrapper
     private static void doHandlePluginLoad(
       @NotNull final ServerWorld world) {
         LOGGER.info(String.format("Invoking plugin callbacks: %s", world.func_234923_W_().func_240901_a_()));
-
-        PluginManger.getInstance().getPlugins().parallelStream().forEach(plugin -> plugin.onReloadStartedFor(world));
+        PluginManger.getInstance().run(plugin -> plugin.onReloadStartedFor(world));
     }
 }

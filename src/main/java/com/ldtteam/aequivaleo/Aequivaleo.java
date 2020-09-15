@@ -2,9 +2,11 @@ package com.ldtteam.aequivaleo;
 
 import com.ldtteam.aequivaleo.api.AequivaleoAPI;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.network.NetworkChannel;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -30,6 +32,9 @@ public class Aequivaleo
         IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
         networkChannel = new NetworkChannel(Constants.MOD_ID);
+
+        PluginManger.getInstance().detect();
+        PluginManger.getInstance().run(IAequivaleoPlugin::onConstruction);
     }
 
     public static Aequivaleo getInstance()

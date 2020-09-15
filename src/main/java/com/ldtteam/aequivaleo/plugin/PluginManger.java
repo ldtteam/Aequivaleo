@@ -16,6 +16,7 @@ import net.minecraftforge.forgespi.language.ModFileScanData;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class PluginManger implements IAequivaleoPluginManager
@@ -41,6 +42,10 @@ public final class PluginManger implements IAequivaleoPluginManager
     public ImmutableSet<IAequivaleoPlugin> getPlugins()
     {
         return plugins;
+    }
+
+    public void run(Consumer<IAequivaleoPlugin> callback) {
+        getPlugins().parallelStream().forEach(callback);
     }
 
     public void detect() {

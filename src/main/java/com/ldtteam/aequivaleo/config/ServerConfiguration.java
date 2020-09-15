@@ -1,12 +1,13 @@
 package com.ldtteam.aequivaleo.config;
 
+import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
  * Mod server configuration.
  * Loaded serverside, synced on connection.
  */
-public class ServerConfiguration extends AbstractConfiguration
+public class ServerConfiguration extends AbstractAequivaleoConfiguration
 {
     public ForgeConfigSpec.BooleanValue exportGraph;
     public ForgeConfigSpec.BooleanValue writeResultsToLog;
