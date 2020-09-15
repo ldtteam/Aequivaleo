@@ -24,7 +24,7 @@ public class Configuration
     public Configuration(final ModContainer modContainer)
     {
         final Pair<ServerConfiguration, ForgeConfigSpec> ser = new ForgeConfigSpec.Builder().configure(ServerConfiguration::new);
-        server = new ModConfig(ModConfig.Type.SERVER, ser.getRight(), modContainer, "server-vanilla-aequivaleo.toml");
+        server = new ModConfig(ModConfig.Type.SERVER, ser.getRight(), modContainer, "vanilla-aequivaleo-server.toml");
         serverConfig = ser.getLeft();
         modContainer.addConfig(server);
     }
