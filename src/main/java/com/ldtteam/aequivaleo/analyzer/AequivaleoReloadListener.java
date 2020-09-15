@@ -6,6 +6,9 @@ import com.ldtteam.aequivaleo.api.event.OnAnalysisCompleted;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
+import net.minecraft.client.resources.ReloadListener;
+import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IFutureReloadListener;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.MinecraftForge;
@@ -27,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
-public class AequivaleoReloadListener implements ISelectiveResourceReloadListener
+public class AequivaleoReloadListener extends ReloadListener<Object>
 {
 
     private static final Logger LOGGER = LogManager.getLogger(AequivaleoReloadListener.class);
@@ -47,7 +50,13 @@ public class AequivaleoReloadListener implements ISelectiveResourceReloadListene
     }
 
     @Override
-    public void onResourceManagerReload(final IResourceManager resourceManager, final Predicate<IResourceType> resourcePredicate)
+    protected Object prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    {
+        return new Object();
+    }
+
+    @Override
+    protected void apply(final Object objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
         reloadResources();

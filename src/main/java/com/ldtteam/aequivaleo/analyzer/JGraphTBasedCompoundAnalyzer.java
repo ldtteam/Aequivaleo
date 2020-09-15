@@ -145,6 +145,8 @@ public class JGraphTBasedCompoundAnalyzer
         final StatCollector statCollector = new StatCollector(getWorld().func_234923_W_().func_240901_a_(), recipeGraph.vertexSet().size());
         processRecipeGraphUsingBreathFirstSearch(recipeGraph, statCollector);
 
+        statCollector.onCalculationComplete();
+
         for (IAnalysisGraphNode v : recipeGraph
                                       .vertexSet())
         {
@@ -712,20 +714,30 @@ public class JGraphTBasedCompoundAnalyzer
 
         private void onVisitNode() {
             visitedNodes++;
-            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
             final long now = System.currentTimeMillis();
+            
             if (now >= lastReportingTime + (5*1000)) {
                 lastReportingTime = now;
-
-                LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
-                  newPercentage,
-                  worldName,
-                  sourceNodesVisited,
-                  compoundNodesVisited,
-                  ingredientNodesVisited,
-                  recipeNodesVisited,
-                  totalNodes));
+                logState();
             }
+        }
+
+        private void logState()
+        {
+            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
+
+            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
+              newPercentage,
+              worldName,
+              sourceNodesVisited,
+              compoundNodesVisited,
+              ingredientNodesVisited,
+              recipeNodesVisited,
+              totalNodes));
+        }
+
+        private void onCalculationComplete() {
+            logState();
         }
     }
 }
