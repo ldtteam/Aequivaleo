@@ -2,20 +2,14 @@ package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import com.ldtteam.aequivaleo.recipe.equivalency.*;
+import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
+import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.FurnaceRecipe;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
@@ -25,8 +19,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 public final class WorldBootstrapper

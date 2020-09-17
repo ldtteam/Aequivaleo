@@ -300,13 +300,6 @@ task vanillaApiSourceJar(type: Jar){
     from sourceSets.vanillaApi.allJava
 }
 
-idea {
-    module {
-        inheritOutputDirs = true
-        outputDir = project.file("out")
-    }
-}
-
 task setupDecompWorkspace {
     afterEvaluate {
         println "Setup"
