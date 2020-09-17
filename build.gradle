@@ -366,7 +366,6 @@ curseforge {
             addArtifact packageJavadoc
             addArtifact packageVanillaApiJavadoc
             addArtifact vanillaApiSourceJar
-            addArtifact vanilaApiSourceJar
 
             mainArtifact(shadowJar)
         }
@@ -415,6 +414,9 @@ artifacts {
     apiJar
     packageApiJavadoc
     apiSourceJar
+    vanillaApiJar
+    vanillaApiSourceJar
+    packageVanillaApiJavadoc
 }
 
 publishing {
