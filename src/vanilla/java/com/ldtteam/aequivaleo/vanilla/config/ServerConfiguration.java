@@ -60,7 +60,6 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
               ItemTags.MUSIC_DISCS.getName().toString(),
               ItemTags.ARROWS.getName().toString(),
 
-              Tags.Items.ARROWS.getName().toString(),
               Tags.Items.BONES.getName().toString(),
               Tags.Items.BOOKSHELVES.getName().toString(),
               Tags.Items.CHESTS_ENDER.getName().toString(),
@@ -155,7 +154,6 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
               Tags.Items.INGOTS_NETHER_BRICK.getName().toString(),
               Tags.Items.LEATHER.getName().toString(),
               Tags.Items.MUSHROOMS.getName().toString(),
-              Tags.Items.MUSIC_DISCS.getName().toString(),
               Tags.Items.NETHER_STARS.getName().toString(),
               Tags.Items.NETHERRACK.getName().toString(),
               Tags.Items.NUGGETS_GOLD.getName().toString(),

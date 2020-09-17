@@ -123,7 +123,7 @@ minecraft {
             property 'forge.logging.console.level', 'info'
 
             mods {
-                equivalency {
+                aequivaleo {
                     source sourceSets.main
                     source sourceSets.api
                     source sourceSets.vanilla
@@ -142,7 +142,7 @@ minecraft {
             property 'forge.logging.console.level', 'info'
 
             mods {
-                equivalency {
+                aequivaleo {
                     source sourceSets.main
                     source sourceSets.api
                     source sourceSets.vanilla
@@ -163,7 +163,7 @@ minecraft {
             args '--mod', project.modBaseName, '--all', '--output', file('src/generated/resources/'), '--input', file('src/main/resources')
 
             mods {
-                equivalency {
+                aequivaleo {
                     source sourceSets.main
                     source sourceSets.api
                     source sourceSets.vanilla
@@ -213,6 +213,21 @@ task vanillaApiJar(type: Jar) {
     from sourceSets.vanilla.output
     classifier 'vanilla-api'
     baseName project.name
+}
+
+processResources {
+    inputs.property "version", version
+    inputs.property "MCversion", project.exactMinecraftVersion
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META-INF/mods.toml'
+
+        expand 'version': version, 'MCversion': project.exactMinecraftVersion, 'forge_version': project.forgeMinVersion
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'META-INF/mods.toml'
+    }
 }
 
 jar {
@@ -288,6 +303,7 @@ task vanillaApiSourceJar(type: Jar){
 idea {
     module {
         inheritOutputDirs = true
+        outputDir = project.file("out")
     }
 }
 
@@ -336,10 +352,16 @@ curseforge {
     if (System.getenv().CURSEAPIKEY != null && System.getenv().CURSERELEASETYPE != null)
     {
         apiKey = System.getenv().CURSEAPIKEY
+        def additionalVersions = project.additionalMinecraftVersions.split(',');
 
         project {
             id = '404450'
             addGameVersion project.minecraftVersion
+
+            additionalVersions.each {
+                addGameVersion it.trim()
+            }
+
             changelog = file('build/changelog.md')
             changelogType = 'markdown'
             releaseType = System.getenv().CURSERELEASETYPE
