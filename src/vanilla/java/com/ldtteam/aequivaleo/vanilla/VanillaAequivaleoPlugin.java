@@ -12,10 +12,7 @@ import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.FurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
-import net.minecraft.item.crafting.FurnaceRecipe;
-import net.minecraft.item.crafting.ICraftingRecipe;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.*;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -24,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
@@ -70,7 +68,12 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .parallelStream()
           .forEach(recipe -> processCraftingRecipe(world, recipe));
 
-        final List<FurnaceRecipe> smeltingRecipe = world.getRecipeManager().func_241447_a_(IRecipeType.SMELTING);
+        final List<AbstractCookingRecipe> smeltingRecipe = new ArrayList<>();
+        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.SMELTING));
+        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.BLASTING));
+        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.CAMPFIRE_COOKING));
+        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.SMOKING));
+
         smeltingRecipe
           .parallelStream()
           .forEach(recipe -> processSmeltingRecipe(world, recipe));
