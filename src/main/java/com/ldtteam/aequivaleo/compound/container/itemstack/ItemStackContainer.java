@@ -13,13 +13,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
 
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
@@ -145,7 +143,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         }
 
         final ItemStack otherStack = (ItemStack) contents;
-        return Comparators.ID_COMPARATOR.compare(stack, otherStack);
+        return Comparators.ITEM_STACK_COMPARATOR.compare(stack, otherStack);
     }
 
     @Override

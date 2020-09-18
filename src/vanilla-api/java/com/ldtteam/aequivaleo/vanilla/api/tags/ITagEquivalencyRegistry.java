@@ -1,7 +1,8 @@
-package com.ldtteam.aequivaleo.api.tags;
+package com.ldtteam.aequivaleo.vanilla.api.tags;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.util.TagUtils;
+import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ public interface ITagEquivalencyRegistry
      * @return The tag equivalency registry.
      */
     static ITagEquivalencyRegistry getInstance() {
-        return IAequivaleoAPI.getInstance().getTagEquivalencyRegistry();
+        return IVanillaAequivaleoPluginAPI.getInstance().getTagEquivalencyRegistry();
     }
 
     /**

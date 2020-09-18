@@ -8,14 +8,12 @@ import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
-import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
-import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
@@ -43,12 +41,6 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IGameObjectEquivalencyHandlerRegistry getGameObjectEquivalencyHandlerRegistry()
     {
         return GameObjectEquivalencyHandlerRegistry.getInstance();
-    }
-
-    @Override
-    public ITagEquivalencyRegistry getTagEquivalencyRegistry()
-    {
-        return TagEquivalencyRegistry.getInstance();
     }
 
     @Override

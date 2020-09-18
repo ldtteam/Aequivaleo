@@ -1,7 +1,7 @@
-package com.ldtteam.aequivaleo.tags;
+package com.ldtteam.aequivaleo.vanilla.tags;
 
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
+import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import net.minecraft.tags.ITag;
 import org.jetbrains.annotations.NotNull;
 

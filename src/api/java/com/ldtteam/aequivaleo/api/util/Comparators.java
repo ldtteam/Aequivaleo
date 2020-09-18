@@ -2,8 +2,11 @@ package com.ldtteam.aequivaleo.api.util;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.registry.Registry;
+import net.minecraftforge.fluids.FluidStack;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 public final class Comparators
 {
@@ -13,7 +16,7 @@ public final class Comparators
         throw new IllegalStateException("Tried to initialize: Comparators but this is a Utility class.");
     }
 
-    public static final Comparator<ItemStack> ID_COMPARATOR = (itemStack1, itemStack2) -> {
+    public static final Comparator<ItemStack> ITEM_STACK_COMPARATOR = (itemStack1, itemStack2) -> {
 
         if (itemStack1 != null && itemStack2 != null) {
             if (!ItemStackUtils.isEmpty(itemStack1)  && !ItemStackUtils.isEmpty(itemStack2)) {
@@ -70,4 +73,50 @@ public final class Comparators
         }
     };
 
+    public static final Comparator<FluidStack> FLUID_STACK_COMPARATOR = (fluidStack1, fluidStack2) -> {
+
+        if (fluidStack1 != null && fluidStack2 != null) {
+            // Sort on id
+            if (Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid()) == 0) {
+                // Sort on fluid
+                if (fluidStack1.getFluid() == fluidStack2.getFluid()) {
+                    // Then sort on meta
+                    // Then sort on NBT
+                    if (fluidStack1.hasTag() && fluidStack2.hasTag()) {
+                        // Then sort on stack size
+                        if (FluidStack.areFluidStackTagsEqual(fluidStack1, fluidStack2)) {
+                            return (fluidStack1.getAmount() - fluidStack2.getAmount());
+                        }
+                        else {
+                            return fluidStack1.getTag().toString().compareTo(fluidStack2.getTag().toString());
+                        }
+                    }
+                    else if (!(fluidStack1.hasTag()) && fluidStack2.hasTag()) {
+                        return -1;
+                    }
+                    else if (fluidStack1.hasTag() && !(fluidStack2.hasTag())) {
+                        return 1;
+                    }
+                    else {
+                        return (fluidStack1.getAmount() - fluidStack2.getAmount());
+                    }
+                }
+                else {
+                    return Objects.requireNonNull(fluidStack1.getFluid().getRegistryName()).compareTo(fluidStack2.getFluid().getRegistryName());
+                }
+            }
+            else {
+                return Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid());
+            }
+        }
+        else if (fluidStack1 != null) {
+            return -1;
+        }
+        else if (fluidStack2 != null) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+    };
 }

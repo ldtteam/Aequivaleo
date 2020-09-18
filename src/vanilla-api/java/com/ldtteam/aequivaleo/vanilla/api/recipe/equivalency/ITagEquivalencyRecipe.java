@@ -1,5 +1,6 @@
-package com.ldtteam.aequivaleo.api.recipe.equivalency;
+package com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency;
 
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import net.minecraft.tags.ITag;
 
 /**

@@ -8,7 +8,7 @@ import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandler
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
-import com.ldtteam.aequivaleo.tags.TagEquivalencyRegistry;
+import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;

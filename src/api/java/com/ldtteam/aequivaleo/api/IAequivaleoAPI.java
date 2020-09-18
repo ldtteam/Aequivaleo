@@ -3,12 +3,10 @@ package com.ldtteam.aequivaleo.api;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
-import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
-import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
@@ -17,8 +15,8 @@ import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The API for Equivalency.
- * Retrieved via an IMC with a callback.
+ * The API for aequivaleo.
+ * Retrieved via an IMC with a callback or via its {@link #getInstance()} method.
  */
 public interface IAequivaleoAPI
 {
@@ -45,12 +43,6 @@ public interface IAequivaleoAPI
      * @return The registry which handles callbacks for equivalency checks.
      */
     IGameObjectEquivalencyHandlerRegistry getGameObjectEquivalencyHandlerRegistry();
-
-    /**
-     * Gives access to a registry which handles equivalencies via tags.
-     * @return The registry which allows the analysis engine to take tags into account.
-     */
-    ITagEquivalencyRegistry getTagEquivalencyRegistry();
 
     /**
      * Gives access to the registry that holds the recipe information for a given world.

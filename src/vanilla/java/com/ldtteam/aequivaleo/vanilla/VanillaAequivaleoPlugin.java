@@ -7,7 +7,9 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.tags.ITagEquivalencyRegistry;
+import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
+import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
+import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.FurnaceEquivalencyRecipe;
@@ -43,6 +45,8 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     public void onConstruction()
     {
         LOGGER.info("Started Aequivaleo vanilla plugin.");
+        IVanillaAequivaleoPluginAPI.Holder.setInstance(VanillaAequivaleoPluginAPI.getInstance());
+
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
     }
 
