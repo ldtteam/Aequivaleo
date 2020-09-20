@@ -91,7 +91,9 @@ public interface IAequivaleoAPI
      * @return The Gson serialization handler.
      */
     default Gson getGson() {
-        return setupGson().create();
+        return setupGson()
+                 .setPrettyPrinting()
+                 .create();
     }
 
     /**
