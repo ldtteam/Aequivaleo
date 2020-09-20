@@ -130,7 +130,7 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
     @Override
     public ICompoundContainer<?> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
     {
-        if (json.isJsonObject())
+        if (!json.isJsonObject())
             throw new JsonParseException("The given container object is not a json object.");
 
         final JsonPrimitive typeElement = json.getAsJsonObject().getAsJsonPrimitive("type");
