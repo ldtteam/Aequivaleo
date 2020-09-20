@@ -3,8 +3,8 @@ package com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 
 /**
- * Represents a recipe for vanilla crafting.
+ * Represents a recipe for simple crafting.
  */
-public interface IVanillaCraftingEquivalencyRecipe extends IEquivalencyRecipe
+public interface ISimpleEquivalencyRecipe extends IEquivalencyRecipe
 {
 }

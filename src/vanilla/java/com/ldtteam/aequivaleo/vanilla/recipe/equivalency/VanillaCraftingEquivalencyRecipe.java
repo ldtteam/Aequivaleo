@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.IVanillaCraftingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ISimpleEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.Validate;
@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class VanillaCraftingEquivalencyRecipe implements IVanillaCraftingEquivalencyRecipe
+public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecipe
 {
     private final ResourceLocation           recipeName;
     private final SortedSet<IRecipeIngredient> inputs;

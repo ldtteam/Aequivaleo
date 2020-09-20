@@ -5,6 +5,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 /**
  * Represents a furnace recipe.
  */
-public interface IFurnaceEquivalencyRecipe extends IEquivalencyRecipe
+public interface ICookingEquivalencyRecipe extends IEquivalencyRecipe
 {
 }

@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInf
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
+import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
@@ -112,6 +113,13 @@ public interface IAequivaleoAPI
      * @return The builder with the serializers setup as type adapters.
      */
     GsonBuilder setupGson(GsonBuilder builder);
+
+    /**
+     * Gives access to the recipe type processing registry.
+     *
+     * @return The recipe type processing registry.
+     */
+    IRecipeTypeProcessingRegistry getRecipeTypeProcessingRegistry();
 
     /**
      * Returns the aequivaleo mod container.

@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.vanilla;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
+import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
@@ -11,6 +12,7 @@ import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
+import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.FurnaceEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
@@ -61,22 +63,34 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .stream()
           .map(ResourceLocation::new)
           .forEach(ITagEquivalencyRegistry.getInstance()::addTag);
+
+        LOGGER.debug("Registering recipe processing types.");
+        IRecipeTypeProcessingRegistry.getInstance()
+          .registerAs(Constants.SIMPLE_RECIPE_TYPE, IRecipeType.CRAFTING)
+          .registerAs(Constants.COOKING_RECIPE_TYPE, IRecipeType.SMELTING, IRecipeType.BLASTING, IRecipeType.CAMPFIRE_COOKING, IRecipeType.SMOKING);
     }
 
     @Override
     public void onReloadStartedFor(final ServerWorld world)
     {
 
-        final List<ICraftingRecipe> craftingRecipes = world.getRecipeManager().func_241447_a_(IRecipeType.CRAFTING);
+        final List<? extends IRecipe<?>> craftingRecipes = IRecipeTypeProcessingRegistry
+          .getInstance()
+          .getRecipeTypesToBeProcessedAs(Constants.SIMPLE_RECIPE_TYPE)
+          .stream()
+          .flatMap(type -> world.getRecipeManager().func_241447_a_(type).stream())
+          .collect(Collectors.toList());
+
         craftingRecipes
           .parallelStream()
           .forEach(recipe -> processCraftingRecipe(world, recipe));
 
-        final List<AbstractCookingRecipe> smeltingRecipe = new ArrayList<>();
-        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.SMELTING));
-        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.BLASTING));
-        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.CAMPFIRE_COOKING));
-        smeltingRecipe.addAll(world.getRecipeManager().func_241447_a_(IRecipeType.SMOKING));
+        final List<? extends IRecipe<?>> smeltingRecipe = IRecipeTypeProcessingRegistry
+                                                            .getInstance()
+                                                            .getRecipeTypesToBeProcessedAs(Constants.COOKING_RECIPE_TYPE)
+                                                            .stream()
+                                                            .flatMap(type -> world.getRecipeManager().func_241447_a_(type).stream())
+                                                            .collect(Collectors.toList());
 
         smeltingRecipe
           .parallelStream()
