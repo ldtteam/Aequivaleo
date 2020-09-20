@@ -24,7 +24,7 @@ import java.util.Set;
 public abstract class LockedInformationProvider implements IDataProvider
 {
 
-    private final String modName;
+    private final String        modId;
     private final DataGenerator dataGenerator;
     private final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
         @Override
@@ -36,8 +36,8 @@ public abstract class LockedInformationProvider implements IDataProvider
     private final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
 
-    protected LockedInformationProvider(final String modName, final DataGenerator dataGenerator) {
-        this.modName = modName;
+    protected LockedInformationProvider(final String modId, final DataGenerator dataGenerator) {
+        this.modId = modId;
         this.dataGenerator = dataGenerator;
     }
 
@@ -70,7 +70,7 @@ public abstract class LockedInformationProvider implements IDataProvider
       final WorldData worldData
     ) throws IOException
     {
-        final Path dataSavePath = dataGenerator.getOutputFolder().resolve("aequivaleo/locked/" + worldData.getPath());
+        final Path dataSavePath = dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/locked/%s", modId, worldData.getPath()));
         for (Map.Entry<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstance>>> entry : worldData.getDataToWrite().entrySet())
         {
             ICompoundContainer<?> container = entry.getKey();
@@ -96,7 +96,7 @@ public abstract class LockedInformationProvider implements IDataProvider
     @Override
     public String getName()
     {
-        return StringUtils.capitalize(modName) + " locked information data generator.";
+        return StringUtils.capitalize(modId) + " locked information data generator.";
     }
 
     public abstract void calculateDataToSave();
