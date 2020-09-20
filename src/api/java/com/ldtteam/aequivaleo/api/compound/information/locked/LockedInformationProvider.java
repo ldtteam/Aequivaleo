@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class LockedInformationDataGenerator implements IDataProvider
+public abstract class LockedInformationProvider implements IDataProvider
 {
 
     private final String modName;
@@ -36,7 +36,7 @@ public abstract class LockedInformationDataGenerator implements IDataProvider
     private final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
 
-    protected LockedInformationDataGenerator(final String modName, final DataGenerator dataGenerator) {
+    protected LockedInformationProvider(final String modName, final DataGenerator dataGenerator) {
         this.modName = modName;
         this.dataGenerator = dataGenerator;
     }
