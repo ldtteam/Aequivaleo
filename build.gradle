@@ -210,7 +210,7 @@ task apiJar(type: Jar) {
 
 
 task vanillaApiJar(type: Jar) {
-    from sourceSets.vanilla.output
+    from sourceSets.vanillaApi.output
     classifier 'vanilla-api'
     baseName project.name
 }
