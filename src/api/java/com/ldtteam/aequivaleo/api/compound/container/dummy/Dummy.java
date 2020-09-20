@@ -41,6 +41,18 @@ public class Dummy implements ICompoundContainer<Dummy>
         return 0d;
     }
 
+    @Override
+    public boolean canBeLoadedFromDisk()
+    {
+        return false;
+    }
+
+    @Override
+    public String getContentAsFileName()
+    {
+        throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
+    }
+
     /**
      * The originally stored data.
      *

@@ -44,7 +44,7 @@ public abstract class LockedInformationDataGenerator implements IDataProvider
     @Override
     public final void act(final DirectoryCache cache) throws IOException
     {
-        this.save();
+        this.calculateDataToSave();
 
         final Gson gson = IAequivaleoAPI.getInstance().getGson();
 
@@ -99,7 +99,7 @@ public abstract class LockedInformationDataGenerator implements IDataProvider
         return StringUtils.capitalize(modName) + " locked information data generator.";
     }
 
-    public abstract void save();
+    public abstract void calculateDataToSave();
 
     public final void saveData(
       final Object gameObject,
@@ -145,6 +145,9 @@ public abstract class LockedInformationDataGenerator implements IDataProvider
             gameObject,
             1d
           );
+
+        if (!container.canBeLoadedFromDisk())
+            throw new IllegalArgumentException("The given game object can not be saved to disk.");
 
         this.generalData
           .getDataToWrite()
@@ -205,6 +208,9 @@ public abstract class LockedInformationDataGenerator implements IDataProvider
                                                     gameObject,
                                                     1d
                                                   );
+
+        if (!container.canBeLoadedFromDisk())
+            throw new IllegalArgumentException("The given game object can not be saved to disk.");
 
         this.worldDataMap
           .computeIfAbsent(worldId, WorldData::new)
