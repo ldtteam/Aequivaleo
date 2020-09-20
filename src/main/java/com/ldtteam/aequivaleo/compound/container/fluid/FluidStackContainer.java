@@ -24,7 +24,7 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "Fluidstack");
+            setRegistryName(Constants.MOD_ID, "fluidstack");
         }
 
         @NotNull
@@ -105,26 +105,28 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         this.hashCode = stack.writeToNBT(new CompoundNBT()).hashCode();
     }
 
-    /**
-     * The contents of this container. Set to the 1 unit of the content type {@link FluidStack}
-     *
-     * @return The contents.
-     */
     @Override
     public FluidStack getContents()
     {
         return stack;
     }
 
-    /**
-     * The amount of {@link FluidStack}s contained in this wrapper.
-     *
-     * @return The amount.
-     */
     @Override
     public Double getContentsCount()
     {
         return count;
+    }
+
+    @Override
+    public boolean canBeLoadedFromDisk()
+    {
+        return false;
+    }
+
+    @Override
+    public String getContentAsFileName()
+    {
+        throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
     }
 
     @Override

@@ -107,6 +107,19 @@ public class ItemContainer implements ICompoundContainer<Item>
     }
 
     @Override
+    public boolean canBeLoadedFromDisk()
+    {
+        return true;
+    }
+
+    @Override
+    public String getContentAsFileName()
+    {
+        return "item_" + Objects.requireNonNull(getContents().getRegistryName())
+                            .getNamespace() + "_" + getContents().getRegistryName().getPath();
+    }
+
+    @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
         //Dummies are after us. :D

@@ -130,6 +130,18 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     }
 
     @Override
+    public boolean canBeLoadedFromDisk()
+    {
+        return false;
+    }
+
+    @Override
+    public String getContentAsFileName()
+    {
+        throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
+    }
+
+    @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
         //Dummies are after us. :D

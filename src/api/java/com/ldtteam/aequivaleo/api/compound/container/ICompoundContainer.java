@@ -20,4 +20,21 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
      * @return The amount.
      */
     Double getContentsCount();
+
+    /**
+     * Indicates if this containers locked information
+     * can be loaded from disk.
+     *
+     * This if for example false for ItemStacks.
+     *
+     * @return True to indicate that data can be loaded form disk, false when not.
+     */
+    boolean canBeLoadedFromDisk();
+
+    /**
+     * Gives access to the content as a filename.
+     *
+     * @return a file name that represents the content.
+     */
+    String getContentAsFileName();
 }

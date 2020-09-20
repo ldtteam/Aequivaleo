@@ -25,7 +25,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "Fluid");
+            setRegistryName(Constants.MOD_ID, "fluid");
         }
 
         @NotNull
@@ -83,27 +83,29 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         this.hashCode = Objects.requireNonNull(fluid.getRegistryName()).hashCode();
     }
 
-    /**
-     * The contents of this container.
-     * Set to the 1 unit of the content type {@link Fluid}
-     *
-     * @return The contents.
-     */
     @Override
     public Fluid getContents()
     {
         return fluid;
     }
 
-    /**
-     * The amount of {@link Fluid}s contained in this wrapper.
-     *
-     * @return The amount.
-     */
     @Override
     public Double getContentsCount()
     {
         return count;
+    }
+
+    @Override
+    public boolean canBeLoadedFromDisk()
+    {
+        return true;
+    }
+
+    @Override
+    public String getContentAsFileName()
+    {
+        return "fluid_" + Objects.requireNonNull(getContents().getRegistryName())
+          .getNamespace() + "_" + getContents().getRegistryName().getPath();
     }
 
     @Override

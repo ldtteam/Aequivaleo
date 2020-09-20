@@ -1,7 +1,10 @@
 package com.ldtteam.aequivaleo.api;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
@@ -12,6 +15,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,6 +84,32 @@ public interface IAequivaleoAPI
      * @return The recipe calculator.
      */
     IRecipeCalculator getRecipeCalculator();
+
+    /**
+     * Sets up a new Gson instance and create the serialization handler.
+     *
+     * @return The Gson serialization handler.
+     */
+    default Gson getGson() {
+        return setupGson().create();
+    }
+
+    /**
+     * Setups a new {@link GsonBuilder} to use with Aequivaleos serializers.
+     *
+     * @return The new {@link GsonBuilder} setup to be used with Aequivaleo.
+     */
+    default GsonBuilder setupGson() {
+        return setupGson(new GsonBuilder());
+    }
+
+    /**
+     * Allows for Aequivaleo to inject its serialization handlers into the given {@link GsonBuilder}.
+     *
+     * @param builder The builder to inject serializers into.
+     * @return The builder with the serializers setup as type adapters.
+     */
+    GsonBuilder setupGson(GsonBuilder builder);
 
     /**
      * Returns the aequivaleo mod container.

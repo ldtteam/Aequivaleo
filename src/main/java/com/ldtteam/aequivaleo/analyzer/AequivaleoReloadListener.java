@@ -1,14 +1,25 @@
 package com.ldtteam.aequivaleo.analyzer;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceData;
+import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
+import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -18,17 +29,24 @@ import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
-public class AequivaleoReloadListener extends ReloadListener<Object>
+public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocation, List<CompoundInstanceData>>>
 {
+    private static final String JSON_EXTENSION = ".json";
+    private static final int JSON_EXTENSION_LENGTH = JSON_EXTENSION.length();
 
     private static final Logger LOGGER = LogManager.getLogger(AequivaleoReloadListener.class);
+    private static final ResourceLocation GENERAL_DATA_NAME = new ResourceLocation(Constants.MOD_ID, "general");
 
     @SubscribeEvent
     public static void onAddReloadListener(final AddReloadListenerEvent reloadListenerEvent)
@@ -41,28 +59,87 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
     public static void onServerStarted(final FMLServerStartedEvent serverStartedEvent)
     {
         LOGGER.info("Building initial equivalency graph.");
-        reloadResources();
+        reloadResources(parseData(serverStartedEvent.getServer().getDataPackRegistries().getResourceManager()));
     }
 
     @Override
-    protected Object prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected Map<ResourceLocation, List<CompoundInstanceData>> prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
     {
-        return new Object();
+        return parseData(resourceManagerIn);
     }
 
     @Override
-    protected void apply(final Object objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected void apply(final Map<ResourceLocation, List<CompoundInstanceData>> objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
-        reloadResources();
+        reloadResources(objectIn);
     }
 
-    private static void reloadResources()
-    {
+    private static Map<ResourceLocation, List<CompoundInstanceData>> parseData(final IResourceManager resourceManager) {
         if (ServerLifecycleHooks.getCurrentServer() == null)
         {
-            return;
+            return ImmutableMap.of();
         }
+
+        final Map<ResourceLocation, List<CompoundInstanceData>> data = new HashMap<>();
+        final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
+
+        data.put(
+          GENERAL_DATA_NAME,
+          read(
+            resourceManager,
+          "aequivaleo/locking/general"
+          )
+        );
+
+        worlds.forEach(world -> {
+            final String path = "aequivaleo/locking/" + world.func_234923_W_().func_240901_a_().getNamespace() + "/" + world.func_234923_W_().func_240901_a_().getPath();
+
+            data.put(
+              world.func_234923_W_().func_240901_a_(),
+              read(
+                resourceManager,
+                path
+              )
+            );
+        });
+
+        return data;
+    }
+
+    private static List<CompoundInstanceData> read(final IResourceManager resourceManager, final String targetPath)  {
+        final List<CompoundInstanceData> collectedData = Lists.newArrayList();
+        final int targetPathLength = targetPath.length() + 1; //Account for the seperator.
+
+        final Gson gson = IAequivaleoAPI.getInstance().getGson();
+
+        resourceManager.getAllResourceLocations(targetPath, s -> s.endsWith(JSON_EXTENSION)).forEach(resourceLocation -> {
+            String locationPath = resourceLocation.getPath();
+            ResourceLocation resourceLocationWithoutExtension = new ResourceLocation(resourceLocation.getNamespace(), locationPath.substring(targetPathLength, locationPath.length() - JSON_EXTENSION_LENGTH));
+
+            try (
+              IResource iresource = resourceManager.getResource(resourceLocation);
+              InputStream inputstream = iresource.getInputStream();
+              Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8));
+            ) {
+                CompoundInstanceData data = gson.fromJson(reader, CompoundInstanceDataSerializer.HANDLED_TYPE);
+                if (data != null) {
+                    collectedData.add(data);
+                } else {
+                    LOGGER.error("Couldn't load data file {} from {} as it's null or empty", resourceLocationWithoutExtension, resourceLocation);
+                }
+            } catch (IllegalArgumentException | IOException | JsonParseException jsonparseexception) {
+                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, jsonparseexception);
+            }
+        });
+
+        return collectedData;
+    }
+
+    private static void reloadResources(final Map<ResourceLocation, List<CompoundInstanceData>> data)
+    {
+        if (data.isEmpty() || ServerLifecycleHooks.getCurrentServer() == null)
+            return;
 
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
@@ -78,7 +155,12 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
         });
 
         CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
-          new AequivaleoWorldAnalysisRunner(world),
+          new AequivaleoWorldAnalysisRunner(
+            data.get(GENERAL_DATA_NAME),
+            world,
+            data.get(world.func_234923_W_().func_240901_a_()
+            )
+          ),
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
@@ -94,9 +176,18 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
     private static class AequivaleoWorldAnalysisRunner implements Runnable
     {
 
+        private final List<CompoundInstanceData> generalData;
         private final ServerWorld serverWorld;
+        private final List<CompoundInstanceData> worldData;
 
-        private AequivaleoWorldAnalysisRunner(final ServerWorld serverWorld) {this.serverWorld = serverWorld;}
+        private AequivaleoWorldAnalysisRunner(
+          final List<CompoundInstanceData> generalData,
+          final ServerWorld serverWorld,
+          final List<CompoundInstanceData> worldData) {
+            this.generalData = generalData;
+            this.serverWorld = serverWorld;
+            this.worldData = worldData;
+        }
 
         @Override
         public void run()
@@ -109,12 +200,50 @@ public class AequivaleoReloadListener extends ReloadListener<Object>
             LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
             try {
                 WorldBootstrapper.onWorldReload(getServerWorld());
+
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> generalGroupedData = groupDataByContainer(generalData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> worldGroupedData = groupDataByContainer(worldData);
+
+                final Map<ICompoundContainer<?>, Set<CompoundInstance>> targetMap = Maps.newHashMap();
+
+                final Set<ICompoundContainer<?>> keySets = ImmutableSet.<ICompoundContainer<?>>builder()
+                  .addAll(generalGroupedData.keySet())
+                  .addAll(worldGroupedData.keySet())
+                  .build();
+
+                keySets.forEach(container -> {
+                    generalGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                    .ordinal())).forEachOrdered(
+                        compoundInstanceData -> compoundInstanceData.handle(targetMap)
+                    );
+
+                    worldGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                    .ordinal())).forEachOrdered(
+                      compoundInstanceData -> compoundInstanceData.handle(targetMap)
+                    );
+                });
+
+                targetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().func_234923_W_())
+                  ::registerLocking);
+
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
                 ResultsInformationCache.getInstance(getServerWorld().func_234923_W_()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {
                 LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().func_234923_W_().func_240901_a_()), t);
             }
             LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
+        }
+
+        private static Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
+            return GroupingUtils.groupBy(
+              data,
+              CompoundInstanceData::getContainer
+            )
+              .stream()
+              .collect(Collectors.toMap(
+                c -> c.iterator().next().getContainer(),
+                Function.identity()
+              ));
         }
 
         public ServerWorld getServerWorld()

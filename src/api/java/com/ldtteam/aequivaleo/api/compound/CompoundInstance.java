@@ -1,7 +1,13 @@
 package com.ldtteam.aequivaleo.api.compound;
 
+import com.google.gson.*;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
+import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.Type;
+import java.util.Objects;
 
 public final class CompoundInstance implements Comparable<CompoundInstance>
 {

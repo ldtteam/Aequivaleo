@@ -1,7 +1,5 @@
 package com.ldtteam.aequivaleo.compound.container.registry;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
@@ -15,14 +13,18 @@ import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.Validate.notNull;
 
 public class CompoundContainerFactoryManager implements ICompoundContainerFactoryManager
 {
+
+    public static final Type HANDLED_TYPE = ICompoundContainer.class;
 
     private static final CompoundContainerFactoryManager INSTANCE = new CompoundContainerFactoryManager();
 
