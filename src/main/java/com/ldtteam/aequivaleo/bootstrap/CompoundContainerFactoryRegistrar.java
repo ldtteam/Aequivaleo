@@ -11,9 +11,11 @@ import com.ldtteam.aequivaleo.compound.container.itemstack.ItemContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryInternal;
 import net.minecraftforge.registries.RegistryManager;
@@ -35,6 +37,12 @@ public final class CompoundContainerFactoryRegistrar
               CompoundContainerFactoryManager.getInstance().bake();
           }).create();
         ModRegistries.CONTAINER_FACTORY = RegistryManager.ACTIVE.getRegistry(ICompoundContainerFactory.class);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onDataGeneration(GatherDataEvent event) {
+        LOGGER.info("Data generation triggered. Baking container factory manager.");
+        CompoundContainerFactoryManager.getInstance().bake();
     }
 
     @SubscribeEvent
