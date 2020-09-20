@@ -3,18 +3,19 @@ package com.ldtteam.aequivaleo.compound.data.serializers;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.util.ResourceLocation;
 
 import java.lang.reflect.Type;
 
-public final class CompoundInstanceSerializer implements JsonSerializer<CompoundInstance>, JsonDeserializer<CompoundInstance>
+public final class CompoundInstanceRefSerializer implements JsonSerializer<CompoundInstanceRef>, JsonDeserializer<CompoundInstanceRef>
 {
 
-    public static final Type HANDLED_TYPE = CompoundInstance.class;
+    public static final Type HANDLED_TYPE = CompoundInstanceRef.class;
 
     @Override
-    public CompoundInstance deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+    public CompoundInstanceRef deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
     {
         if (!json.isJsonObject())
         {
@@ -30,18 +31,18 @@ public final class CompoundInstanceSerializer implements JsonSerializer<Compound
             return null;
         }
 
-        return new CompoundInstance(
-          ModRegistries.COMPOUND_TYPE.getValue(location),
+        return new CompoundInstanceRef(
+          location,
           count
         );
     }
 
     @Override
-    public JsonElement serialize(final CompoundInstance src, final Type typeOfSrc, final JsonSerializationContext context)
+    public JsonElement serialize(final CompoundInstanceRef src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonObject object = new JsonObject();
         object.addProperty("amount", src.getAmount());
-        object.add("type", context.serialize(src.getType().getRegistryName()));
+        object.add("type", context.serialize(src.getType()));
 
         return object;
     }

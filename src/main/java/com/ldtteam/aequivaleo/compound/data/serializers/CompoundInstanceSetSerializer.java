@@ -22,7 +22,7 @@ public final class CompoundInstanceSetSerializer implements JsonSerializer<Set<C
         final Set<CompoundInstance> result = Sets.newHashSet();
         array.forEach(jsonElement -> {
             result.add(
-              context.deserialize(jsonElement, CompoundInstanceSerializer.HANDLED_TYPE)
+              context.deserialize(jsonElement, CompoundInstanceRefSerializer.HANDLED_TYPE)
             );
         });
         return result;

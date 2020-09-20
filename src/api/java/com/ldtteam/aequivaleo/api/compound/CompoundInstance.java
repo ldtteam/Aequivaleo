@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.api.compound;
 
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -91,5 +92,12 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
                  "type=" + type +
                  ", amount=" + amount +
                  '}';
+    }
+
+    public CompoundInstanceRef asRef() {
+        return new CompoundInstanceRef(
+          getType().getRegistryName(),
+          getAmount()
+        );
     }
 }

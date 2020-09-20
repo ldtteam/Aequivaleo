@@ -8,6 +8,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DirectoryCache;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class LockedInformationProvider implements IDataProvider
 {
@@ -71,10 +73,10 @@ public abstract class LockedInformationProvider implements IDataProvider
     ) throws IOException
     {
         final Path dataSavePath = dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/locked/%s", modId, worldData.getPath()));
-        for (Map.Entry<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstance>>> entry : worldData.getDataToWrite().entrySet())
+        for (Map.Entry<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstanceRef>>> entry : worldData.getDataToWrite().entrySet())
         {
             ICompoundContainer<?> container = entry.getKey();
-            Pair<Boolean, Set<CompoundInstance>> instancesAndReplacing = entry.getValue();
+            Pair<Boolean, Set<CompoundInstanceRef>> instancesAndReplacing = entry.getValue();
             final CompoundInstanceData data =
               new CompoundInstanceData(
                 instancesAndReplacing.getLeft() ? CompoundInstanceData.Mode.REPLACING : CompoundInstanceData.Mode.ADDITIVE,
@@ -101,43 +103,43 @@ public abstract class LockedInformationProvider implements IDataProvider
 
     public abstract void calculateDataToSave();
 
-    public final void saveData(
+    public final void saveDataRefs(
       final Object gameObject,
-      final CompoundInstance... instances
+      final CompoundInstanceRef... instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           gameObject,
           Sets.newHashSet(instances)
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final Object gameObject,
       final boolean replacing,
-      final CompoundInstance... instances
+      final CompoundInstanceRef... instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           gameObject,
           replacing,
           Sets.newHashSet(instances)
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final Object gameObject,
-      final Set<CompoundInstance> instances
+      final Set<CompoundInstanceRef> instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           gameObject,
           false,
           Sets.newHashSet(instances)
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final Object gameObject,
       final boolean replacing,
-      final Set<CompoundInstance> instances
+      final Set<CompoundInstanceRef> instances
     ) {
         final ICompoundContainer<?> container = ICompoundContainerFactoryManager
           .getInstance()
@@ -157,25 +159,25 @@ public abstract class LockedInformationProvider implements IDataProvider
           );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final ResourceLocation worldId,
       final Object gameObject,
-      final CompoundInstance... instances
+      final CompoundInstanceRef... instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           worldId,
           gameObject,
           Sets.newHashSet(instances)
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final ResourceLocation worldId,
       final Object gameObject,
       final boolean replacing,
-      final CompoundInstance... instances
+      final CompoundInstanceRef... instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           worldId,
           gameObject,
           replacing,
@@ -183,12 +185,12 @@ public abstract class LockedInformationProvider implements IDataProvider
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final ResourceLocation worldId,
       final Object gameObject,
-      final Set<CompoundInstance> instances
+      final Set<CompoundInstanceRef> instances
     ) {
-        this.saveData(
+        this.saveDataRefs(
           worldId,
           gameObject,
           false,
@@ -196,11 +198,11 @@ public abstract class LockedInformationProvider implements IDataProvider
         );
     }
 
-    public final void saveData(
+    public final void saveDataRefs(
       final ResourceLocation worldId,
       final Object gameObject,
       final boolean replacing,
-      final Set<CompoundInstance> instances
+      final Set<CompoundInstanceRef> instances
     ) {
         final ICompoundContainer<?> container = ICompoundContainerFactoryManager
                                                   .getInstance()
@@ -221,9 +223,107 @@ public abstract class LockedInformationProvider implements IDataProvider
           );
     }
 
+    public final void saveData(
+      final Object gameObject,
+      final CompoundInstance... instances
+    ) {
+        this.saveData(
+          gameObject,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final Object gameObject,
+      final boolean replacing,
+      final CompoundInstance... instances
+    ) {
+        this.saveData(
+          gameObject,
+          replacing,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final Object gameObject,
+      final Set<CompoundInstance> instances
+    ) {
+        this.saveData(
+          gameObject,
+          false,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final Object gameObject,
+      final boolean replacing,
+      final Set<CompoundInstance> instances
+    ) {
+        this.saveDataRefs(
+          gameObject,
+          replacing,
+          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
+        );
+    }
+
+    public final void saveData(
+      final ResourceLocation worldId,
+      final Object gameObject,
+      final CompoundInstance... instances
+    ) {
+        this.saveData(
+          worldId,
+          gameObject,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final ResourceLocation worldId,
+      final Object gameObject,
+      final boolean replacing,
+      final CompoundInstance... instances
+    ) {
+        this.saveData(
+          worldId,
+          gameObject,
+          replacing,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final ResourceLocation worldId,
+      final Object gameObject,
+      final Set<CompoundInstance> instances
+    ) {
+        this.saveData(
+          worldId,
+          gameObject,
+          false,
+          Sets.newHashSet(instances)
+        );
+    }
+
+    public final void saveData(
+      final ResourceLocation worldId,
+      final Object gameObject,
+      final boolean replacing,
+      final Set<CompoundInstance> instances
+    ) {
+        this.saveDataRefs(
+          worldId,
+          gameObject,
+          replacing,
+          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
+        );
+    }
+
     private static class WorldData {
         private final ResourceLocation worldId;
-        private final Map<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstance>>> dataToWrite = Maps.newHashMap();
+        private final Map<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstanceRef>>> dataToWrite = Maps.newHashMap();
 
         private WorldData(final ResourceLocation worldId) {
             this.worldId = worldId;
@@ -234,7 +334,7 @@ public abstract class LockedInformationProvider implements IDataProvider
             return worldId;
         }
 
-        public Map<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstance>>> getDataToWrite()
+        public Map<ICompoundContainer<?>, Pair<Boolean, Set<CompoundInstanceRef>>> getDataToWrite()
         {
             return dataToWrite;
         }
