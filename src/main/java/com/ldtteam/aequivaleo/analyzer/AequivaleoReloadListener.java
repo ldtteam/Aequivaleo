@@ -93,7 +93,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
         );
 
         worlds.forEach(world -> {
-            final String path = "aequivaleo/locking/" + world.func_234923_W_().func_240901_a_().getNamespace() + "/" + world.func_234923_W_().func_240901_a_().getPath();
+            final String path = "aequivaleo/locked/" + world.func_234923_W_().func_240901_a_().getNamespace() + "/" + world.func_234923_W_().func_240901_a_().getPath();
 
             data.put(
               world.func_234923_W_().func_240901_a_(),
