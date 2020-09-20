@@ -28,6 +28,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -88,7 +89,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
           GENERAL_DATA_NAME,
           read(
             resourceManager,
-          "aequivaleo/locking/general"
+          "aequivaleo/locked/general"
           )
         );
 
@@ -107,7 +108,8 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
         return data;
     }
 
-    private static List<CompoundInstanceData> read(final IResourceManager resourceManager, final String targetPath)  {
+    @NotNull
+    private static List<CompoundInstanceData> read(@NotNull final IResourceManager resourceManager, @NotNull final String targetPath)  {
         final List<CompoundInstanceData> collectedData = Lists.newArrayList();
         final int targetPathLength = targetPath.length() + 1; //Account for the seperator.
 
