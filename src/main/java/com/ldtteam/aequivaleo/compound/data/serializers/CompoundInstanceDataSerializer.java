@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.compound.data.serializers;
 
 import com.google.gson.*;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceData;
 
@@ -22,7 +22,7 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
         final JsonObject object = json.getAsJsonObject();
         final CompoundInstanceData.Mode mode = object.has("mode") ? context.deserialize(object.get("mode"), CompoundInstanceDataModeSerializer.HANDLED_TYPE) : CompoundInstanceData.Mode.ADDITIVE;
         final ICompoundContainer<?> container = context.deserialize(object.get("target"), CompoundContainerFactoryManager.HANDLED_TYPE);
-        final Set<CompoundInstance> instances = context.deserialize(object.get("compounds"), CompoundInstanceSetSerializer.HANDLED_TYPE);
+        final Set<CompoundInstanceRef> instances = context.deserialize(object.get("compounds"), CompoundInstanceRefSetSerializer.HANDLED_TYPE);
 
         return new CompoundInstanceData(
           mode,
@@ -38,7 +38,7 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
 
          result.add("mode", context.serialize(src.getMode(), CompoundInstanceDataModeSerializer.HANDLED_TYPE));
          result.add("target", context.serialize(src.getContainer(), CompoundContainerFactoryManager.HANDLED_TYPE));
-         result.add("compounds", context.serialize(src.getCompoundInstances(), CompoundInstanceSetSerializer.HANDLED_TYPE));
+         result.add("compounds", context.serialize(src.getCompoundInstances(), CompoundInstanceRefSetSerializer.HANDLED_TYPE));
 
          return result;
     }

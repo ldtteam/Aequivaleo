@@ -14,7 +14,7 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataModeSerializer;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceRefSerializer;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceSetSerializer;
+import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceRefSetSerializer;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
@@ -88,7 +88,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
                  .registerTypeAdapter(CompoundInstanceDataModeSerializer.HANDLED_TYPE, new CompoundInstanceDataModeSerializer())
                  .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSerializer.HANDLED_TYPE, new CompoundInstanceRefSerializer())
-                 .registerTypeAdapter(CompoundInstanceSetSerializer.HANDLED_TYPE, new CompoundInstanceSetSerializer())
+                 .registerTypeAdapter(CompoundInstanceRefSetSerializer.HANDLED_TYPE, new CompoundInstanceRefSetSerializer())
                  .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
                  .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
     }

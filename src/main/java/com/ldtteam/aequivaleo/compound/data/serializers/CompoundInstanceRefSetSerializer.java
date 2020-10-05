@@ -4,22 +4,23 @@ import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
 
 import java.lang.reflect.Type;
 import java.util.Set;
 
-public final class CompoundInstanceSetSerializer implements JsonSerializer<Set<CompoundInstance>>, JsonDeserializer<Set<CompoundInstance>>
+public final class CompoundInstanceRefSetSerializer implements JsonSerializer<Set<CompoundInstanceRef>>, JsonDeserializer<Set<CompoundInstanceRef>>
 {
-    public static final Type HANDLED_TYPE = new TypeToken<Set<CompoundInstance>>(){}.getType();
+    public static final Type HANDLED_TYPE = new TypeToken<Set<CompoundInstanceRef>>(){}.getType();
 
     @Override
-    public Set<CompoundInstance> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+    public Set<CompoundInstanceRef> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
     {
         if (!json.isJsonArray())
             throw new JsonParseException("For a Set<CompoundInstance> an array is required.");
 
         final JsonArray array = json.getAsJsonArray();
-        final Set<CompoundInstance> result = Sets.newHashSet();
+        final Set<CompoundInstanceRef> result = Sets.newHashSet();
         array.forEach(jsonElement -> {
             result.add(
               context.deserialize(jsonElement, CompoundInstanceRefSerializer.HANDLED_TYPE)
@@ -29,7 +30,7 @@ public final class CompoundInstanceSetSerializer implements JsonSerializer<Set<C
     }
 
     @Override
-    public JsonElement serialize(final Set<CompoundInstance> src, final Type typeOfSrc, final JsonSerializationContext context)
+    public JsonElement serialize(final Set<CompoundInstanceRef> src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonArray result = new JsonArray();
         src.forEach(instance -> {
