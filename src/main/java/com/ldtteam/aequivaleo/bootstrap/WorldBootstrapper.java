@@ -47,8 +47,8 @@ public final class WorldBootstrapper
 
     private static void resetDataForWorld(final World world)
     {
-        LockedCompoundInformationRegistry.getInstance(world.func_234923_W_()).reset();
-        EquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).reset();
+        LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).reset();
+        EquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).reset();
     }
 
     private static void doBootstrapTagInformation(final World world)
@@ -73,7 +73,7 @@ public final class WorldBootstrapper
             {
                 if (!GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
                 {
-                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                    EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
                       .register(
                         new TagEquivalencyRecipe<>(
                           tag,
@@ -104,7 +104,7 @@ public final class WorldBootstrapper
                 final ICompoundContainer<?> itemContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
                 final ICompoundContainer<?> itemStackContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(group.get(0), group.get(0).getCount());
 
-                EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
                   .register(new InstancedEquivalency(
                     false, itemContainer, itemStackContainer
                   ))
@@ -117,7 +117,7 @@ public final class WorldBootstrapper
 
     private static void doHandlePluginLoad(
       @NotNull final ServerWorld world) {
-        LOGGER.info(String.format("Invoking plugin callbacks: %s", world.func_234923_W_().func_240901_a_()));
+        LOGGER.info(String.format("Invoking plugin callbacks: %s", world.getDimensionKey().getLocation()));
         PluginManger.getInstance().run(plugin -> plugin.onReloadStartedFor(world));
     }
 }

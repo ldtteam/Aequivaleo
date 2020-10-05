@@ -68,7 +68,7 @@ public class SyncCompletedMessage implements IMessage
           );
 
         ResultsInformationCache.getInstance(
-          RegistryKey.func_240903_a_(Registry.WORLD_KEY, worldKeyName)
+          RegistryKey.getOrCreateKey(Registry.WORLD_KEY, worldKeyName)
         ).set(partialPackets.stream().collect(
           Collectors.toMap(
             Map.Entry::getKey,

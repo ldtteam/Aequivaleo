@@ -28,8 +28,8 @@ public final class TagUtils
         return result;
     }
 
-    public static <T> Optional<ITag.INamedTag<T>> getTag(final TagCollection<T> tTagCollection, final ResourceLocation location) {
-        return Optional.ofNullable(tTagCollection.getTagMap().get(location))
+    public static <T> Optional<ITag.INamedTag<T>> getTag(final ITagCollection<T> tTagCollection, final ResourceLocation location) {
+        return Optional.ofNullable(tTagCollection.getIDTagMap().get(location))
                  .filter(ITag.INamedTag.class::isInstance)
                  .map(tag -> (ITag.INamedTag<T>) tag);
     }

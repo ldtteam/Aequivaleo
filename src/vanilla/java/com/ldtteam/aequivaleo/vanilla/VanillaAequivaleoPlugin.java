@@ -102,7 +102,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
     private static List<IRecipe<?>> getRecipes(final IRecipeType type, final World world)
     {
-        final List<? extends IRecipe<?>> recipes = world.getRecipeManager().func_241447_a_(type);
+        final List<? extends IRecipe<?>> recipes = world.getRecipeManager().getRecipesForType(type);
         final List<IRecipe<?>> result = Lists.newArrayList(recipes);
         return result;
     }
@@ -134,7 +134,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         ).collect(Collectors.toList());
 
         variants.forEach(recipe -> {
-            IEquivalencyRecipeRegistry.getInstance(world.func_234923_W_()).register(recipe);
+            IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(recipe);
         });
     }
 }

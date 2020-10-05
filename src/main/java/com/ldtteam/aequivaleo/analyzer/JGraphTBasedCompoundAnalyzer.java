@@ -50,7 +50,7 @@ public class JGraphTBasedCompoundAnalyzer
         final Map<ICompoundContainer<?>, IAnalysisGraphNode> compoundNodes = new TreeMap<>();
         final Map<IRecipeIngredient, IAnalysisGraphNode> ingredientNodes = new TreeMap<>();
 
-        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
                                            .get())
         {
             final IAnalysisGraphNode recipeGraphNode = new RecipeGraphNode(recipe);
@@ -97,7 +97,7 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        for (ICompoundContainer<?> lockedWrapper : LockedCompoundInformationRegistry.getInstance(world.func_234923_W_()).get().keySet())
+        for (ICompoundContainer<?> lockedWrapper : LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).get().keySet())
         {
             if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(lockedWrapper)))
             {
@@ -116,7 +116,7 @@ public class JGraphTBasedCompoundAnalyzer
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
-            GraphIOHandler.getInstance().export(world.func_234923_W_().func_240901_a_().toString().replace(":", "_").concat(".json"), recipeGraph);
+            GraphIOHandler.getInstance().export(world.getDimensionKey().getLocation().toString().replace(":", "_").concat(".json"), recipeGraph);
 
         final Set<ContainerWrapperGraphNode> rootNodes = findRootNodes(recipeGraph);
 
@@ -142,7 +142,7 @@ public class JGraphTBasedCompoundAnalyzer
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
 
-        final StatCollector statCollector = new StatCollector(getWorld().func_234923_W_().func_240901_a_(), recipeGraph.vertexSet().size());
+        final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation(), recipeGraph.vertexSet().size());
         processRecipeGraphUsingBreathFirstSearch(recipeGraph, statCollector);
 
         statCollector.onCalculationComplete();
@@ -172,15 +172,15 @@ public class JGraphTBasedCompoundAnalyzer
         if (Aequivaleo.getInstance().getConfiguration().getServer().writeResultsToLog.get()) {
             synchronized (ANALYSIS_LOCK)
             {
-                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().func_234923_W_().func_240901_a_()));
+                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
                 for (ContainerWrapperGraphNode node : notDefinedGraphNodes)
                 {
                     AequivaleoLogger.bigWarningMessage(String.format("Missing root information for: %s. Removing from recipe graph.", node.getWrapper()));
                     recipeGraph.removeVertex(node);
                 }
-                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().func_234923_W_().func_240901_a_()));
+                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
 
-                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().func_234923_W_().func_240901_a_()));
+                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().getDimensionKey().getLocation()));
                 for (Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>> entry : resultingCompounds.entrySet())
                 {
                     ICompoundContainer<?> wrapper = entry.getKey();
@@ -188,10 +188,10 @@ public class JGraphTBasedCompoundAnalyzer
                     if (!compounds.isEmpty())
                         AequivaleoLogger.bigWarningMessage("{}: {}", wrapper, compounds);
                 }
-                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().func_234923_W_().func_240901_a_()));
+                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().getDimensionKey().getLocation()));
             }
         } else {
-            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", getWorld().func_234923_W_().func_240901_a_()));
+            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", getWorld().getDimensionKey().getLocation()));
         }
 
         this.results = resultingCompounds;
@@ -655,7 +655,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     private Set<CompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<CompoundInstance> lockedInstances = LockedCompoundInformationRegistry.getInstance(world.func_234923_W_())
+        final Set<CompoundInstance> lockedInstances = LockedCompoundInformationRegistry.getInstance(world.getDimensionKey())
                                                          .get()
                                                          .get(createUnitWrapper(wrapper));
 

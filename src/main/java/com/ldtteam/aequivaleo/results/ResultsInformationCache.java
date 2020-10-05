@@ -77,7 +77,7 @@ public class ResultsInformationCache implements IResultsInformationCache
             NetworkSplittingManager.getInstance().sendSplit(
               Lists.newArrayList(data.cacheData.entrySet()),
               PartialSyncResultsMessage::new,
-              integer -> new SyncCompletedMessage(integer, key.func_240901_a_()),
+              integer -> new SyncCompletedMessage(integer, key.getLocation()),
               message -> Aequivaleo.getInstance().getNetworkChannel().sendToEveryone(message)
             );
         });
@@ -88,7 +88,7 @@ public class ResultsInformationCache implements IResultsInformationCache
             NetworkSplittingManager.getInstance().sendSplit(
               Lists.newArrayList(data.cacheData.entrySet()),
               PartialSyncResultsMessage::new,
-              integer -> new SyncCompletedMessage(integer, key.func_240901_a_()),
+              integer -> new SyncCompletedMessage(integer, key.getLocation()),
               message -> Aequivaleo.getInstance().getNetworkChannel().sendToPlayer(message, player)
             );
         });

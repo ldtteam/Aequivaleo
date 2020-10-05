@@ -94,10 +94,10 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
         );
 
         worlds.forEach(world -> {
-            final String path = "aequivaleo/locked/" + world.func_234923_W_().func_240901_a_().getNamespace() + "/" + world.func_234923_W_().func_240901_a_().getPath();
+            final String path = "aequivaleo/locked/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
 
             data.put(
-              world.func_234923_W_().func_240901_a_(),
+              world.getDimensionKey().getLocation(),
               read(
                 resourceManager,
                 path
@@ -160,7 +160,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
           new AequivaleoWorldAnalysisRunner(
             data.get(GENERAL_DATA_NAME),
             world,
-            data.get(world.func_234923_W_().func_240901_a_()
+            data.get(world.getDimensionKey().getLocation()
             )
           ),
           aequivaleoReloadExecutor
@@ -199,7 +199,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
 
         private void reloadEquivalencyData()
         {
-            LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
+            LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation().toString());
             try {
                 WorldBootstrapper.onWorldReload(getServerWorld());
 
@@ -225,15 +225,15 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
                     );
                 });
 
-                targetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().func_234923_W_())
+                targetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
                   ::registerLocking);
 
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
-                ResultsInformationCache.getInstance(getServerWorld().func_234923_W_()).set(analyzer.calculateAndGet());
+                ResultsInformationCache.getInstance(getServerWorld().getDimensionKey()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {
-                LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().func_234923_W_().func_240901_a_()), t);
+                LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().getDimensionKey().getLocation()), t);
             }
-            LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().func_234923_W_().func_240901_a_().toString());
+            LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation().toString());
         }
 
         private static Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
