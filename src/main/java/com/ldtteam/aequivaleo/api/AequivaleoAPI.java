@@ -22,6 +22,7 @@ import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.util.RegistryKey;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,7 +89,8 @@ public final class AequivaleoAPI implements IAequivaleoAPI
                  .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSerializer.HANDLED_TYPE, new CompoundInstanceRefSerializer())
                  .registerTypeAdapter(CompoundInstanceSetSerializer.HANDLED_TYPE, new CompoundInstanceSetSerializer())
-                 .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance());
+                 .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
+                 .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
     }
 
     @Override
