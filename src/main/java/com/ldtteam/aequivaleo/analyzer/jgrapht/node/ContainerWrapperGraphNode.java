@@ -1,20 +1,21 @@
-package com.ldtteam.aequivaleo.analyzer.jgrapht;
+package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.google.common.collect.Sets;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import org.jetbrains.annotations.NotNull;
+import org.jgrapht.Graph;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class ContainerWrapperGraphNode implements IAnalysisGraphNode
+public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
 {
     @NotNull
     private final ICompoundContainer<?> wrapper;
-
-    @NotNull
-    private final Set<CompoundInstance> compoundInstances = new TreeSet<>();
 
     public ContainerWrapperGraphNode(@NotNull final ICompoundContainer<?> wrapper) {this.wrapper = wrapper;}
 
@@ -22,12 +23,6 @@ public class ContainerWrapperGraphNode implements IAnalysisGraphNode
     public ICompoundContainer<?> getWrapper()
     {
         return wrapper;
-    }
-
-    @NotNull
-    public Set<CompoundInstance> getCompoundInstances()
-    {
-        return compoundInstances;
     }
 
     @Override
@@ -61,6 +56,10 @@ public class ContainerWrapperGraphNode implements IAnalysisGraphNode
                  '}';
     }
 
-
-
+    @Override
+    public void onNeighboringSource()
+    {
+        if (!this.getResultingValue().isPresent())
+            throw new IllegalStateException("A container node touched by a source node, should have a value!");
+    }
 }

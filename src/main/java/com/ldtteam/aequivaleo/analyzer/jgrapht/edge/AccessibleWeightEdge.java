@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.analyzer.jgrapht;
+package com.ldtteam.aequivaleo.analyzer.jgrapht.edge;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 

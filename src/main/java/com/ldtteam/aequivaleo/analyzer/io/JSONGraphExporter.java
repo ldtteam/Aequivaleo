@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.io;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
 import org.jgrapht.Graph;
 import org.jgrapht.nio.BaseExporter;
 import org.jgrapht.nio.GraphExporter;

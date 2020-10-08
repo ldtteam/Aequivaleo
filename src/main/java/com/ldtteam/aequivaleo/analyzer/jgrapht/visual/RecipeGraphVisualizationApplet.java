@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.visual;
 
-import com.ldtteam.aequivaleo.analyzer.jgrapht.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.swing.mxGraphComponent;
 import org.jgrapht.Graph;
