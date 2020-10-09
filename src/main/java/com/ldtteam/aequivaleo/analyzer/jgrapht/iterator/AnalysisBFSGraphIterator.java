@@ -4,8 +4,15 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
 import org.jgrapht.Graph;
 import org.jgrapht.traverse.CrossComponentIterator;
 
+import java.util.ArrayDeque;
+import java.util.LinkedList;
+import java.util.Queue;
+
 public class AnalysisBFSGraphIterator<V extends IAnalysisGraphNode<N>, E, N> extends CrossComponentIterator<V, E, AnalysisBFSGraphIterator.SearchNodeData<E>>
 {
+
+    private final Queue<V> completeQueue = new ArrayDeque<>();
+    private final LinkedList<V> incompleteQueue = new LinkedList<>();
 
     public AnalysisBFSGraphIterator(final Graph<V, E> g)
     {
