@@ -97,7 +97,10 @@ sourceSets {
     }
 }
 
-version = project.exactMinecraftVersion + "-" + System.getenv().containsKey("Version") ? System.getenv("Version") : 'null'
+version = project.exactMinecraftVersion + "-" + System.getenv().containsKey("Version") ? System.getenv("Version") : project.modVersion
+
+project.logger.lifecycle("Building for version: " + version);
+
 group = modGroup
 archivesBaseName = modBaseName
 
