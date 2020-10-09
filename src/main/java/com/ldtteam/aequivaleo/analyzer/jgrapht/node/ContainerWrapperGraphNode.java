@@ -1,16 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import org.jetbrains.annotations.NotNull;
-import org.jgrapht.Graph;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
 {
@@ -54,6 +46,12 @@ public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
         return "ContainerWrapperGraphNode{" +
                  "wrapper=" + wrapper +
                  '}';
+    }
+
+    @Override
+    public void collectStats(final StatCollector statCollector)
+    {
+        statCollector.onVisitContainerNode();
     }
 
     @Override

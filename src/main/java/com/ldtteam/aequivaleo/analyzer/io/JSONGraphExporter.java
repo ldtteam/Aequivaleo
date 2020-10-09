@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.analyzer.io;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jgrapht.Graph;
 import org.jgrapht.nio.BaseExporter;
 import org.jgrapht.nio.GraphExporter;
@@ -10,9 +11,10 @@ import org.jgrapht.nio.IntegerIdProvider;
 
 import java.io.Writer;
 import java.lang.reflect.Type;
+import java.util.Set;
 import java.util.function.Function;
 
-public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode, AccessibleWeightEdge> implements GraphExporter<IAnalysisGraphNode, AccessibleWeightEdge>, JsonSerializer<Graph<IAnalysisGraphNode, AccessibleWeightEdge>>
+public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> implements GraphExporter<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge>, JsonSerializer<Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge>>
 {
 
 
@@ -27,13 +29,13 @@ public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode, Accessib
      *
      * @param vertexIdProvider the vertex id provider to use. Cannot be null.
      */
-    public JSONGraphExporter(final Function<IAnalysisGraphNode, String> vertexIdProvider)
+    public JSONGraphExporter(final Function<IAnalysisGraphNode<Set<CompoundInstance>>, String> vertexIdProvider)
     {
         super(vertexIdProvider);
     }
 
     @Override
-    public void exportGraph(final Graph<IAnalysisGraphNode, AccessibleWeightEdge> g, final Writer writer)
+    public void exportGraph(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> g, final Writer writer)
     {
         final Gson gson = new GsonBuilder()
                                     .registerTypeAdapter(Graph.class, this)
@@ -51,14 +53,14 @@ public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode, Accessib
 
     @Override
     public JsonElement serialize(
-      final Graph<IAnalysisGraphNode, AccessibleWeightEdge> src, final Type typeOfSrc, final JsonSerializationContext context)
+      final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonObject graph = new JsonObject();
         graph.addProperty("creator", "LDTTeam Aequivaleo - Graph Serializer");
         graph.addProperty("version", 1);
 
         final JsonArray nodes = new JsonArray();
-        for (final IAnalysisGraphNode iAnalysisGraphNode : src.vertexSet())
+        for (final IAnalysisGraphNode<Set<CompoundInstance>> iAnalysisGraphNode : src.vertexSet())
         {
             nodes.add(context.serialize(iAnalysisGraphNode, IAnalysisGraphNode.class));
         }

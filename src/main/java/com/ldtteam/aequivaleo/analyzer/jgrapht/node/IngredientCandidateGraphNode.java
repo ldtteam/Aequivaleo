@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
@@ -65,6 +66,12 @@ public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
     {
         doNodeCalculation(isComplete(graph));
         super.onReached(graph);
+    }
+
+    @Override
+    public void collectStats(final StatCollector statCollector)
+    {
+        statCollector.onVisitIngredientNode();
     }
 
     private void doNodeCalculation(final boolean incomplete)

@@ -1,30 +1,32 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.iterator;
 
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
 import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
 import org.jgrapht.traverse.CrossComponentIterator;
 
 import java.util.ArrayDeque;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public class AnalysisBFSGraphIterator<V extends IAnalysisGraphNode<N>, E, N> extends CrossComponentIterator<V, E, AnalysisBFSGraphIterator.SearchNodeData<E>>
+public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysisGraphNode<N>, AccessibleWeightEdge, AnalysisBFSGraphIterator.SearchNodeData>
 {
 
-    private final Queue<V> completeQueue = new ArrayDeque<>();
-    private final LinkedList<V> incompleteQueue = new LinkedList<>();
+    private final Queue<IAnalysisGraphNode<N>> completeQueue = new ArrayDeque<>();
+    private final LinkedList<IAnalysisGraphNode<N>> incompleteQueue = new LinkedList<>();
 
-    public AnalysisBFSGraphIterator(final Graph<V, E> g)
+    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g)
     {
         super(g);
     }
 
-    public AnalysisBFSGraphIterator(final Graph<V, E> g, final V startVertex)
+    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final IAnalysisGraphNode<N> startVertex)
     {
         super(g, startVertex);
     }
 
-    public AnalysisBFSGraphIterator(final Graph<V, E> g, final Iterable<V> startVertices)
+    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final Iterable<IAnalysisGraphNode<N>> startVertices)
     {
         super(g, startVertices);
     }
@@ -32,39 +34,51 @@ public class AnalysisBFSGraphIterator<V extends IAnalysisGraphNode<N>, E, N> ext
     @Override
     protected boolean isConnectedComponentExhausted()
     {
-        return false;
+        return completeQueue.isEmpty() && incompleteQueue.isEmpty();
     }
 
     @Override
-    protected void encounterVertex(final V vertex, final E edge)
+    protected void encounterVertex(final IAnalysisGraphNode<N> vertex, final AccessibleWeightEdge edge)
     {
+        int depth = (edge == null ? 0
+                       : getSeenData(Graphs.getOppositeVertex(graph, edge, vertex)).depth + 1);
+        putSeenData(vertex, new AnalysisBFSGraphIterator.SearchNodeData(edge, depth));
 
+        vertex.onReached(getGraph());
+        vertex.determineResult();
+
+        if (vertex.isComplete(getGraph()))
+            completeQueue.add(vertex);
     }
 
     @Override
-    protected V provideNextVertex()
+    protected IAnalysisGraphNode<N> provideNextVertex()
     {
-        return null;
+        if (!completeQueue.isEmpty())
+            return completeQueue.poll();
+
+        return incompleteQueue.removeFirst();
     }
 
     @Override
-    protected void encounterVertexAgain(final V vertex, final E edge)
+    protected void encounterVertexAgain(final IAnalysisGraphNode<N> vertex, final AccessibleWeightEdge edge)
     {
-
+        //For now lets noop.
+        //Need to do some thinking.
     }
 
-    static class SearchNodeData<E>
+    static class SearchNodeData
     {
         /**
          * Edge to parent
          */
-        final E edge;
+        final AccessibleWeightEdge edge;
         /**
          * Depth of node in search tree
          */
         final int depth;
 
-        SearchNodeData(E edge, int depth)
+        SearchNodeData(AccessibleWeightEdge edge, int depth)
         {
             this.edge = edge;
             this.depth = depth;

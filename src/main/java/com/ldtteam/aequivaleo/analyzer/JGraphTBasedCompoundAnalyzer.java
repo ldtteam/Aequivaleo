@@ -4,31 +4,23 @@ import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
-import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
 public class JGraphTBasedCompoundAnalyzer
 {
@@ -143,7 +135,11 @@ public class JGraphTBasedCompoundAnalyzer
         }
 
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation(), recipeGraph.vertexSet().size());
-        processRecipeGraphUsingBreathFirstSearch(recipeGraph, statCollector);
+        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, source);
+
+        while(analysisBFSGraphIterator.hasNext()) {
+            analysisBFSGraphIterator.next().collectStats(statCollector);
+        }
 
         statCollector.onCalculationComplete();
 
@@ -155,7 +151,7 @@ public class JGraphTBasedCompoundAnalyzer
                 ContainerWrapperGraphNode containerWrapperGraphNode = (ContainerWrapperGraphNode) v;
                 //We could not find any information on this, possibly due to it being in a different set,
                 //Or it is not producible. Register it as a not defined graph node.
-                if (containerWrapperGraphNode.getCompoundInstances().size() == 0)
+                if (containerWrapperGraphNode.getResultingValue().orElse(Collections.emptySet()).size() == 0)
                 {
                     notDefinedGraphNodes.add(containerWrapperGraphNode);
                 }
@@ -164,7 +160,7 @@ public class JGraphTBasedCompoundAnalyzer
                     if (!resultingCompounds.containsKey(containerWrapperGraphNode.getWrapper()))
                         resultingCompounds.putIfAbsent(containerWrapperGraphNode.getWrapper(), new ConcurrentSkipListSet<>());
 
-                    resultingCompounds.get(containerWrapperGraphNode.getWrapper()).addAll(containerWrapperGraphNode.getCompoundInstances());
+                    resultingCompounds.get(containerWrapperGraphNode.getWrapper()).addAll(containerWrapperGraphNode.getResultingValue().orElse(Collections.emptySet()));
                 }
             }
         }
@@ -254,101 +250,6 @@ public class JGraphTBasedCompoundAnalyzer
         }
     }
 
-    private void processRecipeGraphUsingBreathFirstSearch(
-      @NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph,
-      final StatCollector statCollector)
-    {
-        final LinkedHashSet<IAnalysisGraphNode<Set<CompoundInstance>>> processingQueue = new LinkedHashSet<>();
-        processingQueue.add(new SourceGraphNode());
-        final LinkedHashSet<IngredientCandidateGraphNode> noneCompleteIngredientNodes = new LinkedHashSet<>();
-
-        processRecipeGraphFromNodeUsingBreathFirstSearch(recipeGraph, processingQueue, noneCompleteIngredientNodes, statCollector);
-
-        final Set<IngredientCandidateGraphNode> alreadyProcessedIncompleteNodes = new HashSet<>();
-
-        LinkedHashSet<IngredientCandidateGraphNode> workingSet = new LinkedHashSet<>(noneCompleteIngredientNodes);
-        while(!workingSet.isEmpty()) {
-            final IngredientCandidateGraphNode newTarget = workingSet.iterator().next();
-            workingSet.remove(newTarget);
-            alreadyProcessedIncompleteNodes.add(newTarget);
-
-            handleIngredientNodeCompounds(
-              newTarget,
-              true
-            );
-
-            if (newTarget.getCompoundInstances().isEmpty())
-                continue;
-
-            processingQueue.add(
-              newTarget
-            );
-
-            processRecipeGraphFromNodeUsingBreathFirstSearch(
-              recipeGraph,
-              processingQueue,
-              workingSet,
-              statCollector
-            );
-
-            workingSet.removeAll(alreadyProcessedIncompleteNodes);
-        }
-    }
-
-    private void processRecipeGraphFromNodeUsingBreathFirstSearch(
-      @NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph,
-      final LinkedHashSet<IAnalysisGraphNode<Set<CompoundInstance>>> processingQueue,
-      final Set<IngredientCandidateGraphNode> noneCompleteIngredientNodes,
-      final StatCollector statCollector)
-    {
-        final Set<IAnalysisGraphNode> visitedNodes = new LinkedHashSet<>();
-
-        while(!processingQueue.isEmpty())
-        {
-            final Iterator<IAnalysisGraphNode> nodeIterator = processingQueue.iterator();
-            final IAnalysisGraphNode node = nodeIterator.next();
-            nodeIterator.remove();
-
-            processRecipeGraphForNodeWithBFS(recipeGraph, processingQueue, visitedNodes, noneCompleteIngredientNodes, node, statCollector);
-        }
-    }
-
-    private void processRecipeGraphForNodeWithBFS(
-      @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph,
-      final LinkedHashSet<IAnalysisGraphNode> processingQueue,
-      final Set<IAnalysisGraphNode> visitedNodes,
-      final Set<IngredientCandidateGraphNode> noneCompleteIngredients,
-      final IAnalysisGraphNode node,
-      final StatCollector statCollector)
-    {
-        visitedNodes.add(node);
-        final Class<? extends IAnalysisGraphNode> clazz = node.getClass();
-
-        Set<IAnalysisGraphNode> nextIterationNodes = Sets.newHashSet();
-
-        AequivaleoLogger.fine(String.format("Processing node: %s", node));
-
-        if(clazz == SourceGraphNode.class)
-        {
-            statCollector.onVisitSourceNode();
-        }
-        if (clazz == ContainerWrapperGraphNode.class)
-        {
-            statCollector.onVisitCompoundNode();
-        }
-        if (clazz == IngredientCandidateGraphNode.class)
-        {
-            statCollector.onVisitIngredientNode();
-        }
-        if (clazz == RecipeGraphNode.class)
-        {
-            statCollector.onVisitRecipeNode();
-        }
-
-        nextIterationNodes.removeIf(visitedNodes::contains);
-        processingQueue.addAll(nextIterationNodes);
-    }
-
     private ICompoundContainer<?> createUnitWrapper(@NotNull final ICompoundContainer<?> wrapper)
     {
         if (wrapper.getContentsCount() == 1d)
@@ -357,10 +258,10 @@ public class JGraphTBasedCompoundAnalyzer
         return CompoundContainerFactoryManager.getInstance().wrapInContainer(wrapper.getContents(), 1d);
     }
 
-    private Set<ContainerWrapperGraphNode> findRootNodes(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> graph)
+    private Set<ContainerWrapperGraphNode> findRootNodes(@NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
     {
         Set<ContainerWrapperGraphNode> set = new HashSet<>();
-        for (IAnalysisGraphNode v : findDanglingNodes(graph))
+        for (IAnalysisGraphNode<Set<CompoundInstance>> v : findDanglingNodes(graph))
         {
             if (v instanceof ContainerWrapperGraphNode)
             {
@@ -371,10 +272,10 @@ public class JGraphTBasedCompoundAnalyzer
         return set;
     }
 
-    private Set<IAnalysisGraphNode> findDanglingNodes(@NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> graph)
+    private Set<IAnalysisGraphNode<Set<CompoundInstance>>> findDanglingNodes(@NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
     {
-        Set<IAnalysisGraphNode> set = new HashSet<>();
-        for (IAnalysisGraphNode v : graph
+        Set<IAnalysisGraphNode<Set<CompoundInstance>>> set = new HashSet<>();
+        for (IAnalysisGraphNode<Set<CompoundInstance>> v : graph
                                       .vertexSet())
         {
             if (graph.incomingEdgesOf(v).isEmpty())
@@ -405,71 +306,5 @@ public class JGraphTBasedCompoundAnalyzer
     public Map<ICompoundContainer<?>, Set<CompoundInstance>> getResults()
     {
         return results;
-    }
-
-    private static final class StatCollector {
-
-        private static final Logger LOGGER = LogManager.getLogger();
-
-        private final ResourceLocation worldName;
-        private final long totalNodes;
-        private long lastReportingTime = 0;
-        private long visitedNodes = 0;
-        private long sourceNodesVisited;
-        private long compoundNodesVisited;
-        private long ingredientNodesVisited;
-        private long recipeNodesVisited;
-
-        private StatCollector(final ResourceLocation worldName, final int totalNodes) {
-            this.worldName = worldName;
-            this.totalNodes = totalNodes;}
-
-        public void onVisitSourceNode() {
-            sourceNodesVisited++;
-            onVisitNode();
-        }
-
-        public void onVisitCompoundNode() {
-            compoundNodesVisited++;
-            onVisitNode();
-        }
-
-        public void onVisitIngredientNode() {
-            ingredientNodesVisited++;
-            onVisitNode();
-        }
-
-        public void onVisitRecipeNode() {
-            recipeNodesVisited++;
-            onVisitNode();
-        }
-
-        private void onVisitNode() {
-            visitedNodes++;
-            final long now = System.currentTimeMillis();
-            
-            if (now >= lastReportingTime + (5*1000)) {
-                lastReportingTime = now;
-                logState();
-            }
-        }
-
-        private void logState()
-        {
-            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
-
-            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
-              newPercentage,
-              worldName,
-              sourceNodesVisited,
-              compoundNodesVisited,
-              ingredientNodesVisited,
-              recipeNodesVisited,
-              totalNodes));
-        }
-
-        private void onCalculationComplete() {
-            logState();
-        }
     }
 }

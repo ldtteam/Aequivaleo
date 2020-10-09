@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
+import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jgrapht.Graph;
@@ -38,5 +39,11 @@ public class SourceGraphNode extends AbstractAnalysisGraphNode
             v.determineResult();
             v.onNeighboringSource();
         }
+    }
+
+    @Override
+    public void collectStats(final StatCollector statCollector)
+    {
+        statCollector.onVisitSourceNode();
     }
 }

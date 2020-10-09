@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
+import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
@@ -34,4 +35,6 @@ public interface IAnalysisGraphNode<V>
     void onReached(final Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph);
 
     void determineResult();
+
+    void collectStats(final StatCollector statCollector);
 }
