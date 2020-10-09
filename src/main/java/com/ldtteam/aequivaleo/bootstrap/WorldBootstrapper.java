@@ -10,6 +10,7 @@ import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
@@ -104,13 +105,20 @@ public final class WorldBootstrapper
                 final ICompoundContainer<?> itemContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
                 final ICompoundContainer<?> itemStackContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(group.get(0), group.get(0).getCount());
 
-                EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
-                  .register(new InstancedEquivalency(
-                    false, itemContainer, itemStackContainer
-                  ))
-                  .register(new InstancedEquivalency(
-                    false, itemStackContainer, itemContainer
-                  ));
+                try {
+
+                    EquivalencyRecipeRegistry.getInstance(world.func_234923_W_())
+                      .register(new InstancedEquivalency(
+                        false, itemContainer, itemStackContainer
+                      ))
+                      .register(new InstancedEquivalency(
+                        false, itemStackContainer, itemContainer
+                      ));
+                } catch (Exception ex) {
+                    LOGGER.error(String.format("Failed to register equivalency between the Item: %s and its ItemStack (in NBT form): %s",
+                      item.getRegistryName(),
+                      group.get(0).write(new CompoundNBT()).toString()));
+                }
             }
         });
     }
