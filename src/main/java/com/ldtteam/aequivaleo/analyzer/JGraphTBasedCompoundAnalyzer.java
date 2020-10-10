@@ -91,20 +91,28 @@ public class JGraphTBasedCompoundAnalyzer
 
         for (ICompoundContainer<?> lockedWrapper : LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).get().keySet())
         {
+            IAnalysisGraphNode<Set<CompoundInstance>> node;
             if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(lockedWrapper)))
             {
                 compoundNodes.putIfAbsent(lockedWrapper, new ContainerWrapperGraphNode(lockedWrapper));
 
                 final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(lockedWrapper);
+                node = inputWrapperGraphNode;
 
                 resultingCompounds.putIfAbsent(lockedWrapper, new ConcurrentSkipListSet<>());
                 recipeGraph.addVertex(inputWrapperGraphNode);
             }
             else
             {
-                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(new ContainerWrapperGraphNode(lockedWrapper)));
+                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(lockedWrapper)));
                 recipeGraph.removeAllEdges(incomingEdgesToRemove);
+                node = compoundNodes.get(lockedWrapper);
             }
+
+            if (node == null)
+                throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
+
+            node.getCandidates().add(LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).get().get(lockedWrapper));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
@@ -125,17 +133,8 @@ public class JGraphTBasedCompoundAnalyzer
 
         removeDanglingNodes(recipeGraph, rootNodes);
 
-        final SourceGraphNode source = new SourceGraphNode();
-        recipeGraph.addVertex(source);
-
-        for (ContainerWrapperGraphNode rootNode : rootNodes)
-        {
-            recipeGraph.addEdge(source, rootNode);
-            recipeGraph.setEdgeWeight(source, rootNode, 1d);
-        }
-
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation(), recipeGraph.vertexSet().size());
-        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, source);
+        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, rootNodes);
 
         while(analysisBFSGraphIterator.hasNext()) {
             analysisBFSGraphIterator.next().collectStats(statCollector);

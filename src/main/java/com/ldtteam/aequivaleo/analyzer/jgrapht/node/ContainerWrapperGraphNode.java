@@ -4,6 +4,8 @@ import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
 {
     @NotNull
@@ -57,7 +59,7 @@ public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
     @Override
     public void onNeighboringSource()
     {
-        if (!this.getResultingValue().isPresent())
+        if (this.getResultingValue().map(Set::isEmpty).orElse(true))
             throw new IllegalStateException("A container node touched by a source node, should have a value!");
     }
 }

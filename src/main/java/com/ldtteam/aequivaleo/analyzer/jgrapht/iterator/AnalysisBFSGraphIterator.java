@@ -6,9 +6,8 @@ import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.traverse.CrossComponentIterator;
 
-import java.util.ArrayDeque;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysisGraphNode<N>, AccessibleWeightEdge, AnalysisBFSGraphIterator.SearchNodeData>
 {
@@ -16,19 +15,9 @@ public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysi
     private final Queue<IAnalysisGraphNode<N>> completeQueue = new ArrayDeque<>();
     private final LinkedList<IAnalysisGraphNode<N>> incompleteQueue = new LinkedList<>();
 
-    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g)
+    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final Set<? extends IAnalysisGraphNode<N>> startVertices)
     {
-        super(g);
-    }
-
-    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final IAnalysisGraphNode<N> startVertex)
-    {
-        super(g, startVertex);
-    }
-
-    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final Iterable<IAnalysisGraphNode<N>> startVertices)
-    {
-        super(g, startVertices);
+        super(g, new HashSet<>(startVertices));
     }
 
     @Override
@@ -48,7 +37,9 @@ public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysi
         vertex.determineResult();
 
         if (vertex.isComplete(getGraph()))
-            completeQueue.add(vertex);
+            completeQueue.offer(vertex);
+        else
+            incompleteQueue.offer(vertex);
     }
 
     @Override

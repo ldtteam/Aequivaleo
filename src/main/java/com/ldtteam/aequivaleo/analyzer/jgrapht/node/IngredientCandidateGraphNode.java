@@ -64,7 +64,7 @@ public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
     @Override
     public void onReached(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
     {
-        doNodeCalculation(isComplete(graph));
+        doNodeCalculation(!isComplete(graph));
         super.onReached(graph);
     }
 

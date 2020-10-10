@@ -1,28 +1,26 @@
-package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
+package com.ldtteam.aequivaleo.testing.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ISimpleEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.Validate;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecipe
+public class TestingEquivalencyRecipe implements IEquivalencyRecipe
 {
-    private final ResourceLocation           recipeName;
-    private final SortedSet<IRecipeIngredient> inputs;
+    private final SortedSet<IRecipeIngredient>     inputs;
     private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
-    public VanillaCraftingEquivalencyRecipe(
-      final ResourceLocation recipeName,
+    public TestingEquivalencyRecipe(
       final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
-      final Set<ICompoundContainer<?>> outputs) {
-        this.recipeName = recipeName;
+      final Set<ICompoundContainer<?>> outputs
+    ) {
         this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
         this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
         this.outputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(outputs)));
@@ -46,11 +44,6 @@ public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecip
         return outputs;
     }
 
-    public ResourceLocation getRecipeName()
-    {
-        return recipeName;
-    }
-
     @Override
     public boolean equals(final Object o)
     {
@@ -58,31 +51,19 @@ public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecip
         {
             return true;
         }
-        if (!(o instanceof VanillaCraftingEquivalencyRecipe))
+        if (o == null || getClass() != o.getClass())
         {
             return false;
         }
-
-        final VanillaCraftingEquivalencyRecipe that = (VanillaCraftingEquivalencyRecipe) o;
-
-        if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
-        {
-            return false;
-        }
-        return getOutputs() != null ? getOutputs().equals(that.getOutputs()) : that.getOutputs() == null;
+        final TestingEquivalencyRecipe that = (TestingEquivalencyRecipe) o;
+        return getInputs().equals(that.getInputs()) &&
+                 getRequiredKnownOutputs().equals(that.getRequiredKnownOutputs()) &&
+                 getOutputs().equals(that.getOutputs());
     }
 
     @Override
     public int hashCode()
     {
-        int result = getInputs() != null ? getInputs().hashCode() : 0;
-        result = 31 * result + (getOutputs() != null ? getOutputs().hashCode() : 0);
-        return result;
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("Equivalent via vanilla crafting: %s", recipeName);
+        return Objects.hash(getInputs(), getRequiredKnownOutputs(), getOutputs());
     }
 }
