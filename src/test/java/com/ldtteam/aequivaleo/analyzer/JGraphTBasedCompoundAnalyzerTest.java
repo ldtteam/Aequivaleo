@@ -30,7 +30,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -368,6 +367,96 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(2)), result.get(cc("invalid1")));
         assertEquals(s(cz(1)), result.get(cc("invalid2")));
         assertEquals(s(), result.get(cc("invalid3")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipeDeepInvalidWithZeroAssumption() {
+        input.registerValue("a1", ImmutableSet.of(cz( 1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
+        registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1)), result.get(cc("a1")));
+        assertEquals(s(cz(2)), result.get(cc("b2")));
+        assertEquals(s(cz(1)), result.get(cc("invalid1")));
+        assertEquals(s(), result.get(cc("invalid2")));
+    }
+    
+    @Test
+    public void testGenerateValuesMultiRecipeDeepInvalidWithInvalidAssumption() {
+        input.registerValue("a1", ImmutableSet.of(ci( 1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
+        registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(1)), result.get(cc("a1")));
+        assertEquals(s(ci(2)), result.get(cc("b2")));
+        assertEquals(s(), result.get(cc("invalid1")));
+        assertEquals(s(), result.get(cc("invalid2")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipeDeepInvalidWithJoinedAnalysis() {
+        input.registerValue("a1", ImmutableSet.of(cz( 1), ci(1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
+        registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1), ci(1)), result.get(cc("a1")));
+        assertEquals(s(cz(2), ci(2)), result.get(cc("b2")));
+        assertEquals(s(cz(1)), result.get(cc("invalid1")));
+        assertEquals(s(), result.get(cc("invalid2")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipesInvalidIngredientWithZeroAssumption() {
+        input.registerValue("a1", ImmutableSet.of(cz( 1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1)), result.get(cc("a1")));
+        assertEquals(s(cz(2)), result.get(cc("b2")));
+        assertEquals(s(), result.get(cc("invalid")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipesInvalidIngredientWithInvalidAssumption() {
+        input.registerValue("a1", ImmutableSet.of(ci( 1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(1)), result.get(cc("a1")));
+        assertEquals(s(ci(2)), result.get(cc("b2")));
+        assertEquals(s(), result.get(cc("invalid")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipesInvalidIngredientWithJoinedAnalysis() {
+        input.registerValue("a1", ImmutableSet.of(cz( 1), ci(1)));
+
+        registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1), ci(1)), result.get(cc("a1")));
+        assertEquals(s(cz(2), ci(2)), result.get(cc("b2")));
+        assertEquals(s(), result.get(cc("invalid")));
     }
 
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
