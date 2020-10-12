@@ -1,12 +1,10 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +20,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
     private Set<CompoundInstance> result = null;
     @NotNull
     private Map<IAnalysisGraphNode<Set<CompoundInstance>>, Set<CompoundInstance>> candidates = Maps.newHashMap();
+    private boolean isIncomplete = false;
 
     @NotNull
     @Override
@@ -56,6 +55,9 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
         {
             IAnalysisGraphNode<Set<CompoundInstance>> v = graph.getEdgeTarget(accessibleWeightEdge);
             v.addCandidateResult(this, getResultingValue().orElse(Sets.newHashSet()));
+
+            if (this.isIncomplete())
+                v.setIncomplete();
         }
     }
 
@@ -66,7 +68,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
     }
 
     @Override
-    public void determineResult()
+    public void determineResult(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
     {
         //Short cirquit empty result.
         if (getCandidates().size() == 0)
@@ -103,10 +105,26 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
           .stream()
           .map(Sets::newHashSet)
           .filter(s -> !s.isEmpty())
-          .map(s -> s.iterator().next().iterator().next().getType().getGroup().determineResult(s)) //For each type invoke the determination routine.
+          .map(s -> s.iterator().next().iterator().next().getType().getGroup().determineResult(s, canResultBeCalculated(graph))) //For each type invoke the determination routine.
           .collect(Collectors.toSet()) //
           .stream()
           .flatMap(Collection::stream)
           .collect(Collectors.toSet()); //Group all of them together.
+    }
+
+    @Override
+    public void setIncomplete()
+    {
+        this.isIncomplete = true;
+    }
+
+    @Override
+    public boolean isIncomplete()
+    {
+        return this.isIncomplete;
+    }
+
+    public boolean hasIncompleteChildren(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph) {
+        return graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).anyMatch(IAnalysisGraphNode::isIncomplete);
     }
 }

@@ -6,7 +6,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -24,10 +23,20 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      * Callback used to determine which value variant should be taken if multiple calculation results are possible.
      *
      * @param candidates The candidate values to decide between.
+     * @param complete Indicates if the node is completely analyzed when a decision needs to be made. True when all information is known.
      *
      * @return The set of chosen compound instances. Or an empty set, to indicate that this node should not be processed.
      */
-    Set<CompoundInstance> determineResult(Set<Set<CompoundInstance>> candidates);
+    Set<CompoundInstance> determineResult(Set<Set<CompoundInstance>> candidates, final Boolean complete);
+
+    /**
+     * Allows the group to indicate if an incomplete recipe is allowed to process compounds of this group.
+     *
+     * @param recipe The recipe in question.
+     *
+     * @return True to allow, false to disallow.
+     */
+    boolean shouldIncompleteRecipeBeProcessed(@NotNull final IEquivalencyRecipe recipe);
 
     /**
      * Indicates if the given instance is allowed to contribute to a given recipe.

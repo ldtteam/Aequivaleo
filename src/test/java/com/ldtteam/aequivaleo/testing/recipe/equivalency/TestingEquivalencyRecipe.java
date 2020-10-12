@@ -12,15 +12,17 @@ import java.util.TreeSet;
 
 public class TestingEquivalencyRecipe implements IEquivalencyRecipe
 {
+    private final String name;
     private final SortedSet<IRecipeIngredient>     inputs;
     private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
     public TestingEquivalencyRecipe(
-      final Set<IRecipeIngredient> inputs,
+      final String name, final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs
     ) {
+        this.name = name;
         this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
         this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
         this.outputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(outputs)));
@@ -65,5 +67,13 @@ public class TestingEquivalencyRecipe implements IEquivalencyRecipe
     public int hashCode()
     {
         return Objects.hash(getInputs(), getRequiredKnownOutputs(), getOutputs());
+    }
+
+    @Override
+    public String toString()
+    {
+        return "TestingEquivalencyRecipe{" +
+                 "name='" + name + '\'' +
+                 '}';
     }
 }

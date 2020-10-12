@@ -128,12 +128,19 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        rootNodes.removeAll(notDefinedGraphNodes);
+        notDefinedGraphNodes.forEach(IAnalysisGraphNode::setIncomplete);
 
-        removeDanglingNodes(recipeGraph, rootNodes);
+        final SourceGraphNode source = new SourceGraphNode();
+        recipeGraph.addVertex(source);
+
+        for (ContainerWrapperGraphNode rootNode : rootNodes)
+        {
+            recipeGraph.addEdge(source, rootNode);
+            recipeGraph.setEdgeWeight(source, rootNode, 1d);
+        }
 
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation(), recipeGraph.vertexSet().size());
-        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, rootNodes);
+        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, source);
 
         while(analysisBFSGraphIterator.hasNext()) {
             analysisBFSGraphIterator.next().collectStats(statCollector);

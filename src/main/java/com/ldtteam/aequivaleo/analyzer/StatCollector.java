@@ -61,16 +61,24 @@ public class StatCollector
 
     private void logState()
     {
-        final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
 
-        LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
-          newPercentage,
-          worldName,
-          sourceNodesVisited,
-          containerNodesVisited,
-          ingredientNodesVisited,
-          recipeNodesVisited,
-          totalNodes));
+        if (totalNodes > 0) {
+            final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
+
+
+            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
+              newPercentage,
+              worldName,
+              sourceNodesVisited,
+              containerNodesVisited,
+              ingredientNodesVisited,
+              recipeNodesVisited,
+              totalNodes));
+        }
+        else
+        {
+            LOGGER.info(String.format("No nodes required visiting for world: %s", worldName));
+        }
     }
 
     public void onCalculationComplete()

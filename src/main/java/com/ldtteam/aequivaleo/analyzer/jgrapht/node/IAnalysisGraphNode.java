@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 //Marker interface indicating that this is a possible component of a graph.
 public interface IAnalysisGraphNode<V>
 {
-
     @NotNull
     Optional<V> getResultingValue();
 
@@ -32,15 +31,19 @@ public interface IAnalysisGraphNode<V>
     @NotNull
     Set<IAnalysisGraphNode<V>> getAnalyzedNeighbors();
 
-    default boolean isComplete(final Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph) {
-        return getAnalyzedNeighbors().equals(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+    default boolean canResultBeCalculated(final Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph) {
+        return getResultingValue().isPresent() || getAnalyzedNeighbors().equals(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
     }
 
     void onReached(final Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph);
 
-    void determineResult();
-
     void collectStats(final StatCollector statCollector);
 
     void forceSetResult(V compoundInstances);
+
+    void determineResult(Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph);
+
+    void setIncomplete();
+
+    boolean isIncomplete();
 }
