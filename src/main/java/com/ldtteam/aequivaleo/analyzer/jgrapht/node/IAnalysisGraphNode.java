@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedGraph;
@@ -20,6 +21,11 @@ public interface IAnalysisGraphNode<V>
     @NotNull
     Optional<V> getResultingValue();
 
+    void addCandidateResult(
+      final IAnalysisGraphNode<V> neighbor,
+      final Set<CompoundInstance> instances
+    );
+
     @NotNull
     Set<V> getCandidates();
 
@@ -30,11 +36,11 @@ public interface IAnalysisGraphNode<V>
         return getAnalyzedNeighbors().equals(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
     }
 
-    default void onNeighboringSource() {}
-
     void onReached(final Graph<IAnalysisGraphNode<V>, AccessibleWeightEdge> graph);
 
     void determineResult();
 
     void collectStats(final StatCollector statCollector);
+
+    void forceSetResult(V compoundInstances);
 }

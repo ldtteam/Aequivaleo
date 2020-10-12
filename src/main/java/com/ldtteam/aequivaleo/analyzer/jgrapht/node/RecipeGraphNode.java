@@ -144,7 +144,7 @@ public class RecipeGraphNode extends AbstractAnalysisGraphNode
                 }
             }
 
-            neighbor.getCandidates().add(set);
+            neighbor.addCandidateResult(this, set);
         }
     }
 

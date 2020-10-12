@@ -55,11 +55,4 @@ public class ContainerWrapperGraphNode extends AbstractAnalysisGraphNode
     {
         statCollector.onVisitContainerNode();
     }
-
-    @Override
-    public void onNeighboringSource()
-    {
-        if (this.getResultingValue().map(Set::isEmpty).orElse(true))
-            throw new IllegalStateException("A container node touched by a source node, should have a value!");
-    }
 }

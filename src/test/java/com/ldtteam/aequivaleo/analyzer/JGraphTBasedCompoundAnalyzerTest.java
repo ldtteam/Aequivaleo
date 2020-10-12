@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
@@ -27,9 +28,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.internal.matchers.Any;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
@@ -50,23 +50,30 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @SuppressStaticInitializationFor("net.minecraft.world.World")
 @PowerMockIgnore("jdk.internal.reflect.*")
 @PrepareForTest({Aequivaleo.class})
-public class JGraphTBasedCompoundAnalyzerTest extends TestCase {
+public class JGraphTBasedCompoundAnalyzerTest extends TestCase
+{
 
     RegistryKey<net.minecraft.world.World> key;
-    net.minecraft.world.World world;
-    JGraphTBasedCompoundAnalyzer analyzer;
+    net.minecraft.world.World              world;
+    JGraphTBasedCompoundAnalyzer           analyzer;
 
-    ICompoundType type = mock(ICompoundType.class);
+    ICompoundType      type  = mock(ICompoundType.class);
     ICompoundTypeGroup group = mock(ICompoundTypeGroup.class);
-    @Before
-    public void setUp() {
-        //Prevent »Cannot run program "infocmp"« Error
-        LogManager.setFactory(new SimpleLoggerContextFactory() );
 
-        key =  mock(RegistryKey.class);
+    ILockedCompoundInformationRegistry input;
+
+    @Before
+    public void setUp()
+    {
+        //Prevent »Cannot run program "infocmp"« Error
+        LogManager.setFactory(new SimpleLoggerContextFactory());
+
+        key = mock(RegistryKey.class);
         world = mock(net.minecraft.world.World.class);
         when(world.getDimensionKey()).thenReturn(key);
         analyzer = new JGraphTBasedCompoundAnalyzer(world);
+
+        input = LockedCompoundInformationRegistry.getInstance(key);
 
         mockStatic(Aequivaleo.class);
         Aequivaleo mod = mock(Aequivaleo.class);
@@ -91,39 +98,108 @@ public class JGraphTBasedCompoundAnalyzerTest extends TestCase {
         when(group.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(group.isValidFor(any(), any())).thenReturn(true);
         when(group.canContributeToRecipeAsOutput(any(), any(), any())).thenReturn(true);
+        when(group.determineResult(any())).thenAnswer(new Answer<Set<CompoundInstance>>()
+        {
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Set<CompoundInstance> answer(final InvocationOnMock invocation) throws Throwable
+            {
+                final Set<Set<CompoundInstance>> data = invocation.getArgumentAt(0, Set.class);
+
+                return data
+                         .stream()
+                         .filter(i -> !i.isEmpty())
+                         .min((left, right) -> (int) (left
+                                                                 .stream()
+                                                                 .mapToDouble(CompoundInstance::getAmount)
+                                                                 .sum() - right
+                                                                            .stream()
+                                                                            .mapToDouble(CompoundInstance::getAmount)
+                                                                            .sum()))
+                         .orElse(Sets.newHashSet());
+            }
+        });
     }
 
     @After
-    public void tearDown() {
+    public void tearDown()
+    {
         LockedCompoundInformationRegistry.getInstance(key).reset();
         EquivalencyRecipeRegistry.getInstance(key).reset();
     }
 
     @Test
-    public void testSetSimpleValue() {
-        ILockedCompoundInformationRegistry lockedCInfoRegistry = LockedCompoundInformationRegistry.getInstance(key);
-        lockedCInfoRegistry.registerLocking("A", ImmutableSet.of(new CompoundInstance(type, 1.0)));
-        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+    public void testSetSimpleValue()
+    {
+        input.registerLocking("A", ImmutableSet.of(new CompoundInstance(type, 1.0)));
 
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
         assertEquals(ImmutableSet.of(new CompoundInstance(type, 1.0)), result.get(cc("A")));
     }
 
     @Test
-    public void simpleCraftingBenchRecipe() {
-        ILockedCompoundInformationRegistry lockedCInfoRegistry = LockedCompoundInformationRegistry.getInstance(key);
-        lockedCInfoRegistry.registerLocking("log", ImmutableSet.of(new CompoundInstance(type, 32.0)));
+    public void simpleCraftingBenchRecipe()
+    {
+        input.registerValue("log", ImmutableSet.of(new CompoundInstance(type, 32.0)));
 
         registerRecipe(s(cc("log", 1)), s(cc("plank", 4)));
         registerRecipe(s(cc("plank", 4)), s(cc("workbench", 1)));
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
         assertEquals(s(ci(32)), result.get(cc("log")));
-        assertEquals(s(ci(8)), result.get(cc( "plank")));
+        assertEquals(s(ci(8)), result.get(cc("plank")));
         assertEquals(s(ci(32)), result.get(cc("workbench")));
-
     }
 
-    public void registerRecipe(Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs) {
+    @Test
+    public void testGenerateValuesSimpleMultiRecipeWithEmptyAlternative()
+    {
+        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(type, 1)));
+
+        registerRecipe(s(cc("a1", 4)), s(cc("c4", 1)));
+        registerRecipe(s(), s(cc("c4", 1)));
+        registerRecipe(s(cc("a1", 2)), s(cc("b2", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+        assertEquals(s(ci(1)), result.get(cc("a1")));
+        assertEquals(s(ci(2)), result.get(cc("b2")));
+        assertEquals(s(ci(4)), result.get(cc("c4")));
+    }
+
+    @Test
+    public void testGenerateValuesSimpleFixedAfterInherit() {
+        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(type, 1)));
+
+        registerRecipe(s(cc("a1", 4)), s(cc("c4", 1)));
+        registerRecipe(s(cc("a1", 2)), s(cc("b2", 1)));
+
+        input.registerLocking("b2", ImmutableSet.of(new CompoundInstance(type, 20)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(1)), result.get(cc("a1")));
+        assertEquals(s(ci(20)), result.get(cc("b2")));
+        assertEquals(s(ci(4)), result.get(cc("c4")));
+    }
+
+    @Test
+    public void testGenerateValuesSimpleFixedDoNotInherit() {
+        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(type, 1)));
+        registerRecipe(s(cc("a1", 2)), s(cc("b2", 1)));
+        registerRecipe(s(cc("b2", 2)), s(cc("c4", 1)));
+        input.registerValue("b2", ImmutableSet.of(new CompoundInstance(type, 0)));
+        input.registerLocking("b2", ImmutableSet.of(new CompoundInstance(type, 20)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(1)), result.get(cc("a1")));
+        assertEquals(s(ci(20)), result.get(cc("b2")));
+        assertEquals(s(ci(0)), result.get(cc("c4")));
+    }
+
+    public void registerRecipe(Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
+    {
         EquivalencyRecipeRegistry.getInstance(key).register(
           new TestingEquivalencyRecipe(
             inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
@@ -133,19 +209,24 @@ public class JGraphTBasedCompoundAnalyzerTest extends TestCase {
         );
     }
 
-    public ICompoundContainer<?> cc(String s) {
+    public ICompoundContainer<?> cc(String s)
+    {
         return cc(s, 1);
     }
 
-    public ICompoundContainer<?> cc(String s, double count) {
+    public ICompoundContainer<?> cc(String s, double count)
+    {
         return new StringCompoundContainer(s, count);
     }
 
-    public <T> Set<T> s(T ... args) {
-        return ImmutableSet.copyOf((T[])args);
+    @SafeVarargs
+    public final <T> Set<T> s(T... args)
+    {
+        return ImmutableSet.copyOf(args);
     }
 
-    public CompoundInstance ci(double amount) {
+    public CompoundInstance ci(double amount)
+    {
         return new CompoundInstance(type, amount);
     }
 }

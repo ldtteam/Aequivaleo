@@ -33,8 +33,8 @@ public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysi
                        : getSeenData(Graphs.getOppositeVertex(graph, edge, vertex)).depth + 1);
         putSeenData(vertex, new AnalysisBFSGraphIterator.SearchNodeData(edge, depth));
 
-        vertex.onReached(getGraph());
         vertex.determineResult();
+        vertex.onReached(getGraph());
 
         if (vertex.isComplete(getGraph()))
             completeQueue.offer(vertex);

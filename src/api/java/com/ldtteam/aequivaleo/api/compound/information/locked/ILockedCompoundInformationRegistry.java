@@ -33,6 +33,32 @@ public interface ILockedCompoundInformationRegistry
         return IAequivaleoAPI.getInstance().getLockedCompoundWrapperToTypeRegistry(worldKey);
     }
 
+
+    /**
+     * Registers a given set of compound instances to a given wrapper.
+     * Forces the given wrapper to have the compound instances at the start of the calculation.
+     * If the calculation determines that a different value is more appropriate then the given value will be overridden.
+     *
+     * @param wrapper The wrapper to assign the compound instances to.
+     * @param compounds The instances to assign to the given wrapper.
+     * @return The registry with the locking assigned.
+     */
+    ILockedCompoundInformationRegistry registerValue(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
+
+    /**
+     * Registers a given set of compound instances to a given game object.
+     * Forces the given wrapper to have the compound instances at the start of the calculation.
+     * If the calculation determines that a different value is more appropriate then the given value will be overridden.
+     *
+     * Equivalency will need to know how to turn the game object into a compound container wrapper, so a factory for it will need to be registered.
+     *
+     * @param gameObjectInstanceToAssign The game object to assign the compound instances to.
+     * @param compounds The instances to assign to the given game object.
+     * @param <T> The type of the game object to assign the instances to.
+     * @return The registry with the locking assigned.
+     */
+    <T> ILockedCompoundInformationRegistry registerValue(@NotNull final T gameObjectInstanceToAssign, @NotNull final Set<CompoundInstance> compounds);
+
     /**
      * Registers a given set of compound instances to a given wrapper.
      * Forces the given wrapper to have the compound instances regardless of analysis results.
@@ -56,8 +82,14 @@ public interface ILockedCompoundInformationRegistry
     <T> ILockedCompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
 
     /**
+     * Gives access to value data.
+     * @return The value data.
+     */
+    ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getValueInformation();
+
+    /**
      * Gives access to locking data.
      * @return The locking data.
      */
-    ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> get();
+    ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getLockingInformation();
 }

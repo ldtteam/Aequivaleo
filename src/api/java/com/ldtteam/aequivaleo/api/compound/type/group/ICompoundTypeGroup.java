@@ -21,14 +21,13 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
 {
 
     /**
-     * Callback used to determine which compound containers compound instances should be taken.
+     * Callback used to determine which value variant should be taken if multiple calculation results are possible.
      *
-     * @param data The analyzed compound containers and their possible instances.
-     * @param inComplete Indicates that the ingredient was analyzed in an incomplete fashion.
+     * @param candidates The candidate values to decide between.
      *
      * @return The set of chosen compound instances. Or an empty set, to indicate that this node should not be processed.
      */
-    Set<CompoundInstance> handleIngredient(Map<? extends ICompoundContainer<?>, Set<CompoundInstance>> data, boolean inComplete);
+    Set<CompoundInstance> determineResult(Set<Set<CompoundInstance>> candidates);
 
     /**
      * Indicates if the given instance is allowed to contribute to a given recipe.

@@ -1,6 +1,5 @@
 package com.ldtteam.aequivaleo.analyzer;
 
-import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
@@ -89,30 +88,30 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        for (ICompoundContainer<?> lockedWrapper : LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).get().keySet())
+        for (ICompoundContainer<?> valueWrapper : LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).getValueInformation().keySet())
         {
             IAnalysisGraphNode<Set<CompoundInstance>> node;
-            if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(lockedWrapper)))
+            if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(valueWrapper)))
             {
-                compoundNodes.putIfAbsent(lockedWrapper, new ContainerWrapperGraphNode(lockedWrapper));
+                compoundNodes.putIfAbsent(valueWrapper, new ContainerWrapperGraphNode(valueWrapper));
 
-                final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(lockedWrapper);
+                final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(valueWrapper);
                 node = inputWrapperGraphNode;
 
-                resultingCompounds.putIfAbsent(lockedWrapper, new ConcurrentSkipListSet<>());
+                resultingCompounds.putIfAbsent(valueWrapper, new ConcurrentSkipListSet<>());
                 recipeGraph.addVertex(inputWrapperGraphNode);
             }
             else
             {
-                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(lockedWrapper)));
+                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
                 recipeGraph.removeAllEdges(incomingEdgesToRemove);
-                node = compoundNodes.get(lockedWrapper);
+                node = compoundNodes.get(valueWrapper);
             }
 
             if (node == null)
                 throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
 
-            node.getCandidates().add(LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).get().get(lockedWrapper));
+            node.forceSetResult(LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).getValueInformation().get(valueWrapper));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
@@ -123,7 +122,7 @@ public class JGraphTBasedCompoundAnalyzer
         final Set<ContainerWrapperGraphNode> notDefinedGraphNodes = new HashSet<>();
         for (ContainerWrapperGraphNode n : rootNodes)
         {
-            if (getLockedInformationInstances(n.getWrapper()).isEmpty())
+            if (getLockedInformationInstances(n.getWrapper()).isEmpty() && getValueInformationInstances(n.getWrapper()).isEmpty())
             {
                 notDefinedGraphNodes.add(n);
             }
@@ -141,6 +140,32 @@ public class JGraphTBasedCompoundAnalyzer
         }
 
         statCollector.onCalculationComplete();
+
+        for (ICompoundContainer<?> valueWrapper : LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().keySet())
+        {
+            IAnalysisGraphNode<Set<CompoundInstance>> node;
+            if (!recipeGraph.containsVertex(new ContainerWrapperGraphNode(valueWrapper)))
+            {
+                compoundNodes.putIfAbsent(valueWrapper, new ContainerWrapperGraphNode(valueWrapper));
+
+                final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(valueWrapper);
+                node = inputWrapperGraphNode;
+
+                resultingCompounds.putIfAbsent(valueWrapper, new ConcurrentSkipListSet<>());
+                recipeGraph.addVertex(inputWrapperGraphNode);
+            }
+            else
+            {
+                final Set<AccessibleWeightEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
+                recipeGraph.removeAllEdges(incomingEdgesToRemove);
+                node = compoundNodes.get(valueWrapper);
+            }
+
+            if (node == null)
+                throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
+
+            node.forceSetResult(LockedCompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().get(valueWrapper));
+        }
 
         for (IAnalysisGraphNode<Set<CompoundInstance>> v : recipeGraph
                                       .vertexSet())
@@ -288,11 +313,23 @@ public class JGraphTBasedCompoundAnalyzer
     private Set<CompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
         final Set<CompoundInstance> lockedInstances = LockedCompoundInformationRegistry.getInstance(world.getDimensionKey())
-                                                         .get()
+                                                         .getLockingInformation()
                                                          .get(createUnitWrapper(wrapper));
 
         if (lockedInstances != null)
             return lockedInstances;
+
+        return new HashSet<>();
+    }
+
+    private Set<CompoundInstance> getValueInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
+    {
+        final Set<CompoundInstance> valueInstances = LockedCompoundInformationRegistry.getInstance(world.getDimensionKey())
+                                                        .getValueInformation()
+                                                        .get(createUnitWrapper(wrapper));
+
+        if (valueInstances != null)
+            return valueInstances;
 
         return new HashSet<>();
     }
