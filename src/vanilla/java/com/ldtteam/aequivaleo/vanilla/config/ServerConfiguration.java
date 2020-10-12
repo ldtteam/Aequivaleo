@@ -200,7 +200,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
                   return ResourceLocation.isPathValid(parts[0]);
               }
 
-              return ResourceLocation.isResouceNameValid(parts[0]) && ResourceLocation.isPathValid(parts[1]);
+              return ResourceLocation.isValidNamespace(parts[0]) && ResourceLocation.isPathValid(parts[1]);
           }
         );
         finishCategory(builder);
