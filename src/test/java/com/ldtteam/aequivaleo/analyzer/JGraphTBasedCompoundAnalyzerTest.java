@@ -30,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -101,6 +102,8 @@ public class JGraphTBasedCompoundAnalyzerTest
         CompoundContainerFactoryManager.getInstance().bake();
 
         when(typeUnknownIsZero.getGroup()).thenReturn(groupUnknownIsZero);
+        when(typeUnknownIsZero.toString()).thenReturn("Type:Zero");
+        when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_zero"));
         when(groupUnknownIsZero.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any(), any())).thenReturn(true);
@@ -123,6 +126,8 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(groupUnknownIsZero.shouldIncompleteRecipeBeProcessed(any())).thenReturn(true);
 
         when(typeUnknownIsInvalid.getGroup()).thenReturn(groupUnknownIsInvalid);
+        when(typeUnknownIsInvalid.toString()).thenReturn("Type:Invalid");
+        when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_invalid"));
         when(groupUnknownIsInvalid.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any(), any())).thenReturn(true);
@@ -345,6 +350,23 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(), result.get(cc("b")));
         assertEquals(s(), result.get(cc("invalid1")));
         assertEquals(s(), result.get(cc("invalid2")));
+        assertEquals(s(), result.get(cc("invalid3")));
+    }
+
+    @Test
+    public void testGenerateValuesDeepInvalidConversionWithJoinedAnalysis() {
+        input.registerValue("a1", ImmutableSet.of(ci( 1), cz(1)));
+
+        registerRecipe("(1x a1 + 1x invalid1) to 1x b", s(cc("a1", 1), cc("invalid1", 1)), s(cc("b", 1)));
+        registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
+        registerRecipe("(1x a1 + 1x invalid3) to 1x invalid2", s(cc("a1", 1), cc("invalid3", 1)), s(cc("invalid2", 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(1), cz(1)), result.get(cc("a1")));
+        assertEquals(s(cz(3)), result.get(cc("b")));
+        assertEquals(s(cz(2)), result.get(cc("invalid1")));
+        assertEquals(s(cz(1)), result.get(cc("invalid2")));
         assertEquals(s(), result.get(cc("invalid3")));
     }
 
