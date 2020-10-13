@@ -1,7 +1,8 @@
-package com.ldtteam.aequivaleo.api.recipe.equivalency;
+package com.ldtteam.aequivaleo.api.recipe.equivalency.calculator;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import net.minecraft.item.ItemStack;
