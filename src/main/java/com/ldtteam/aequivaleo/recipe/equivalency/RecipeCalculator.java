@@ -1,10 +1,9 @@
 package com.ldtteam.aequivaleo.recipe.equivalency;
 
-import com.ibm.icu.impl.Pair;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -13,6 +12,7 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.function.Function;
@@ -70,12 +70,12 @@ public class RecipeCalculator implements IRecipeCalculator
                            .map(iRecipeIngredient -> iRecipeIngredient.getCandidates()
                                                        .stream()
                                                        .map(container -> Pair.of(container.getContents(), iRecipeIngredient.getRequiredCount().intValue() * container.getContentsCount().intValue()))
-                                                       .filter(integerPair -> integerPair.first instanceof ItemStack)
-                                                       .map(integerPair -> Pair.of((ItemStack) integerPair.first, integerPair.second))
-                                                       .filter(itemStackIntegerPair -> !itemStackIntegerPair.first.isEmpty())
+                                                       .filter(integerPair -> integerPair.getKey() instanceof ItemStack)
+                                                       .map(integerPair -> Pair.of((ItemStack) integerPair.getKey(), integerPair.getValue()))
+                                                       .filter(itemStackIntegerPair -> !itemStackIntegerPair.getKey().isEmpty())
                                                        .map(itemStackIntegerPair -> {
-                                                           final ItemStack containerStack = itemStackIntegerPair.first.getContainerItem();
-                                                           containerStack.setCount(itemStackIntegerPair.second);
+                                                           final ItemStack containerStack = itemStackIntegerPair.getKey().getContainerItem();
+                                                           containerStack.setCount(itemStackIntegerPair.getValue());
                                                            return containerStack;
                                                        })
                                                        .filter(stack -> !stack.isEmpty())
