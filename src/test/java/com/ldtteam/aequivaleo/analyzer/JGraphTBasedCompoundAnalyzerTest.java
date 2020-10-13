@@ -162,16 +162,16 @@ public class JGraphTBasedCompoundAnalyzerTest
     @Test
     public void testSetSimpleValue()
     {
-        input.registerLocking("A", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1.0)));
+        input.registerLocking("A", s(cz( 1.0)));
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
-        assertEquals(ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1.0)), result.get(cc("A")));
+        assertEquals(s(cz( 1.0)), result.get(cc("A")));
     }
 
     @Test
     public void testSimpleCraftingBenchRecipe()
     {
-        input.registerValue("log", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 32.0)));
+        input.registerValue("log", s(cz( 32.0)));
 
         registerRecipe("1x log to 4x plank", s(cc("log", 1)), s(cc("plank", 4)));
         registerRecipe("4x plank to 1x workbench", s(cc("plank", 4)), s(cc("workbench", 1)));
@@ -185,7 +185,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     @Test
     public void testGenerateValuesSimpleMultiRecipeWithEmptyAlternative()
     {
-        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("4x a1 to 1x c4", s(cc("a1", 4)), s(cc("c4", 1)));
         registerRecipe("nothing to 1x c4", s(), s(cc("c4", 1)));
@@ -199,12 +199,12 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesSimpleFixedAfterInherit() {
-        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("4x a1 to 1x c4", s(cc("a1", 4)), s(cc("c4", 1)));
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
 
-        input.registerLocking("b2", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 20)));
+        input.registerLocking("b2", s(cz( 20)));
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
@@ -215,11 +215,11 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesSimpleFixedDoNotInherit() {
-        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
+        input.registerValue("a1", s(cz( 1)));
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("2x b2 to 1x c4", s(cc("b2", 2)), s(cc("c4", 1)));
-        input.registerValue("b2", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 0)));
-        input.registerLocking("b2", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 20)));
+        input.registerValue("b2", s(cz( 0)));
+        input.registerLocking("b2", s(cz( 20)));
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
@@ -230,8 +230,8 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesSimpleSelectMinValueWithDependency() {
-        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
-        input.registerValue("b2", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 2)));
+        input.registerValue("a1", s(cz( 1)));
+        input.registerValue("b2", s(cz( 2)));
         registerRecipe("2x a1 to 1x c", s(cc("a1", 2)), s(cc("c", 1)));
         registerRecipe("2x b2 to 1x c", s(cc("b2", 2)), s(cc("c", 1)));
         registerRecipe("1x c to 1x d", s(cc("c", 2)), s(cc("d", 1)));
@@ -246,7 +246,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesSimpleWoodToWorkBench() {
-        input.registerValue("planks", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
+        input.registerValue("planks", s(cz( 1)));
         registerRecipe("1x wood to 4x planks", s(cc("wood", 1)), s(cc("planks", 4)));
         registerRecipe("4x planks to 1x workbench", s(cc("planks", 4)), s(cc("workbench", 1)));
 
@@ -260,7 +260,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     @Test
     public void testGenerateValuesWood() {
         for (char i : "ABCD".toCharArray()) {
-            input.registerValue("wood" + i, ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 32)));
+            input.registerValue("wood" + i, s(cz( 32)));
             registerRecipe("1x wood" + i + " to 4x planks" + i, s(cc("wood" + i, 1)), s(cc("planks" + i, 4)));
         }
 
@@ -305,7 +305,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesDeepConversions() {
-        input.registerValue("a1", ImmutableSet.of(new CompoundInstance(typeUnknownIsZero, 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("1x a1 to 1x b1", s(cc("a1", 1)), s(cc("b1", 1)));
         registerRecipe("1x b1 to 1x c1", s(cc("b1", 1)), s(cc("c1", 1)));
@@ -320,7 +320,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesDeepInvalidConversionWithZeroAssumption() {
-        input.registerValue("a1", ImmutableSet.of(cz( 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("(1x a1 + 1x invalid1) to 1x b", s(cc("a1", 1), cc("invalid1", 1)), s(cc("b", 1)));
         registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
@@ -337,7 +337,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesDeepInvalidConversionWithInvalidAssumption() {
-        input.registerValue("a1", ImmutableSet.of(ci( 1)));
+        input.registerValue("a1", s(ci( 1)));
 
         registerRecipe("(1x a1 + 1x invalid1) to 1x b", s(cc("a1", 1), cc("invalid1", 1)), s(cc("b", 1)));
         registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
@@ -354,7 +354,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesDeepInvalidConversionWithJoinedAnalysis() {
-        input.registerValue("a1", ImmutableSet.of(ci( 1), cz(1)));
+        input.registerValue("a1", s(ci( 1), cz(1)));
 
         registerRecipe("(1x a1 + 1x invalid1) to 1x b", s(cc("a1", 1), cc("invalid1", 1)), s(cc("b", 1)));
         registerRecipe("(1x a1 + 1x invalid2) to 1x invalid1", s(cc("a1", 1), cc("invalid2", 1)), s(cc("invalid1", 1)));
@@ -371,7 +371,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesMultiRecipeDeepInvalidWithZeroAssumption() {
-        input.registerValue("a1", ImmutableSet.of(cz( 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
@@ -387,7 +387,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     
     @Test
     public void testGenerateValuesMultiRecipeDeepInvalidWithInvalidAssumption() {
-        input.registerValue("a1", ImmutableSet.of(ci( 1)));
+        input.registerValue("a1", s(ci( 1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
@@ -403,7 +403,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesMultiRecipeDeepInvalidWithJoinedAnalysis() {
-        input.registerValue("a1", ImmutableSet.of(cz( 1), ci(1)));
+        input.registerValue("a1", s(cz( 1), ci(1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid1 to 1x b2", s(cc("invalid1", 1)), s(cc("b", 1)));
@@ -419,7 +419,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesMultiRecipesInvalidIngredientWithZeroAssumption() {
-        input.registerValue("a1", ImmutableSet.of(cz( 1)));
+        input.registerValue("a1", s(cz( 1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
@@ -433,7 +433,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesMultiRecipesInvalidIngredientWithInvalidAssumption() {
-        input.registerValue("a1", ImmutableSet.of(ci( 1)));
+        input.registerValue("a1", s(ci( 1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
@@ -447,7 +447,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     @Test
     public void testGenerateValuesMultiRecipesInvalidIngredientWithJoinedAnalysis() {
-        input.registerValue("a1", ImmutableSet.of(cz( 1), ci(1)));
+        input.registerValue("a1", s(cz( 1), ci(1)));
 
         registerRecipe("2x a1 to 1x b2", s(cc("a1", 2)), s(cc("b2", 1)));
         registerRecipe("1x invalid to 1x b2", s(cc("invalid", 1)), s(cc("b2", 1)));
@@ -457,6 +457,65 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(1), ci(1)), result.get(cc("a1")));
         assertEquals(s(cz(2), ci(2)), result.get(cc("b2")));
         assertEquals(s(), result.get(cc("invalid")));
+    }
+
+    @Test
+    public void testGenerateValuesMultiRecipeSourcesInvalidIngredientWithZeroAssumption() {
+        input.registerValue("a1", s(cz( 2)));
+        input.registerValue("b2", s(cz( 1)));
+
+        registerRecipe("(1x b2 + 1x invalid2) to 1x d2", s(cc("b2"), cc("invalid2")), s(cc("d2")));
+        registerRecipe("(1x a1 + 1x invalid1) to 1x c1", s(cc("a1"), cc("invalid1")), s(cc("c1")));
+        registerRecipe("1x d2 to 1x c1", s(cc("d2")), s(cc("c1")));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(2)), result.get(cc("a1")));
+        assertEquals(s(cz(1)), result.get(cc("b2")));
+        assertEquals(s(cz(1)), result.get(cc("d2")));
+        assertEquals(s(), result.get(cc("invalid2")));
+        assertEquals(s(), result.get(cc("invalid1")));
+        assertEquals(s(cz(1)), result.get(cc("c1")));
+    }
+
+
+    @Test
+    public void testGenerateValuesMultiRecipeSourcesInvalidIngredientWithInvalidAssumption() {
+        input.registerValue("a1", s(ci( 2)));
+        input.registerValue("b2", s(ci( 1)));
+
+        registerRecipe("(1x b2 + 1x invalid2) to 1x d2", s(cc("b2"), cc("invalid2")), s(cc("d2")));
+        registerRecipe("(1x a1 + 1x invalid1) to 1x c1", s(cc("a1"), cc("invalid1")), s(cc("c1")));
+        registerRecipe("1x d2 to 1x c1", s(cc("d2")), s(cc("c1")));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(2)), result.get(cc("a1")));
+        assertEquals(s(ci(1)), result.get(cc("b2")));
+        assertEquals(s(), result.get(cc("d2")));
+        assertEquals(s(), result.get(cc("invalid2")));
+        assertEquals(s(), result.get(cc("invalid1")));
+        assertEquals(s(), result.get(cc("c1")));
+    }
+
+
+    @Test
+    public void testGenerateValuesMultiRecipeSourcesInvalidIngredientWithJoinedAnalysis() {
+        input.registerValue("a1", s(cz( 2), ci(2)));
+        input.registerValue("b2", s(cz( 1), ci(1)));
+
+        registerRecipe("(1x b2 + 1x invalid2) to 1x d2", s(cc("b2"), cc("invalid2")), s(cc("d2")));
+        registerRecipe("(1x a1 + 1x invalid1) to 1x c1", s(cc("a1"), cc("invalid1")), s(cc("c1")));
+        registerRecipe("1x d2 to 1x c1", s(cc("d2")), s(cc("c1")));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(2), ci(2)), result.get(cc("a1")));
+        assertEquals(s(cz(1), ci(1)), result.get(cc("b2")));
+        assertEquals(s(cz(1)), result.get(cc("d2")));
+        assertEquals(s(), result.get(cc("invalid2")));
+        assertEquals(s(), result.get(cc("invalid1")));
+        assertEquals(s(cz(1)), result.get(cc("c1")));
     }
 
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
