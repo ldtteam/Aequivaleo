@@ -8,7 +8,7 @@ import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHa
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataModeSerializer;
