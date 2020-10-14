@@ -2,6 +2,8 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.BuildRecipeGraph;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.*;
@@ -35,8 +37,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     public JGraphTBasedCompoundAnalyzer(final World world) {this.world = world;}
 
-    public void calculate()
-    {
+    public BuildRecipeGraph createGraph() {
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new TreeMap<>();
 
         final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
@@ -150,7 +151,32 @@ public class JGraphTBasedCompoundAnalyzer
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
 
-        final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation(), recipeGraph.vertexSet().size());
+        final JGraphTCyclesReducer<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> cyclesReducer = new JGraphTCyclesReducer<>(
+          SubCycleGraphNode::new,
+          (graph, oldEdge, newEdge) -> graph.setEdgeWeight(newEdge, oldEdge.getWeight()),
+          IAnalysisGraphNode::onNeighborReplaced);
+
+        cyclesReducer.reduce(recipeGraph);
+        return new BuildRecipeGraph(
+          recipeGraph,
+          resultingCompounds,
+          compoundNodes,
+          ingredientNodes,
+          notDefinedGraphNodes,
+          source);
+    }
+
+    public void calculate()
+    {
+        final BuildRecipeGraph buildRecipeGraph = createGraph();
+        final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph = buildRecipeGraph.getRecipeGraph();
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds = buildRecipeGraph.getResultingCompounds();
+        final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>>  compoundNodes = buildRecipeGraph.getCompoundNodes();
+        final Map<IRecipeIngredient, IAnalysisGraphNode<Set<CompoundInstance>>>      ingredientNodes = buildRecipeGraph.getIngredientNodes();
+        final Set<ContainerWrapperGraphNode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
+        final SourceGraphNode source = buildRecipeGraph.getSourceGraphNode();
+
+        final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation().toString(), recipeGraph.vertexSet().size());
         final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, source);
 
         while (analysisBFSGraphIterator.hasNext())

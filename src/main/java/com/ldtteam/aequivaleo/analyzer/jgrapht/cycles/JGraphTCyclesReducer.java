@@ -18,33 +18,33 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E>
+public class JGraphTCyclesReducer<V, E>
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final BiFunction<G, List<V>, V> vertexReplacerFunction;
-    private final TriConsumer<G, E, E>      replacementEdgeAddedCallback;
+    private final BiFunction<Graph<V, E>, List<V>, V> vertexReplacerFunction;
+    private final TriConsumer<Graph<V, E>, E, E>      replacementEdgeAddedCallback;
     private final TriConsumer<V, V, V> onNeighborNodeReplacedCallback;
 
     public JGraphTCyclesReducer(
-      final BiFunction<G, List<V>, V> vertexReplacerFunction,
-      final TriConsumer<G, E, E> replacementEdgeAddedCallback,
+      final BiFunction<Graph<V, E>, List<V>, V> vertexReplacerFunction,
+      final TriConsumer<Graph<V, E>, E, E> replacementEdgeAddedCallback,
       final TriConsumer<V, V, V> onNeighborNodeReplacedCallback) {
         this.vertexReplacerFunction = vertexReplacerFunction;
         this.replacementEdgeAddedCallback = replacementEdgeAddedCallback;
         this.onNeighborNodeReplacedCallback = onNeighborNodeReplacedCallback;
     }
 
-    public void reduce(final G graph) {
+    public void reduce(final Graph<V, E> graph) {
         while(reduceOnce(graph)) {
             //Noop we keep on doing this until the graph is cycle free.
         }
     }
 
     @VisibleForTesting
-    public boolean reduceOnce(final G graph) {
-        LOGGER.debug("Reducing the graph");
+    public boolean reduceOnce(final Graph<V, E> graph) {
+        LOGGER.debug(String.format("Reducing the following graph: %s", graph));
 
         final DirectedSimpleCycles<V, E> cycleFinder = new HawickJamesSimpleCycles<>(graph);
         List<List<V>> sortedCycles = cycleFinder.findSimpleCycles();
@@ -63,6 +63,8 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E>
             LOGGER.debug(String.format(" > Removing cycle: %s", cycle));
 
             final V replacementNode = vertexReplacerFunction.apply(graph, cycle);
+
+            LOGGER.debug(String.format("  > With replacement node: %s", replacementNode));
 
             updateRemainingCyclesAfterReplacement(
               sortedCycles,
