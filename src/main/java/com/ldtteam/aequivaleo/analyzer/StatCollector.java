@@ -48,7 +48,7 @@ public class StatCollector
         onVisitNode();
     }
 
-    public void onInnerGraphNode() {
+    public void onSubCycleNode() {
         subCycleNodesVisited++;
         onVisitNode();
     }

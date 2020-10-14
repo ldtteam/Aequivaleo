@@ -1,26 +1,28 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.visual;
 
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.swing.mxGraphComponent;
 import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphXAdapter;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import javax.swing.*;
+import java.applet.Applet;
 import java.awt.*;
 import java.util.Set;
 
 public class RecipeGraphVisualizationApplet extends JApplet
 {
-    private final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> graph;
+    private final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph;
 
     private static final Dimension DEFAULT_SIZE = new Dimension(530, 320);
 
-    private JGraphXAdapter<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> jgxAdapter;
+    private JGraphXAdapter<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> jgxAdapter;
 
-    public RecipeGraphVisualizationApplet(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> graph) {this.graph = graph;}
+    public RecipeGraphVisualizationApplet(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph) {this.graph = graph;}
 
     public void run()
     {
