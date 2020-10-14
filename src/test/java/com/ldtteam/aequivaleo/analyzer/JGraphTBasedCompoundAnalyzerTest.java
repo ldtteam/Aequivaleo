@@ -518,6 +518,22 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(1)), result.get(cc("c1")));
     }
 
+    @Test
+    public void testGenerateValuesCycleRecipe() {
+        input.registerValue("a1", s(cz( 1)));
+
+        registerRecipe("1x a1 to 1x cycle-1", s(cc("a1")), s(cc("cycle-1")));
+        registerRecipe("1x cycle-1 to 1x cycle-2", s(cc("cycle-1")), s(cc("cycle-2")));
+        registerRecipe("1x cycle-2 to 1x cycle-1", s(cc("cycle-2")), s(cc("cycle-1")));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1)), result.get(cc("a1")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-1")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-2")));
+    }
+
+
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {
         EquivalencyRecipeRegistry.getInstance(key).register(
@@ -525,6 +541,18 @@ public class JGraphTBasedCompoundAnalyzerTest
             name,
             inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
             Collections.emptySet(),
+            outputs
+          )
+        );
+    }
+
+    public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> containers, Set<ICompoundContainer<?>> outputs)
+    {
+        EquivalencyRecipeRegistry.getInstance(key).register(
+          new TestingEquivalencyRecipe(
+            name,
+            inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
+            containers,
             outputs
           )
         );
