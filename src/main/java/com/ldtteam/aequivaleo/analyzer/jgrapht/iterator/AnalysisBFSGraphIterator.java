@@ -1,11 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.iterator;
 
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jgrapht.Graph;
@@ -14,16 +10,16 @@ import org.jgrapht.traverse.CrossComponentIterator;
 
 import java.util.*;
 
-public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdge, AnalysisBFSGraphIterator.SearchNodeData>
+public class AnalysisBFSGraphIterator<N> extends CrossComponentIterator<IAnalysisGraphNode<N>, AccessibleWeightEdge, AnalysisBFSGraphIterator.SearchNodeData>
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
 
-    private final Queue<INode> completeQueue = new ArrayDeque<>();
-    private final LinkedList<INode> incompleteQueue = new LinkedList<>();
+    private final Queue<IAnalysisGraphNode<N>> completeQueue = new ArrayDeque<>();
+    private final LinkedList<IAnalysisGraphNode<N>> incompleteQueue = new LinkedList<>();
 
-    public AnalysisBFSGraphIterator(final IGraph g, final INode sourceGraphNode)
+    public AnalysisBFSGraphIterator(final Graph<IAnalysisGraphNode<N>, AccessibleWeightEdge> g, final IAnalysisGraphNode<N> sourceGraphNode)
     {
         super(g, sourceGraphNode);
     }
@@ -34,12 +30,8 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
         return completeQueue.isEmpty() && incompleteQueue.isEmpty();
     }
 
-    public IGraph getGraph() {
-        return (IGraph) super.getGraph();
-    }
-
     @Override
-    protected void encounterVertex(final INode vertex, final IEdge edge)
+    protected void encounterVertex(final IAnalysisGraphNode<N> vertex, final AccessibleWeightEdge edge)
     {
         LOGGER.debug(String.format("Initially encountered: %s", vertex));
 
@@ -54,33 +46,33 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     }
 
     @Override
-    protected INode provideNextVertex()
+    protected IAnalysisGraphNode<N> provideNextVertex()
     {
-        final INode vertex = innerProvideNextVertex();
+        final IAnalysisGraphNode<N> vertex = innerProvideNextVertex();
 
         vertex.determineResult(getGraph());
-        final Optional<Set<CompoundInstance>> result = vertex.getResultingValue();
+        final Optional<N> result = vertex.getResultingValue();
         LOGGER.debug(String.format("  > Determined result to be: %s", result.isPresent() ? result.get() : "<MISSING>"));
         vertex.onReached(getGraph());
 
         return vertex;
     }
 
-    private INode innerProvideNextVertex() {
+    private IAnalysisGraphNode<N> innerProvideNextVertex() {
         if (!completeQueue.isEmpty())
         {
-            final INode complete = completeQueue.poll();
+            final IAnalysisGraphNode<N> complete = completeQueue.poll();
             LOGGER.debug(String.format("Accessing next complete node: %s", complete));
             return complete;
         }
 
-        final INode incomplete = incompleteQueue.removeFirst();
+        final IAnalysisGraphNode<N> incomplete = incompleteQueue.removeFirst();
         LOGGER.debug(String.format("Accessing next incomplete node: %s", incomplete));
         return incomplete;
     }
 
     @Override
-    protected void encounterVertexAgain(final INode vertex, final IEdge edge)
+    protected void encounterVertexAgain(final IAnalysisGraphNode<N> vertex, final AccessibleWeightEdge edge)
     {
         if (!vertex.getResultingValue().isPresent() && incompleteQueue.contains(vertex) && vertex.canResultBeCalculated(getGraph())) {
             LOGGER.debug(String.format("Upgrading completion state from incomplete to complete on the queued vertex: %s", vertex));
@@ -94,13 +86,13 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
         /**
          * Edge to parent
          */
-        final IEdge edge;
+        final AccessibleWeightEdge edge;
         /**
          * Depth of node in search tree
          */
-        final int  depth;
+        final int depth;
 
-        SearchNodeData(IEdge edge, int depth)
+        SearchNodeData(AccessibleWeightEdge edge, int depth)
         {
             this.edge = edge;
             this.depth = depth;

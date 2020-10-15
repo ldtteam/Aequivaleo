@@ -7,14 +7,13 @@ import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
-import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceData;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -183,8 +181,6 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             return thread;
         });
 
-        RecipeCalculator.IngredientHandler.getInstance().reset();
-
         CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
           new AequivaleoWorldAnalysisRunner(
             world,
@@ -202,9 +198,6 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
                   PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world));
                 }
               );
-          })
-          .thenRunAsync(() -> {
-              RecipeCalculator.IngredientHandler.getInstance().logErrors();
           })
           .thenRunAsync(aequivaleoReloadExecutor::shutdown);
     }
@@ -244,16 +237,16 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             try {
                 WorldBootstrapper.onWorldReload(getServerWorld());
 
-                final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
-                final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueWorldGroupedData = groupDataByContainer(valueWorldData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> valueWorldGroupedData = groupDataByContainer(valueWorldData);
 
-                final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> lockedGeneralGroupedData = groupDataByContainer(lockedGeneralData);
-                final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> lockedWorldGroupedData = groupDataByContainer(lockedWorldData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> lockedGeneralGroupedData = groupDataByContainer(lockedGeneralData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> lockedWorldGroupedData = groupDataByContainer(lockedWorldData);
 
                 final Map<ICompoundContainer<?>, Set<CompoundInstance>> valueTargetMap = Maps.newHashMap();
                 final Map<ICompoundContainer<?>, Set<CompoundInstance>> lockedTargetMap = Maps.newHashMap();
 
-                final Set<Set<ICompoundContainer<?>>> valueKeySets = ImmutableSet.<Set<ICompoundContainer<?>>>builder()
+                final Set<ICompoundContainer<?>> valueKeySets = ImmutableSet.<ICompoundContainer<?>>builder()
                                                                    .addAll(valueGeneralGroupedData.keySet())
                                                                    .addAll(valueWorldGroupedData.keySet())
                                                                    .build();
@@ -270,7 +263,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
                     );
                 });
 
-                final Set<Set<ICompoundContainer<?>>> lockedKeySets = ImmutableSet.<Set<ICompoundContainer<?>>>builder()
+                final Set<ICompoundContainer<?>> lockedKeySets = ImmutableSet.<ICompoundContainer<?>>builder()
                   .addAll(lockedGeneralGroupedData.keySet())
                   .addAll(lockedWorldGroupedData.keySet())
                   .build();
@@ -287,10 +280,10 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
                     );
                 });
 
-                valueTargetMap.forEach(ICompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
+                valueTargetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
                                           ::registerValue);
 
-                lockedTargetMap.forEach(ICompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
+                lockedTargetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
                   ::registerLocking);
 
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
@@ -301,14 +294,14 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation().toString());
         }
 
-        private static Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
-            return GroupingUtils.groupBy(
+        private static Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
+            return GroupingUtils.groupByUsingSet(
               data,
-              CompoundInstanceData::getContainers
+              CompoundInstanceData::getContainer
             )
               .stream()
               .collect(Collectors.toMap(
-                c -> c.iterator().next().getContainers(),
+                c -> c.iterator().next().getContainer(),
                 Function.identity()
               ));
         }
