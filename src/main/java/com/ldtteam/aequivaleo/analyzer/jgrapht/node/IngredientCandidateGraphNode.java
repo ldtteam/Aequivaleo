@@ -1,24 +1,23 @@
-package com.ldtteam.aequivaleo.analyzer.jgrapht;
+package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.ldtteam.aequivaleo.analyzer.StatCollector;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.NotNull;
+import org.jgrapht.Graph;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class IngredientCandidateGraphNode implements IAnalysisGraphNode
+public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
 {
-
-    @NotNull
-    private final Set<IAnalysisGraphNode> analyzedInputNodes = Sets.newConcurrentHashSet();
-
-    @NotNull
-    private ImmutableSet<CompoundInstance> compoundInstances = ImmutableSet.of();
-
     @NotNull
     private final IRecipeIngredient ingredient;
 
@@ -28,19 +27,6 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
     public IRecipeIngredient getIngredient()
     {
         return ingredient;
-    }
-
-    @NotNull
-    public ImmutableSet<CompoundInstance> getCompoundInstances()
-    {
-        return compoundInstances;
-    }
-
-    public void addCompound(final CompoundInstance instance) {
-        final Set<CompoundInstance> instances = new HashSet<>(getCompoundInstances());
-        instances.add(instance);
-
-        this.compoundInstances = ImmutableSet.copyOf(instances);
     }
 
     @Override
@@ -66,17 +52,17 @@ public class IngredientCandidateGraphNode implements IAnalysisGraphNode
         return getIngredient().hashCode();
     }
 
-    @NotNull
-    public Set<IAnalysisGraphNode> getAnalyzedInputNodes()
-    {
-        return analyzedInputNodes;
-    }
-
     @Override
     public String toString()
     {
         return "IngredientCandidateGraphNode{" +
                  "ingredient=" + ingredient +
                  '}';
+    }
+
+    @Override
+    public void collectStats(final StatCollector statCollector)
+    {
+        statCollector.onVisitIngredientNode();
     }
 }

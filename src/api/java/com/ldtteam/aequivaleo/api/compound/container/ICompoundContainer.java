@@ -29,12 +29,16 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
      *
      * @return True to indicate that data can be loaded form disk, false when not.
      */
-    boolean canBeLoadedFromDisk();
+    default boolean canBeLoadedFromDisk() {
+        return false;
+    }
 
     /**
      * Gives access to the content as a filename.
      *
      * @return a file name that represents the content.
      */
-    String getContentAsFileName();
+    default String getContentAsFileName() {
+        throw new UnsupportedOperationException();
+    }
 }

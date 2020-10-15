@@ -27,7 +27,30 @@ public class LockedCompoundInformationRegistry implements ILockedCompoundInforma
     {
     }
 
+    private final Map<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> valueInformation = Maps.newConcurrentMap();
     private final Map<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> lockedInformation = Maps.newConcurrentMap();
+
+    @Override
+    public ILockedCompoundInformationRegistry registerValue(
+      @NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds)
+    {
+        if (wrapper.getContentsCount() != 1)
+            throw new IllegalArgumentException("Can not set locked information with none unit stack.");
+
+        valueInformation.put(wrapper, ImmutableSet.copyOf(compounds));
+
+        return this;
+    }
+
+    @Override
+    public <T> ILockedCompoundInformationRegistry registerValue(
+      @NotNull final T gameObjectInstanceToAssign, @NotNull final Set<CompoundInstance> compounds)
+    {
+        return registerValue(
+          CompoundContainerFactoryManager.getInstance().wrapInContainer(gameObjectInstanceToAssign, 1d),
+          compounds
+        );
+    }
 
     @Override
     public ILockedCompoundInformationRegistry registerLocking(
@@ -53,10 +76,16 @@ public class LockedCompoundInformationRegistry implements ILockedCompoundInforma
 
     public void reset()
     {
+        valueInformation.clear();
         lockedInformation.clear();
     }
 
-    public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> get()
+    public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getValueInformation()
+    {
+        return ImmutableMap.copyOf(valueInformation);
+    }
+
+    public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getLockingInformation()
     {
         return ImmutableMap.copyOf(lockedInformation);
     }

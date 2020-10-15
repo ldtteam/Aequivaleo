@@ -36,20 +36,14 @@ apply plugin: 'maven'
 
 sourceSets {
     api {
-        java {
-            srcDir 'src/api/java'
-        }
-        resources {
-            srcDir 'src/api/resources'
-        }
         compileClasspath += configurations.getByName("minecraft")
     }
     vanillaApi {
         java {
-            srcDir 'src/vanilla-api/java'
+            setSrcDirs([ 'src/vanilla-api/java' ])
         }
         resources {
-            srcDir 'src/vanilla-api/resources'
+            setSrcDirs([ 'src/vanilla-api/resources' ])
         }
 
         compileClasspath += sourceSets.api.output
@@ -57,27 +51,13 @@ sourceSets {
         compileClasspath += configurations.getByName("minecraft")
     }
     vanilla {
-        java {
-            srcDir 'src/vanilla/java'
-        }
-        resources {
-            srcDir 'src/vanilla/resources'
-        }
-
         compileClasspath += sourceSets.api.output
         runtimeClasspath += sourceSets.api.output
         compileClasspath += sourceSets.vanillaApi.output
         runtimeClasspath += sourceSets.vanillaApi.output
         compileClasspath += configurations.getByName("minecraft")
     }
-    //noinspection GroovyAssignabilityCheck
     main {
-        java {
-            srcDir 'src/main/java'
-        }
-        resources {
-            srcDir 'src/main/resources'
-        }
         compileClasspath += sourceSets.api.output
         runtimeClasspath += sourceSets.api.output
         compileClasspath += sourceSets.vanilla.output
@@ -86,12 +66,6 @@ sourceSets {
         runtimeClasspath += sourceSets.vanillaApi.output
     }
     test {
-        java {
-            srcDir 'src/test/java'
-        }
-        resources {
-            srcDir 'src/test/resources'
-        }
         compileClasspath += sourceSets.api.output
         runtimeClasspath += sourceSets.api.output
     }
@@ -189,6 +163,9 @@ dependencies {
     testCompile 'org.assertj:assertj-core:3.9.0'
 
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+
+    testRuntimeOnly group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version:'2.9.9'
+    testRuntimeOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.10.0'
 
     //Utilities
     apiCompile 'com.intellij:annotations:+@jar'

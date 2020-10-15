@@ -26,6 +26,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
-public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocation, List<CompoundInstanceData>>>
+public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>>>
 {
     private static final String JSON_EXTENSION = ".json";
     private static final int JSON_EXTENSION_LENGTH = JSON_EXTENSION.length();
@@ -64,28 +65,49 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
     }
 
     @Override
-    protected Map<ResourceLocation, List<CompoundInstanceData>> prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
     {
         return parseData(resourceManagerIn);
     }
 
     @Override
-    protected void apply(final Map<ResourceLocation, List<CompoundInstanceData>> objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected void apply(final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
         reloadResources(objectIn);
     }
 
-    private static Map<ResourceLocation, List<CompoundInstanceData>> parseData(final IResourceManager resourceManager) {
+    private static Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> parseData(final IResourceManager resourceManager) {
         if (ServerLifecycleHooks.getCurrentServer() == null)
         {
-            return ImmutableMap.of();
+            return Pair.of(ImmutableMap.of(), ImmutableMap.of());
         }
 
-        final Map<ResourceLocation, List<CompoundInstanceData>> data = new HashMap<>();
+        final Map<ResourceLocation, List<CompoundInstanceData>> valueData = new HashMap<>();
+        final Map<ResourceLocation, List<CompoundInstanceData>> lockedData = new HashMap<>();
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
-        data.put(
+        valueData.put(
+          GENERAL_DATA_NAME,
+          read(
+            resourceManager,
+            "aequivaleo/value/general"
+          )
+        );
+
+        worlds.forEach(world -> {
+            final String path = "aequivaleo/value/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
+
+            valueData.put(
+              world.getDimensionKey().getLocation(),
+              read(
+                resourceManager,
+                path
+              )
+            );
+        });
+
+        lockedData.put(
           GENERAL_DATA_NAME,
           read(
             resourceManager,
@@ -96,7 +118,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
         worlds.forEach(world -> {
             final String path = "aequivaleo/locked/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
 
-            data.put(
+            lockedData.put(
               world.getDimensionKey().getLocation(),
               read(
                 resourceManager,
@@ -105,7 +127,7 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
             );
         });
 
-        return data;
+        return Pair.of(valueData, lockedData);
     }
 
     @NotNull
@@ -138,9 +160,12 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
         return collectedData;
     }
 
-    private static void reloadResources(final Map<ResourceLocation, List<CompoundInstanceData>> data)
+    private static void reloadResources(final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> data)
     {
-        if (data.isEmpty() || ServerLifecycleHooks.getCurrentServer() == null)
+        final Map<ResourceLocation, List<CompoundInstanceData>> valueData = data.getLeft();
+        final Map<ResourceLocation, List<CompoundInstanceData>> lockedData = data.getRight();
+
+        if ((lockedData.isEmpty() && valueData.isEmpty()) || ServerLifecycleHooks.getCurrentServer() == null)
             return;
 
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
@@ -158,9 +183,11 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
 
         CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
           new AequivaleoWorldAnalysisRunner(
-            data.get(GENERAL_DATA_NAME),
             world,
-            data.get(world.getDimensionKey().getLocation()
+            valueData.get(GENERAL_DATA_NAME),
+            valueData.get(world.getDimensionKey().getLocation()),
+            lockedData.get(GENERAL_DATA_NAME),
+            lockedData.get(world.getDimensionKey().getLocation()
             )
           ),
           aequivaleoReloadExecutor
@@ -178,17 +205,24 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
     private static class AequivaleoWorldAnalysisRunner implements Runnable
     {
 
-        private final List<CompoundInstanceData> generalData;
-        private final ServerWorld serverWorld;
-        private final List<CompoundInstanceData> worldData;
+        private final ServerWorld                serverWorld;
+        private final List<CompoundInstanceData> valueGeneralData;
+        private final List<CompoundInstanceData> valueWorldData;
+        private final List<CompoundInstanceData> lockedGeneralData;
+        private final List<CompoundInstanceData> lockedWorldData;
 
         private AequivaleoWorldAnalysisRunner(
-          final List<CompoundInstanceData> generalData,
           final ServerWorld serverWorld,
-          final List<CompoundInstanceData> worldData) {
-            this.generalData = generalData;
+          final List<CompoundInstanceData> valueGeneralData,
+          final List<CompoundInstanceData> valueWorldData,
+          final List<CompoundInstanceData> lockedGeneralData,
+          final List<CompoundInstanceData> lockedWorldData)
+        {
+            this.valueGeneralData = valueGeneralData;
+            this.valueWorldData = valueWorldData;
+            this.lockedGeneralData = lockedGeneralData;
             this.serverWorld = serverWorld;
-            this.worldData = worldData;
+            this.lockedWorldData = lockedWorldData;
         }
 
         @Override
@@ -203,29 +237,53 @@ public class AequivaleoReloadListener extends ReloadListener<Map<ResourceLocatio
             try {
                 WorldBootstrapper.onWorldReload(getServerWorld());
 
-                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> generalGroupedData = groupDataByContainer(generalData);
-                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> worldGroupedData = groupDataByContainer(worldData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> valueWorldGroupedData = groupDataByContainer(valueWorldData);
 
-                final Map<ICompoundContainer<?>, Set<CompoundInstance>> targetMap = Maps.newHashMap();
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> lockedGeneralGroupedData = groupDataByContainer(lockedGeneralData);
+                final Map<ICompoundContainer<?>, Collection<CompoundInstanceData>> lockedWorldGroupedData = groupDataByContainer(lockedWorldData);
 
-                final Set<ICompoundContainer<?>> keySets = ImmutableSet.<ICompoundContainer<?>>builder()
-                  .addAll(generalGroupedData.keySet())
-                  .addAll(worldGroupedData.keySet())
-                  .build();
+                final Map<ICompoundContainer<?>, Set<CompoundInstance>> valueTargetMap = Maps.newHashMap();
+                final Map<ICompoundContainer<?>, Set<CompoundInstance>> lockedTargetMap = Maps.newHashMap();
 
-                keySets.forEach(container -> {
-                    generalGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
-                                                                                                                                                    .ordinal())).forEachOrdered(
-                        compoundInstanceData -> compoundInstanceData.handle(targetMap)
+                final Set<ICompoundContainer<?>> valueKeySets = ImmutableSet.<ICompoundContainer<?>>builder()
+                                                                   .addAll(valueGeneralGroupedData.keySet())
+                                                                   .addAll(valueWorldGroupedData.keySet())
+                                                                   .build();
+
+                valueKeySets.forEach(container -> {
+                    valueGeneralGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                          .ordinal())).forEachOrdered(
+                      compoundInstanceData -> compoundInstanceData.handle(valueTargetMap)
                     );
 
-                    worldGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
-                                                                                                                                                    .ordinal())).forEachOrdered(
-                      compoundInstanceData -> compoundInstanceData.handle(targetMap)
+                    valueWorldGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                        .ordinal())).forEachOrdered(
+                      compoundInstanceData -> compoundInstanceData.handle(valueTargetMap)
                     );
                 });
 
-                targetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
+                final Set<ICompoundContainer<?>> lockedKeySets = ImmutableSet.<ICompoundContainer<?>>builder()
+                  .addAll(lockedGeneralGroupedData.keySet())
+                  .addAll(lockedWorldGroupedData.keySet())
+                  .build();
+
+                lockedKeySets.forEach(container -> {
+                    lockedGeneralGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                    .ordinal())).forEachOrdered(
+                        compoundInstanceData -> compoundInstanceData.handle(lockedTargetMap)
+                    );
+
+                    lockedWorldGroupedData.getOrDefault(container, Sets.newHashSet()).stream().sorted(Comparator.comparingInt(compoundInstanceData -> compoundInstanceData.getMode()
+                                                                                                                                                    .ordinal())).forEachOrdered(
+                      compoundInstanceData -> compoundInstanceData.handle(lockedTargetMap)
+                    );
+                });
+
+                valueTargetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
+                                          ::registerValue);
+
+                lockedTargetMap.forEach(ILockedCompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
                   ::registerLocking);
 
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());

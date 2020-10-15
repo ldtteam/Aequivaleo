@@ -1,23 +1,16 @@
 package com.ldtteam.aequivaleo.analyzer.debug;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.analyzer.io.JSONGraphExporter;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.nio.Attribute;
-import org.jgrapht.nio.AttributeType;
-import org.jgrapht.nio.DefaultAttribute;
-import org.jgrapht.nio.json.JSONExporter;
 
-import java.io.File;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.Set;
 
 public class GraphIOHandler
 {
@@ -36,7 +29,7 @@ public class GraphIOHandler
 
     public void export(
       @NotNull final String name,
-      @NotNull final Graph<IAnalysisGraphNode, AccessibleWeightEdge> recipeGraph
+      @NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph
     ) {
         final JSONGraphExporter exporter = new JSONGraphExporter();
 
