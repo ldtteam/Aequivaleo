@@ -2,7 +2,7 @@ package com.ldtteam.aequivaleo.analyzer.io;
 
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jgrapht.Graph;
 import org.jgrapht.nio.BaseExporter;

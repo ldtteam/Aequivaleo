@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jgrapht.Graph;
 

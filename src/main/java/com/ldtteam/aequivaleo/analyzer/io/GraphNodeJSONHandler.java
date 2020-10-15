@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.io;
 
 import com.google.gson.*;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 
 import java.lang.reflect.Type;

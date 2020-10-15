@@ -1,8 +1,9 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -11,16 +12,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jgrapht.Graph;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Set<CompoundInstance>>
+public abstract class AbstractNode implements INode
 {
     @Nullable
-    private Set<CompoundInstance> result = null;
+    private Set<CompoundInstance>                                                      result       = null;
     @NotNull
-    private Map<IAnalysisGraphNode<Set<CompoundInstance>>, Set<CompoundInstance>> candidates = Maps.newHashMap();
-    private boolean isIncomplete = false;
+    private Multimap<INode, Set<CompoundInstance>> candidates   = HashMultimap.create();
+    private boolean                                                                    isIncomplete = false;
 
     @NotNull
     @Override
@@ -30,7 +30,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
     }
 
     @Override
-    public void addCandidateResult(final IAnalysisGraphNode<Set<CompoundInstance>> neighbor, final Set<CompoundInstance> instances)
+    public void addCandidateResult(final INode neighbor, final Set<CompoundInstance> instances)
     {
         this.candidates.put(neighbor, instances);
     }
@@ -44,16 +44,16 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
 
     @NotNull
     @Override
-    public Set<IAnalysisGraphNode<Set<CompoundInstance>>> getAnalyzedNeighbors()
+    public Set<INode> getAnalyzedNeighbors()
     {
         return ImmutableSet.copyOf(candidates.keySet().stream().filter(n -> n != this).collect(Collectors.toList()));
     }
 
     @Override
-    public void onReached(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph) {
-        for (AccessibleWeightEdge accessibleWeightEdge : graph.outgoingEdgesOf(this))
+    public void onReached(final Graph<INode, IEdge> graph) {
+        for (IEdge accessibleWeightEdge : graph.outgoingEdgesOf(this))
         {
-            IAnalysisGraphNode<Set<CompoundInstance>> v = graph.getEdgeTarget(accessibleWeightEdge);
+            INode v = graph.getEdgeTarget(accessibleWeightEdge);
             v.addCandidateResult(this, getResultingValue().orElse(Sets.newHashSet()));
 
             if (this.isIncomplete())
@@ -68,7 +68,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
     }
 
     @Override
-    public void determineResult(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
+    public void determineResult(final Graph<INode, IEdge> graph)
     {
         //Short cirquit empty result.
         if (getCandidates().size() == 0)
@@ -79,8 +79,8 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
 
         //Locking happens via the intrinsic value of node itself.
         //Return that value if it exists.
-        if (this.candidates.containsKey(this)) {
-            this.result = this.candidates.get(this);
+        if (this.candidates.containsKey(this) && this.candidates.get(this).size() == 1) {
+            this.result = this.candidates.get(this).iterator().next();
             return;
         }
 
@@ -95,9 +95,9 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
         //If we have multiples we group them up by type group and then let it decide.
         //Then we collect them all back together into one list
         //Bit of a mess but works.
-        this.result = GroupingUtils.groupBy(getCandidates()
+        this.result = GroupingUtils.groupByUsingSet(getCandidates()
                                               .stream()
-                                              .flatMap(candidate -> GroupingUtils.groupBy(candidate, compoundInstance -> compoundInstance.getType().getGroup()).stream()) //Split apart each of the initial candidate lists into several smaller list based on their group.
+                                              .flatMap(candidate -> GroupingUtils.groupByUsingSet(candidate, compoundInstance -> compoundInstance.getType().getGroup()).stream()) //Split apart each of the initial candidate lists into several smaller list based on their group.
                                               .filter(collection -> !collection.isEmpty())
                                               .map(Sets::newHashSet)
                                               .map(hs -> (Set<CompoundInstance>) hs)
@@ -124,7 +124,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
         return this.isIncomplete;
     }
 
-    public boolean hasIncompleteChildren(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph) {
+    public boolean hasIncompleteChildren(final Graph<INode, IEdge> graph) {
         return graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).anyMatch(IAnalysisGraphNode::isIncomplete);
     }
 }

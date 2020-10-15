@@ -44,7 +44,7 @@ public class JGraphTCyclesReducer<V, E>
 
     @VisibleForTesting
     public boolean reduceOnce(final Graph<V, E> graph) {
-        LOGGER.debug(String.format("Reducing the following graph: %s", graph));
+        LOGGER.debug("Reducing the graph");
 
         final DirectedSimpleCycles<V, E> cycleFinder = new HawickJamesSimpleCycles<>(graph);
         List<List<V>> sortedCycles = cycleFinder.findSimpleCycles();
@@ -63,8 +63,6 @@ public class JGraphTCyclesReducer<V, E>
             LOGGER.debug(String.format(" > Removing cycle: %s", cycle));
 
             final V replacementNode = vertexReplacerFunction.apply(graph, cycle);
-
-            LOGGER.debug(String.format("  > With replacement node: %s", replacementNode));
 
             updateRemainingCyclesAfterReplacement(
               sortedCycles,

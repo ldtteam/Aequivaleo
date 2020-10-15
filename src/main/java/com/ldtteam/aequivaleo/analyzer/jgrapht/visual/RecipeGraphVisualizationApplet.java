@@ -1,16 +1,14 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.visual;
 
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.swing.mxGraphComponent;
 import org.jgrapht.Graph;
 import org.jgrapht.ext.JGraphXAdapter;
-import org.jgrapht.graph.DefaultWeightedEdge;
 
 import javax.swing.*;
-import java.applet.Applet;
 import java.awt.*;
 import java.util.Set;
 
