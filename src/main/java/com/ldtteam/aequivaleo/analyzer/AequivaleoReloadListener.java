@@ -295,7 +295,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         }
 
         private static Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
-            return GroupingUtils.groupBy(
+            return GroupingUtils.groupByUsingSet(
               data,
               CompoundInstanceData::getContainers
             )

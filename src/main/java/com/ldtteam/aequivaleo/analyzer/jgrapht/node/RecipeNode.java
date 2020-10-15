@@ -2,20 +2,25 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithContainer;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithSubNodes;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import org.jetbrains.annotations.NotNull;
+import org.jgrapht.Graph;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RecipeNode extends AbstractNode
+public class RecipeGraphNode extends AbstractNode
 {
     @NotNull
     private final IEquivalencyRecipe recipe;
 
-    public RecipeNode(@NotNull final IEquivalencyRecipe recipe) {this.recipe = recipe;}
+    public RecipeGraphNode(@NotNull final IEquivalencyRecipe recipe) {this.recipe = recipe;}
 
     @NotNull
     public IEquivalencyRecipe getRecipe()
@@ -30,12 +35,12 @@ public class RecipeNode extends AbstractNode
         {
             return true;
         }
-        if (!(o instanceof RecipeNode))
+        if (!(o instanceof RecipeGraphNode))
         {
             return false;
         }
 
-        final RecipeNode that = (RecipeNode) o;
+        final RecipeGraphNode that = (RecipeGraphNode) o;
 
         return getRecipe().equals(that.getRecipe());
     }
@@ -47,11 +52,11 @@ public class RecipeNode extends AbstractNode
     }
 
     @Override
-    public void determineResult(final IGraph graph)
+    public void determineResult(final Graph<INode, IEdge> graph)
     {
         final Set<ContainerNode> requiredKnownOutputs = extractRequiredKnownOutputNeighborsFromGraph(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(
           Collectors.toSet()));
-        final Set<IngredientNode> inputNeighbors = extractInputNeighborsFromGraph(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+        final Set<IngredientCandidateGraphNode> inputNeighbors = extractInputNeighborsFromGraph(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
 
         final boolean isComplete = !hasIncompleteChildren(graph);
 
@@ -98,7 +103,7 @@ public class RecipeNode extends AbstractNode
     }
 
     @Override
-    public void onReached(final IGraph graph)
+    public void onReached(final Graph<INode, IEdge> graph)
     {
         super.onReached(graph);
 
@@ -139,10 +144,10 @@ public class RecipeNode extends AbstractNode
         }
     }
 
-    private Set<IngredientNode> extractInputNeighborsFromGraph(
+    private Set<IngredientCandidateGraphNode> extractInputNeighborsFromGraph(
       final Set<INode> targetVertices
     ) {
-        final Set<IngredientNode> inputNeighbors = new HashSet<>();
+        final Set<IngredientCandidateGraphNode> inputNeighbors = new HashSet<>();
         for (INode v : targetVertices)
         {
             if (v instanceof IInnerGraphNode)
@@ -150,8 +155,8 @@ public class RecipeNode extends AbstractNode
                 final IInnerGraphNode s = (IInnerGraphNode) v;
                 inputNeighbors.addAll(extractInputNeighborsFromGraph(s.getSourceNeighborOf(this)));
             }
-            else if (v instanceof IngredientNode) {
-                inputNeighbors.add((IngredientNode) v);
+            else if (v instanceof IngredientCandidateGraphNode) {
+                inputNeighbors.add((IngredientCandidateGraphNode) v);
             }
         }
 

@@ -8,6 +8,6 @@ import java.util.Set;
 /**
  * Represents a graph node which has other nodes contained in itself.
  */
-public interface IInnerGraphNode extends INode, IAnalysisNodeWithSubNodes<IGraph, Set<CompoundInstance>, INode, IEdge>
+public interface IInnerGraphNode extends INode, IAnalysisNodeWithSubNodes<Set<CompoundInstance>, INode, IEdge>
 {
 }

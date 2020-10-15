@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht;
 
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.ContainerWrapperGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithContainer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.SourceGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
@@ -19,7 +19,7 @@ public class BuildRecipeGraph
     private final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds;
     private final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>>  compoundNodes;
     private final Map<IRecipeIngredient, IAnalysisGraphNode<Set<CompoundInstance>>>      ingredientNodes;
-    private final Set<ContainerWrapperGraphNode>                                         notDefinedGraphNodes;
+    private final Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>>                                         notDefinedGraphNodes;
     private final SourceGraphNode                                                        sourceGraphNode;
 
     public BuildRecipeGraph(
@@ -27,7 +27,8 @@ public class BuildRecipeGraph
       final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds,
       final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>> compoundNodes,
       final Map<IRecipeIngredient, IAnalysisGraphNode<Set<CompoundInstance>>> ingredientNodes,
-      final Set<ContainerWrapperGraphNode> notDefinedGraphNodes, final SourceGraphNode sourceGraphNode)
+      final Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>> notDefinedGraphNodes,
+      final SourceGraphNode sourceGraphNode)
     {
         this.recipeGraph = recipeGraph;
         this.resultingCompounds = resultingCompounds;
@@ -57,7 +58,7 @@ public class BuildRecipeGraph
         return ingredientNodes;
     }
 
-    public Set<ContainerWrapperGraphNode> getNotDefinedGraphNodes()
+    public Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>> getNotDefinedGraphNodes()
     {
         return notDefinedGraphNodes;
     }

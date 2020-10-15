@@ -12,6 +12,7 @@ import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
@@ -36,10 +37,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -106,7 +105,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_zero"));
         when(groupUnknownIsZero.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.isValidFor(any(), any())).thenReturn(true);
-        when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any(), any())).thenReturn(true);
+        when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.determineResult(any(), any()))
           .thenAnswer((Answer<Set<CompoundInstance>>) invocation -> {
             final Set<Set<CompoundInstance>> data = invocation.getArgumentAt(0, Set.class);
@@ -130,7 +129,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_invalid"));
         when(groupUnknownIsInvalid.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.isValidFor(any(), any())).thenReturn(true);
-        when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any(), any())).thenReturn(true);
+        when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.determineResult(any(), any())).thenAnswer((Answer<Set<CompoundInstance>>) invocation -> {
             final Set<Set<CompoundInstance>> data = invocation.getArgumentAt(0, Set.class);
             final boolean isComplete = invocation.getArgumentAt(1, Boolean.class);
@@ -534,6 +533,87 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(1)), result.get(cc("cycle-2")));
     }
 
+    @Test
+    public void testGenerateValuesBigCycleRecipe() {
+        input.registerValue("a1", s(cz( 1)));
+
+        registerRecipe("1x a1 to 1x cycle-1", s(cc("a1")), s(cc("cycle-1")));
+        registerRecipe("1x cycle-1 to 1x cycle-2", s(cc("cycle-1")), s(cc("cycle-2")));
+        registerRecipe("1x cycle-2 to 1x cycle-3", s(cc("cycle-2")), s(cc("cycle-3")));
+        registerRecipe("1x cycle-3 to 1x cycle-4", s(cc("cycle-3")), s(cc("cycle-4")));
+        registerRecipe("1x cycle-4 to 1x cycle-5", s(cc("cycle-4")), s(cc("cycle-5")));
+        registerRecipe("1x cycle-5 to 1x cycle-1", s(cc("cycle-5")), s(cc("cycle-1")));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1)), result.get(cc("a1")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-1")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-2")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-3")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-4")));
+        assertEquals(s(cz(1)), result.get(cc("cycle-5")));
+    }
+
+    @Test
+    public void testGenerateValuesFuelAndMatter() {
+        final String coal = "coal";
+        final String aCoal = "alchemicalCoal";
+        final String aCoalBlock = "alchemicalCoalBlock";
+        final String mFuel = "mobiusFuel";
+        final String mFuelBlock = "mobiusFuelBlock";
+        final String aFuel = "aeternalisFuel";
+        final String aFuelBlock = "aeternalisFuelBlock";
+        String repeat;
+        
+        input.registerValue(coal, s(ci( 128)));
+        addConversion(1, aCoal, Arrays.asList(coal, coal, coal, coal));
+        addConversion(4, aCoal, Collections.singletonList(mFuel));
+        addConversion(9, aCoal, Collections.singletonList(aCoalBlock));
+        repeat = aCoal;
+        addConversion(1, aCoalBlock, Arrays.asList(repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat));
+
+        addConversion(1, mFuel, Arrays.asList(aCoal, aCoal, aCoal, aCoal));
+        addConversion(4, mFuel, Collections.singletonList(aFuel));
+        addConversion(9, mFuel, Collections.singletonList(mFuelBlock));
+        repeat = mFuel;
+        addConversion(1, mFuelBlock, Arrays.asList(repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat));
+
+        addConversion(1, aFuel, Arrays.asList(mFuel, mFuel, mFuel, mFuel));
+        addConversion(9, aFuel, Collections.singletonList(aFuelBlock));
+        repeat = aFuel;
+        addConversion(1, aFuelBlock, Arrays.asList(repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat));
+
+        input.registerValue("diamondBlock", s(ci( 73728L)));
+        final String dMatter = "darkMatter";
+        final String dMatterBlock = "darkMatterBlock";
+
+        addConversion(1, dMatter, Arrays.asList(aFuel, aFuel, aFuel, aFuel, aFuel, aFuel, aFuel, aFuel, "diamondBlock"));
+        addConversion(1, dMatter, Collections.singletonList(dMatterBlock));
+        addConversion(4, dMatterBlock, Arrays.asList(dMatter, dMatter, dMatter, dMatter));
+
+        final String rMatter = "redMatter";
+        final String rMatterBlock = "redMatterBlock";
+        addConversion(1, rMatter, Arrays.asList(aFuel, aFuel, aFuel, dMatter, dMatter, dMatter, aFuel, aFuel, aFuel));
+        addConversion(1, rMatter, Collections.singletonList(rMatterBlock));
+        addConversion(4, rMatterBlock, Arrays.asList(rMatter, rMatter, rMatter, rMatter));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(ci(128)), result.get(cc(coal)));
+        assertEquals(s(ci(512)), result.get(cc(aCoal)));
+        assertEquals(s(ci(4608)), result.get(cc(aCoalBlock)));
+        assertEquals(s(ci(2048)), result.get(cc(mFuel)));
+        assertEquals(s(ci(18432)), result.get(cc(mFuelBlock)));
+        assertEquals(s(ci(8192)), result.get(cc(aFuel)));
+        assertEquals(s(ci(73728)), result.get(cc(aFuelBlock)));
+        assertEquals(s(ci(73728)), result.get(cc("diamondBlock")));
+        assertEquals(s(ci(139264)), result.get(cc(dMatter)));
+        assertEquals(s(ci(139264)), result.get(cc(dMatterBlock)));
+        assertEquals(s(ci(466944)), result.get(cc(rMatter)));
+        assertEquals(s(ci(466944)), result.get(cc(rMatterBlock)));
+    }
+
+
 
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {
@@ -557,6 +637,23 @@ public class JGraphTBasedCompoundAnalyzerTest
             outputs
           )
         );
+    }
+    
+    public void addConversion(int count, String result, List<String> inputs) {
+        final Collection<Collection<String>> groupedInputs = GroupingUtils.groupByUsingList(inputs, Function.identity());
+        final Set<ICompoundContainer<?>> inputContainers = groupedInputs
+          .stream()
+          .map(cs -> cc(cs.iterator().next(), cs.size()))
+          .collect(Collectors.toSet());
+        
+        final String name = groupedInputs
+          .stream().map(cs -> String.format("%dx %s", cs.size(), cs.iterator().next()))
+          .reduce("", (s, s2) -> {
+              final String n = s + " " + s2;
+              return n.trim();
+          }) + " to " + count + "x " + result;
+        
+        registerRecipe(name, inputContainers, s(cc(result, count)));
     }
 
     public ICompoundContainer<?> cc(String s)

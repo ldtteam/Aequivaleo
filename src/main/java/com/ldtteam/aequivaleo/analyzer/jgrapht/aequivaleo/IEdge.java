@@ -10,11 +10,4 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisEdge;
  */
 public interface IEdge extends IAnalysisEdge
 {
-
-    /**
-     * Gives access to the identifier of the edge.
-     *
-     * @return The edge identifier.
-     */
-    long getEdgeIdentifier();
 }
