@@ -98,7 +98,7 @@ public abstract class ValueInformationProvider implements IDataProvider
     @Override
     public String getName()
     {
-        return StringUtils.capitalize(modId) + " locked information data generator.";
+        return StringUtils.capitalize(modId) + " value information data generator.";
     }
 
     public abstract void calculateDataToSave();
