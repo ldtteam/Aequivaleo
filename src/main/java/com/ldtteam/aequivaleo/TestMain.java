@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo;
 
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
@@ -9,7 +9,7 @@ public class TestMain
 {
 
     public static void main(String... args) {
-        final DefaultDirectedWeightedGraph<String, AccessibleWeightEdge> graph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+        final DefaultDirectedWeightedGraph<String, Edge> graph = new DefaultDirectedWeightedGraph<>(Edge.class);
 
         final String A = "A";
         final String B = "B";
@@ -31,7 +31,7 @@ public class TestMain
         graph.addEdge(D, E);
         graph.addEdge(E, C);
 
-        final DirectedSimpleCycles<String, AccessibleWeightEdge> algo = new HawickJamesSimpleCycles<>(graph);
+        final DirectedSimpleCycles<String, Edge> algo = new HawickJamesSimpleCycles<>(graph);
         algo.findSimpleCycles().forEach(s -> {
             System.out.println("Found cycle: Contents:");
             s.forEach(n -> System.out.println("   -> " + n));

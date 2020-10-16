@@ -4,12 +4,12 @@ import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import org.jetbrains.annotations.NotNull;
 
-public class IngredientCandidateGraphNode extends AbstractNode
+public class IngredientNode extends AbstractNode
 {
     @NotNull
     private final IRecipeIngredient ingredient;
 
-    public IngredientCandidateGraphNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
+    public IngredientNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
 
     @NotNull
     public IRecipeIngredient getIngredient()
@@ -24,12 +24,12 @@ public class IngredientCandidateGraphNode extends AbstractNode
         {
             return true;
         }
-        if (!(o instanceof IngredientCandidateGraphNode))
+        if (!(o instanceof IngredientNode))
         {
             return false;
         }
 
-        final IngredientCandidateGraphNode that = (IngredientCandidateGraphNode) o;
+        final IngredientNode that = (IngredientNode) o;
 
         return getIngredient().equals(that.getIngredient());
     }

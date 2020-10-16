@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * The base node spec for aequivaleo analysis.
  */
-public interface INode extends IAnalysisGraphNode<Set<CompoundInstance>, INode, IEdge>
+public interface INode extends IAnalysisGraphNode<IGraph, Set<CompoundInstance>, INode, IEdge>
 {
     @Override
     default INode getSelf() {

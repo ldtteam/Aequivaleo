@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.io;
 
 import com.google.gson.*;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jgrapht.Graph;
@@ -14,7 +14,7 @@ import java.lang.reflect.Type;
 import java.util.Set;
 import java.util.function.Function;
 
-public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> implements GraphExporter<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge>, JsonSerializer<Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge>>
+public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> implements GraphExporter<IAnalysisGraphNode<Set<CompoundInstance>>, Edge>, JsonSerializer<Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge>>
 {
 
 
@@ -35,12 +35,12 @@ public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<Compo
     }
 
     @Override
-    public void exportGraph(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> g, final Writer writer)
+    public void exportGraph(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> g, final Writer writer)
     {
         final Gson gson = new GsonBuilder()
                                     .registerTypeAdapter(Graph.class, this)
                                     .registerTypeAdapter(IAnalysisGraphNode.class, new GraphNodeJSONHandler(this::getVertexId))
-                                    .registerTypeAdapter(AccessibleWeightEdge.class, new GraphEdgeJSONHandler(
+                                    .registerTypeAdapter(Edge.class, new GraphEdgeJSONHandler(
                                       this::getVertexId,
                                       g
                                     ))
@@ -53,7 +53,7 @@ public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<Compo
 
     @Override
     public JsonElement serialize(
-      final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> src, final Type typeOfSrc, final JsonSerializationContext context)
+      final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonObject graph = new JsonObject();
         graph.addProperty("creator", "LDTTeam Aequivaleo - Graph Serializer");
@@ -67,9 +67,9 @@ public class JSONGraphExporter extends BaseExporter<IAnalysisGraphNode<Set<Compo
         graph.add("nodes", nodes);
 
         final JsonArray edges = new JsonArray();
-        for (final AccessibleWeightEdge accessibleWeightEdge : src.edgeSet())
+        for (final Edge edge : src.edgeSet())
         {
-            edges.add(context.serialize(accessibleWeightEdge, AccessibleWeightEdge.class));
+            edges.add(context.serialize(edge, Edge.class));
         }
         graph.add("edges", edges);
         return graph;
