@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.cycles;
 
 import com.ldtteam.aequivaleo.Aequivaleo;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.junit.Before;
@@ -13,7 +13,6 @@ import org.powermock.core.classloader.annotations.SuppressStaticInitializationFo
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collection;
-import java.util.function.BiConsumer;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,14 +23,14 @@ import static org.junit.Assert.assertEquals;
 public class JGraphTCyclesReducerTest
 {
 
-    JGraphTCyclesReducer<String, AccessibleWeightEdge> reducer;
+    JGraphTCyclesReducer<String, Edge> reducer;
 
     @Before
     public void setUp() throws Exception
     {
         reducer = new JGraphTCyclesReducer<>(
           (graph, vertices) -> {
-              final Graph<String, AccessibleWeightEdge> innerGraph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+              final Graph<String, Edge> innerGraph = new DefaultDirectedWeightedGraph<>(Edge.class);
               vertices.forEach(innerGraph::addVertex);
               vertices.stream()
                 .map(graph::outgoingEdgesOf)
@@ -49,7 +48,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceOnlyCycleToSingleNode() {
-        final Graph<String, AccessibleWeightEdge> graph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+        final Graph<String, Edge> graph = new DefaultDirectedWeightedGraph<>(Edge.class);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addEdge("cycle-1", "cycle-2");
@@ -64,7 +63,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceCycleWithAppendix() {
-        final Graph<String, AccessibleWeightEdge> graph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+        final Graph<String, Edge> graph = new DefaultDirectedWeightedGraph<>(Edge.class);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("appendix");
@@ -81,7 +80,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceCycleWithPrefixAndAppendix() {
-        final Graph<String, AccessibleWeightEdge> graph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+        final Graph<String, Edge> graph = new DefaultDirectedWeightedGraph<>(Edge.class);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("prefix");
@@ -100,7 +99,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceDualCycleCompletely() {
-        final Graph<String, AccessibleWeightEdge> graph = new DefaultDirectedWeightedGraph<>(AccessibleWeightEdge.class);
+        final Graph<String, Edge> graph = new DefaultDirectedWeightedGraph<>(Edge.class);
         graph.addVertex("cycle-a-1");
         graph.addVertex("cycle-ab-2");
         graph.addVertex("cycle-b-1");

@@ -2,9 +2,9 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +55,7 @@ public abstract class AbstractNode implements INode
     }
 
     @Override
-    public void onReached(final Graph<INode, IEdge> graph) {
+    public void onReached(final IGraph graph) {
         for (IEdge accessibleWeightEdge : graph.outgoingEdgesOf(this))
         {
             INode v = graph.getEdgeTarget(accessibleWeightEdge);
@@ -74,7 +74,7 @@ public abstract class AbstractNode implements INode
     }
 
     @Override
-    public void determineResult(final Graph<INode, IEdge> graph)
+    public void determineResult(final IGraph graph)
     {
         LOGGER.debug(String.format("Determining the result of: %s", this));
         //Short cirquit empty result.
@@ -144,7 +144,7 @@ public abstract class AbstractNode implements INode
         return this.isIncomplete;
     }
 
-    public boolean hasIncompleteChildren(final Graph<INode, IEdge> graph) {
+    public boolean hasIncompleteChildren(final IGraph graph) {
         return graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).anyMatch(IAnalysisGraphNode::isIncomplete);
     }
 }
