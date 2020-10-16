@@ -1,5 +1,7 @@
 package com.ldtteam.aequivaleo.api.plugin;
 
+import net.minecraft.util.RegistryKey;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
@@ -50,7 +52,9 @@ public interface IAequivaleoPlugin
     /**
      * Called on the client side to indicate that the data for all worlds
      * has been synced over from the client.
+     *
+     * @param worldRegistryKey The registry
      */
     @OnlyIn(Dist.CLIENT)
-    default void onDataSynced() {};
+    default void onDataSynced(final RegistryKey<World> worldRegistryKey) {};
 }

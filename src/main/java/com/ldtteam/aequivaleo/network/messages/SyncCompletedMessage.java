@@ -10,6 +10,7 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +68,10 @@ public class SyncCompletedMessage implements IMessage
             PartialSyncResultsMessage::getCompoundData
           );
 
+        final RegistryKey<World> worldKey = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, worldKeyName);
+
         ResultsInformationCache.getInstance(
-          RegistryKey.getOrCreateKey(Registry.WORLD_KEY, worldKeyName)
+          worldKey
         ).set(partialPackets.stream().collect(
           Collectors.toMap(
             Map.Entry::getKey,
@@ -76,6 +79,6 @@ public class SyncCompletedMessage implements IMessage
           )
         ));
 
-        PluginManger.getInstance().run(IAequivaleoPlugin::onDataSynced);
+        PluginManger.getInstance().run(iAequivaleoPlugin -> iAequivaleoPlugin.onDataSynced(worldKey));
     }
 }
