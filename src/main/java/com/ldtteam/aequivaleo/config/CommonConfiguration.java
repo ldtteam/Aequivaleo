@@ -15,7 +15,7 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration
         jsonPrettyPrint = defineBoolean(builder, "help.enabled", true);
         finishCategory(builder);
         createCategory(builder, "networking");
-        networkBatchingSize = defineInteger(builder, "batch.size", 100);
+        networkBatchingSize = defineInteger(builder, "batch.size", 1000);
         finishCategory(builder);
     }
 
