@@ -3,8 +3,7 @@ package com.ldtteam.aequivaleo.compound.data.serializers;
 import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
 
 import java.lang.reflect.Type;
 import java.util.Set;

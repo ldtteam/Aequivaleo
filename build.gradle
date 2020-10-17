@@ -71,8 +71,7 @@ sourceSets {
     }
 }
 
-version = project.exactMinecraftVersion + "-" + System.getenv().containsKey("Version") ? System.getenv("Version") : project.modVersion
-
+version = (System.getenv().containsKey("Version") ? System.getenv("Version") : project.modVersion)
 project.logger.lifecycle("Building for version: " + version);
 
 group = modGroup

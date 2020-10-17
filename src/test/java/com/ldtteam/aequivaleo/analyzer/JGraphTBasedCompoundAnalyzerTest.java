@@ -7,7 +7,7 @@ import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
@@ -15,7 +15,7 @@ import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
@@ -63,7 +63,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     ICompoundType      typeUnknownIsInvalid = mock(ICompoundType.class);
     ICompoundTypeGroup groupUnknownIsInvalid = mock(ICompoundTypeGroup.class);
 
-    ILockedCompoundInformationRegistry input;
+    ICompoundInformationRegistry input;
 
     @Rule
     public TestName currentTestName = new TestName();
@@ -78,7 +78,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(world.getDimensionKey()).thenReturn(key);
         analyzer = new JGraphTBasedCompoundAnalyzer(world);
 
-        input = LockedCompoundInformationRegistry.getInstance(key);
+        input = CompoundInformationRegistry.getInstance(key);
 
         mockStatic(Aequivaleo.class);
         Aequivaleo mod = mock(Aequivaleo.class);
@@ -154,7 +154,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     @After
     public void tearDown()
     {
-        LockedCompoundInformationRegistry.getInstance(key).reset();
+        CompoundInformationRegistry.getInstance(key).reset();
         EquivalencyRecipeRegistry.getInstance(key).reset();
     }
 

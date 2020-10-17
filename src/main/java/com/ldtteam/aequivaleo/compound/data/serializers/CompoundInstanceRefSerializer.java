@@ -1,9 +1,7 @@
 package com.ldtteam.aequivaleo.compound.data.serializers;
 
 import com.google.gson.*;
-import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.information.CompoundInstanceRef;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.util.ResourceLocation;
 

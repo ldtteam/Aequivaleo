@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.api;
 import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
@@ -11,11 +11,8 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataModeSerializer;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceRefSerializer;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceRefSetSerializer;
-import com.ldtteam.aequivaleo.compound.information.locked.LockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.compound.data.serializers.*;
+import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
@@ -58,9 +55,9 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public ILockedCompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey)
+    public ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey)
     {
-        return LockedCompoundInformationRegistry.getInstance(worldKey);
+        return CompoundInformationRegistry.getInstance(worldKey);
     }
 
     @Override
@@ -89,6 +86,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
                  .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSerializer.HANDLED_TYPE, new CompoundInstanceRefSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSetSerializer.HANDLED_TYPE, new CompoundInstanceRefSetSerializer())
+                 .registerTypeAdapter(CompoundContainerSetSerializer.HANDLED_TYPE, new CompoundContainerSetSerializer())
                  .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
                  .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
     }

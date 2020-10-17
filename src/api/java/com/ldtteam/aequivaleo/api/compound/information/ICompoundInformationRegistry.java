@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.api.compound.information.locked;
+package com.ldtteam.aequivaleo.api.compound.information;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -19,7 +19,7 @@ import java.util.Set;
  *
  * Additionally none "root" ingredients can use this registry to force the analysis engine to assign a given compound container a set of instances.
  */
-public interface ILockedCompoundInformationRegistry
+public interface ICompoundInformationRegistry
 {
 
     /**
@@ -29,7 +29,7 @@ public interface ILockedCompoundInformationRegistry
      *
      * @return The locked information registry.
      */
-    static ILockedCompoundInformationRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+    static ICompoundInformationRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
         return IAequivaleoAPI.getInstance().getLockedCompoundWrapperToTypeRegistry(worldKey);
     }
 
@@ -43,7 +43,7 @@ public interface ILockedCompoundInformationRegistry
      * @param compounds The instances to assign to the given wrapper.
      * @return The registry with the locking assigned.
      */
-    ILockedCompoundInformationRegistry registerValue(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
+    ICompoundInformationRegistry registerValue(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Registers a given set of compound instances to a given game object.
@@ -57,7 +57,7 @@ public interface ILockedCompoundInformationRegistry
      * @param <T> The type of the game object to assign the instances to.
      * @return The registry with the locking assigned.
      */
-    <T> ILockedCompoundInformationRegistry registerValue(@NotNull final T gameObjectInstanceToAssign, @NotNull final Set<CompoundInstance> compounds);
+    <T> ICompoundInformationRegistry registerValue(@NotNull final T gameObjectInstanceToAssign, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Registers a given set of compound instances to a given wrapper.
@@ -67,7 +67,7 @@ public interface ILockedCompoundInformationRegistry
      * @param compounds The instances to assign to the given wrapper.
      * @return The registry with the locking assigned.
      */
-    ILockedCompoundInformationRegistry registerLocking(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
+    ICompoundInformationRegistry registerLocking(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Registers a given set of compound instances to a given game object.
@@ -79,7 +79,7 @@ public interface ILockedCompoundInformationRegistry
      * @param <T> The type of the game object to assign the instances to.
      * @return The registry with the locking assigned.
      */
-    <T> ILockedCompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
+    <T> ICompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
 
     /**
      * Gives access to value data.
