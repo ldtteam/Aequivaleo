@@ -42,6 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
@@ -251,7 +252,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
-        assertEquals(s(), result.get(cc("wood")));
+        assertNull( result.get(cc("wood")));
         assertEquals(s(cz(1)), result.get(cc("planks")));
         assertEquals(s(cz(4)), result.get(cc("workbench")));
     }
@@ -289,7 +290,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         }
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
-        assertEquals(s(), result.get(cc("wood")));
+        assertNull( result.get(cc("wood")));
         for (char i : "ABCD".toCharArray()) {
             assertEquals(s(cz(32)), result.get(cc("wood" + i)));
         }
@@ -331,7 +332,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(3)), result.get(cc("b")));
         assertEquals(s(cz(2)), result.get(cc("invalid1")));
         assertEquals(s(cz(1)), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid3")));
+        assertNull( result.get(cc("invalid3")));
     }
 
     @Test
@@ -345,10 +346,10 @@ public class JGraphTBasedCompoundAnalyzerTest
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
         assertEquals(s(ci(1)), result.get(cc("a1")));
-        assertEquals(s(), result.get(cc("b")));
-        assertEquals(s(), result.get(cc("invalid1")));
-        assertEquals(s(), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid3")));
+        assertNull( result.get(cc("b")));
+        assertNull( result.get(cc("invalid1")));
+        assertNull( result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid3")));
     }
 
     @Test
@@ -365,7 +366,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(3)), result.get(cc("b")));
         assertEquals(s(cz(2)), result.get(cc("invalid1")));
         assertEquals(s(cz(1)), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid3")));
+        assertNull( result.get(cc("invalid3")));
     }
 
     @Test
@@ -381,7 +382,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(1)), result.get(cc("a1")));
         assertEquals(s(cz(2)), result.get(cc("b2")));
         assertEquals(s(cz(1)), result.get(cc("invalid1")));
-        assertEquals(s(), result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid2")));
     }
     
     @Test
@@ -396,8 +397,8 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(ci(1)), result.get(cc("a1")));
         assertEquals(s(ci(2)), result.get(cc("b2")));
-        assertEquals(s(), result.get(cc("invalid1")));
-        assertEquals(s(), result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid1")));
+        assertNull( result.get(cc("invalid2")));
     }
 
     @Test
@@ -413,7 +414,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(1), ci(1)), result.get(cc("a1")));
         assertEquals(s(cz(2), ci(2)), result.get(cc("b2")));
         assertEquals(s(cz(1)), result.get(cc("invalid1")));
-        assertEquals(s(), result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid2")));
     }
 
     @Test
@@ -427,7 +428,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(cz(1)), result.get(cc("a1")));
         assertEquals(s(cz(2)), result.get(cc("b2")));
-        assertEquals(s(), result.get(cc("invalid")));
+        assertNull( result.get(cc("invalid")));
     }
 
     @Test
@@ -441,7 +442,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(ci(1)), result.get(cc("a1")));
         assertEquals(s(ci(2)), result.get(cc("b2")));
-        assertEquals(s(), result.get(cc("invalid")));
+        assertNull( result.get(cc("invalid")));
     }
 
     @Test
@@ -455,7 +456,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(cz(1), ci(1)), result.get(cc("a1")));
         assertEquals(s(cz(2), ci(2)), result.get(cc("b2")));
-        assertEquals(s(), result.get(cc("invalid")));
+        assertNull(result.get(cc("invalid")));
     }
 
     @Test
@@ -472,8 +473,8 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(2)), result.get(cc("a1")));
         assertEquals(s(cz(1)), result.get(cc("b2")));
         assertEquals(s(cz(1)), result.get(cc("d2")));
-        assertEquals(s(), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid1")));
+        assertNull( result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid1")));
         assertEquals(s(cz(1)), result.get(cc("c1")));
     }
 
@@ -491,10 +492,10 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(ci(2)), result.get(cc("a1")));
         assertEquals(s(ci(1)), result.get(cc("b2")));
-        assertEquals(s(), result.get(cc("d2")));
-        assertEquals(s(), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid1")));
-        assertEquals(s(), result.get(cc("c1")));
+        assertNull( result.get(cc("d2")));
+        assertNull( result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid1")));
+        assertNull( result.get(cc("c1")));
     }
 
 
@@ -512,8 +513,8 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(cz(2), ci(2)), result.get(cc("a1")));
         assertEquals(s(cz(1), ci(1)), result.get(cc("b2")));
         assertEquals(s(cz(1)), result.get(cc("d2")));
-        assertEquals(s(), result.get(cc("invalid2")));
-        assertEquals(s(), result.get(cc("invalid1")));
+        assertNull( result.get(cc("invalid2")));
+        assertNull( result.get(cc("invalid1")));
         assertEquals(s(cz(1)), result.get(cc("c1")));
     }
 
