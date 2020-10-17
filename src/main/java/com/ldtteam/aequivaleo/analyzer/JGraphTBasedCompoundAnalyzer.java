@@ -3,11 +3,10 @@ package com.ldtteam.aequivaleo.analyzer;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.BuildRecipeGraph;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithContainer;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithSubNodes;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
@@ -16,14 +15,13 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
-import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 
 import java.util.*;
 
@@ -43,15 +41,15 @@ public class JGraphTBasedCompoundAnalyzer
     public BuildRecipeGraph createGraph() {
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new TreeMap<>();
 
-        final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> recipeGraph = new DefaultDirectedWeightedGraph<>(Edge.class);
+        final IGraph recipeGraph = new AequivaleoGraph();
 
-        final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>> compoundNodes = new HashMap<>();
-        final Map<IRecipeIngredient, IAnalysisGraphNode<Set<CompoundInstance>>> ingredientNodes = new HashMap<>();
+        final Map<ICompoundContainer<?>, INode> compoundNodes = new HashMap<>();
+        final Map<IRecipeIngredient, INode> ingredientNodes = new HashMap<>();
 
         for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
                                            .get())
         {
-            final IAnalysisGraphNode<Set<CompoundInstance>> recipeGraphNode = new RecipeNode(recipe);
+            final INode recipeGraphNode = new RecipeNode(recipe);
 
             recipeGraph.addVertex(recipeGraphNode);
 
@@ -61,7 +59,7 @@ public class JGraphTBasedCompoundAnalyzer
                 final IRecipeIngredient unitIngredient = new SimpleIngredientBuilder().from(input).withCount(1).createIngredient();
                 ingredientNodes.putIfAbsent(unitIngredient, new IngredientNode(unitIngredient));
 
-                final IAnalysisGraphNode<Set<CompoundInstance>> inputNode = ingredientNodes.get(unitIngredient);
+                final INode inputNode = ingredientNodes.get(unitIngredient);
                 recipeGraph.addVertex(inputNode);
 
                 recipeGraph.addEdge(inputNode, recipeGraphNode);
@@ -92,7 +90,7 @@ public class JGraphTBasedCompoundAnalyzer
                     LOGGER.debug(String.format("Reused existing output node for: %s", output));
                 }
 
-                final IAnalysisGraphNode<Set<CompoundInstance>> outputWrapperGraphNode = compoundNodes.get(unitOutputWrapper);
+                final INode outputWrapperGraphNode = compoundNodes.get(unitOutputWrapper);
                 recipeGraph.addVertex(outputWrapperGraphNode);
 
                 recipeGraph.addEdge(recipeGraphNode, outputWrapperGraphNode);
@@ -102,18 +100,18 @@ public class JGraphTBasedCompoundAnalyzer
 
         for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.getDimensionKey()).getValueInformation().keySet())
         {
-            IAnalysisGraphNode<Set<CompoundInstance>> node;
+            INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
             {
                 compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
 
-                final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(valueWrapper);
+                final INode inputWrapperGraphNode = compoundNodes.get(valueWrapper);
                 node = inputWrapperGraphNode;
                 recipeGraph.addVertex(inputWrapperGraphNode);
             }
             else
             {
-                final Set<Edge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
+                final Set<IEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
                 recipeGraph.removeAllEdges(incomingEdgesToRemove);
                 node = compoundNodes.get(valueWrapper);
             }
@@ -133,7 +131,7 @@ public class JGraphTBasedCompoundAnalyzer
 
         final Set<ContainerNode> rootNodes = findRootNodes(recipeGraph);
 
-        final Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>> notDefinedGraphNodes = new HashSet<>();
+        final Set<INode> notDefinedGraphNodes = new HashSet<>();
         for (ContainerNode n : rootNodes)
         {
             if (n.getWrapper().map(w -> getLockedInformationInstances(w).isEmpty()).orElse(false) && n.getWrapper().map(w -> getValueInformationInstances(w).isEmpty()).orElse(false))
@@ -153,10 +151,10 @@ public class JGraphTBasedCompoundAnalyzer
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
 
-        final JGraphTCyclesReducer<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> cyclesReducer = new JGraphTCyclesReducer<>(
+        final JGraphTCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new JGraphTCyclesReducer<IGraph, INode, IEdge>(
           InnerGraphNode::new,
           (graph, oldEdge, newEdge) -> graph.setEdgeWeight(newEdge, oldEdge.getWeight()),
-          IAnalysisGraphNode::onNeighborReplaced);
+          INode::onNeighborReplaced);
 
         cyclesReducer.reduce(recipeGraph);
         return new BuildRecipeGraph(
@@ -171,14 +169,14 @@ public class JGraphTBasedCompoundAnalyzer
     public void calculate()
     {
         final BuildRecipeGraph buildRecipeGraph = createGraph();
-        final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> recipeGraph = buildRecipeGraph.getRecipeGraph();
+        final IGraph recipeGraph = buildRecipeGraph.getRecipeGraph();
         final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds = buildRecipeGraph.getResultingCompounds();
-        final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>>  compoundNodes = buildRecipeGraph.getCompoundNodes();
-        final Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
+        final Map<ICompoundContainer<?>, INode>  compoundNodes = buildRecipeGraph.getCompoundNodes();
+        final Set<INode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
         final SourceNode source = buildRecipeGraph.getSourceGraphNode();
 
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation().toString(), recipeGraph.vertexSet().size());
-        final AnalysisBFSGraphIterator<Set<CompoundInstance>> analysisBFSGraphIterator = new AnalysisBFSGraphIterator<>(recipeGraph, source);
+        final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
 
         while (analysisBFSGraphIterator.hasNext())
         {
@@ -189,18 +187,18 @@ public class JGraphTBasedCompoundAnalyzer
 
         for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().keySet())
         {
-            IAnalysisGraphNode<Set<CompoundInstance>> node;
+            INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
             {
                 compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
 
-                final IAnalysisGraphNode<Set<CompoundInstance>> inputWrapperGraphNode = compoundNodes.get(valueWrapper);
+                final INode inputWrapperGraphNode = compoundNodes.get(valueWrapper);
                 node = inputWrapperGraphNode;
                 recipeGraph.addVertex(inputWrapperGraphNode);
             }
             else
             {
-                final Set<Edge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
+                final Set<IEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
                 recipeGraph.removeAllEdges(incomingEdgesToRemove);
                 node = compoundNodes.get(valueWrapper);
             }
@@ -220,9 +218,12 @@ public class JGraphTBasedCompoundAnalyzer
             synchronized (ANALYSIS_LOCK)
             {
                 AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
-                for (IAnalysisNodeWithContainer<Set<CompoundInstance>> node : notDefinedGraphNodes)
+                for (INode node : notDefinedGraphNodes)
                 {
-                    AequivaleoLogger.bigWarningMessage(String.format("Missing root information for: %s. Removing from recipe graph.", node.getWrapper().map(Object::toString).orElse("<UNKNOWN>")));
+                    if (node instanceof IContainerNode)
+                    {
+                        AequivaleoLogger.bigWarningMessage(String.format("Missing root information for: %s. Removing from recipe graph.", ((IContainerNode) node).getWrapper().map(Object::toString).orElse("<UNKNOWN>")));
+                    }
                     recipeGraph.removeVertex(node);
                 }
                 AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
@@ -249,18 +250,18 @@ public class JGraphTBasedCompoundAnalyzer
     }
 
     private void extractCompoundInstancesFromGraph(
-      final Set<IAnalysisGraphNode<Set<CompoundInstance>>> vertices,
+      final Set<INode> vertices,
       final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds,
-      final Set<IAnalysisNodeWithContainer<Set<CompoundInstance>>> notDefinedGraphNodes)
+      final Set<INode> notDefinedGraphNodes)
     {
-        for (IAnalysisGraphNode<Set<CompoundInstance>> v : vertices)
+        for (INode v : vertices)
         {
-            if (v instanceof IAnalysisNodeWithSubNodes) {
-                extractCompoundInstancesFromGraph(((IAnalysisNodeWithSubNodes<Set<CompoundInstance>>) v).getInnerNodes(), resultingCompounds, notDefinedGraphNodes);
+            if (v instanceof IInnerGraphNode) {
+                extractCompoundInstancesFromGraph(((IInnerGraphNode) v).getInnerNodes(), resultingCompounds, notDefinedGraphNodes);
             }
-            else if (v instanceof IAnalysisNodeWithContainer)
+            else if (v instanceof IContainerNode)
             {
-                IAnalysisNodeWithContainer<Set<CompoundInstance>> containerWrapperGraphNode = (IAnalysisNodeWithContainer<Set<CompoundInstance>>) v;
+                IContainerNode containerWrapperGraphNode = (IContainerNode) v;
                 //We could not find any information on this, possibly due to it being in a different set,
                 //Or it is not producible. Register it as a not defined graph node.
                 if (containerWrapperGraphNode.getResultingValue().orElse(Collections.emptySet()).size() == 0)
@@ -279,9 +280,9 @@ public class JGraphTBasedCompoundAnalyzer
     }
 
     private void handleCompoundContainerAsInput(
-      final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> recipeGraph,
-      final Map<ICompoundContainer<?>, IAnalysisGraphNode<Set<CompoundInstance>>> nodes,
-      final IAnalysisGraphNode<Set<CompoundInstance>> target,
+      final Graph<INode, IEdge> recipeGraph,
+      final Map<ICompoundContainer<?>, INode> nodes,
+      final INode target,
       final ICompoundContainer<?> candidate
     )
     {
@@ -295,7 +296,7 @@ public class JGraphTBasedCompoundAnalyzer
             LOGGER.debug(String.format("Reused existing input node for: %s", candidate));
         }
 
-        final IAnalysisGraphNode<Set<CompoundInstance>> candidateNode = nodes.get(unitWrapper);
+        final INode candidateNode = nodes.get(unitWrapper);
 
         recipeGraph.addVertex(candidateNode);
 
@@ -319,10 +320,10 @@ public class JGraphTBasedCompoundAnalyzer
         return CompoundContainerFactoryManager.getInstance().wrapInContainer(wrapper.getContents(), 1d);
     }
 
-    private Set<ContainerNode> findRootNodes(@NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> graph)
+    private Set<ContainerNode> findRootNodes(@NotNull final Graph<INode, IEdge> graph)
     {
         Set<ContainerNode> set = new HashSet<>();
-        for (IAnalysisGraphNode<Set<CompoundInstance>> v : findDanglingNodes(graph))
+        for (INode v : findDanglingNodes(graph))
         {
             if (v instanceof ContainerNode)
             {
@@ -333,10 +334,10 @@ public class JGraphTBasedCompoundAnalyzer
         return set;
     }
 
-    private Set<IAnalysisGraphNode<Set<CompoundInstance>>> findDanglingNodes(@NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> graph)
+    private Set<INode> findDanglingNodes(@NotNull final Graph<INode, IEdge> graph)
     {
-        Set<IAnalysisGraphNode<Set<CompoundInstance>>> set = new HashSet<>();
-        for (IAnalysisGraphNode<Set<CompoundInstance>> v : graph
+        Set<INode> set = new HashSet<>();
+        for (INode v : graph
                                                              .vertexSet())
         {
             if (graph.incomingEdgesOf(v).isEmpty())

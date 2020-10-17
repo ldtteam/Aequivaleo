@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.debug;
 
 import com.ldtteam.aequivaleo.analyzer.io.JSONGraphExporter;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
@@ -29,7 +31,7 @@ public class GraphIOHandler
 
     public void export(
       @NotNull final String name,
-      @NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, Edge> recipeGraph
+      @NotNull final Graph<INode, IEdge> recipeGraph
     ) {
         final JSONGraphExporter exporter = new JSONGraphExporter();
 
