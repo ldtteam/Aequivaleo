@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.api;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.compound.information.locked.ILockedCompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
@@ -60,7 +60,7 @@ public interface IAequivaleoAPI
      * @param worldKey The world key that represents the world for which locking information registry is being retrieved.
      * @return The registry for locking type information for a given world.
      */
-    ILockedCompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey);
+    ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey);
 
     /**
      * Gives access to the cache that contains the equivalency information after calculation.

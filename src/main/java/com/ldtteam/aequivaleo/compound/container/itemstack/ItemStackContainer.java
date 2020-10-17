@@ -18,6 +18,7 @@ import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
@@ -132,13 +133,15 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     @Override
     public boolean canBeLoadedFromDisk()
     {
-        return false;
+        return true;
     }
 
     @Override
     public String getContentAsFileName()
     {
-        throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
+
+        return "itemstack_" + Objects.requireNonNull(getContents().getItem().getRegistryName())
+                           .getNamespace() + "_" + getContents().getItem().getRegistryName().getPath();
     }
 
     @Override

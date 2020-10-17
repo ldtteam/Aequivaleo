@@ -6,6 +6,8 @@ import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jgrapht.Graph;
@@ -16,6 +18,9 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Set<CompoundInstance>>
 {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Nullable
     private Set<CompoundInstance> result = null;
     @NotNull
@@ -64,16 +69,26 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
     @Override
     public void forceSetResult(final Set<CompoundInstance> compoundInstances)
     {
+        LOGGER.debug(String.format("Force setting the result of: %s to: %s", this, compoundInstances));
         this.result = compoundInstances;
     }
 
     @Override
     public void determineResult(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
     {
+        LOGGER.debug(String.format("Determining the result of: %s", this));
         //Short cirquit empty result.
         if (getCandidates().size() == 0)
         {
-            this.result = result != null ? result : Collections.emptySet();
+            if (result != null)
+            {
+                LOGGER.debug(String.format("  > No candidates available. Using current value: %s", this.result));
+            }
+            else
+            {
+                LOGGER.debug("  > No candidates available, and result not forced. Setting empty collection!");
+                this.result = Collections.emptySet();
+            }
             return;
         }
 
@@ -81,6 +96,7 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
         //Return that value if it exists.
         if (this.candidates.containsKey(this)) {
             this.result = this.candidates.get(this);
+            LOGGER.debug(String.format("  > Candidate data contained forced value: %s", this.result));
             return;
         }
 
@@ -89,9 +105,11 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
         if (getCandidates().size() == 1)
         {
             this.result = getCandidates().iterator().next();
+            LOGGER.debug(String.format("  > Candidate data contained exactly one entry: %s", this.result));
             return;
         }
 
+        LOGGER.debug("  > Candidate data contains more then one entry. Mediation is required. Invoking type group callbacks to determine value.");
         //If we have multiples we group them up by type group and then let it decide.
         //Then we collect them all back together into one list
         //Bit of a mess but works.
@@ -110,6 +128,8 @@ public abstract class AbstractAnalysisGraphNode implements IAnalysisGraphNode<Se
           .stream()
           .flatMap(Collection::stream)
           .collect(Collectors.toSet()); //Group all of them together.
+
+        LOGGER.debug(String.format("  > Mediation completed. Determined value is: %s", this.result));
     }
 
     @Override
