@@ -39,9 +39,7 @@ public abstract class ValueInformationProvider extends AbstractInformationProvid
     @Override
     protected Set<Path> getPathsToWrite(String worldPath)
     {
-        final Set<Path> pathSet = Sets.newHashSet();
-        pathSet.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, VALUE_PATH, worldPath)));
-        return pathSet;
+        return Sets.newHashSet(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, VALUE_PATH, worldPath)));
     }
 
     @Override
