@@ -6,6 +6,7 @@ import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InnerGraphNode
@@ -198,44 +200,30 @@ public class InnerGraphNode
     {
 
         final Set<INode> startingNodes = innerGraph.vertexSet().stream().filter(node -> !node.getCandidates().isEmpty()).collect(Collectors.toSet());
-        for (final INode startingNode : startingNodes)
+        for (final INode startNode : startingNodes)
         {
+            //NOTE: Due to the way our system works, every node will have only one incoming edge!
+            final Set<IEdge> incomingEdges = Sets.newHashSet(innerGraph.incomingEdgesOf(startNode));
+            final Map<IEdge, INode> sourceMap =
+              incomingEdges.stream().collect(Collectors.toMap(Function.identity(), innerGraph::getEdgeSource));
 
-        }
-
-        for (IAnalysisGraphNode<Set<CompoundInstance>> n : neighborCandidateValues.keySet())
-        {
-            if (!neighborCandidateValues.get(n).isEmpty())
+            //We remove the inner edge of all edge
+            for (IEdge incomingEdge : incomingEdges)
             {
-                final Collection<IAnalysisGraphNode<Set<CompoundInstance>>> candidateStartNodesForNeighbor =
-                  incomingNeighbors.get(n);
-                candidateStartNodesForNeighbor.forEach(startNode -> {
-                    LOGGER.debug(String.format("Processing inner circle for: %s", startNode));
-                    //NOTE: Due to the way our system works, every node will have only one incoming edge!
-                    final Set<AccessibleWeightEdge> incomingEdges = Sets.newHashSet(innerGraph.incomingEdgesOf(startNode));
-                    final Map<AccessibleWeightEdge, IAnalysisGraphNode<Set<CompoundInstance>>> sourceMap =
-                      incomingEdges.stream().collect(Collectors.toMap(Function.identity(), innerGraph::getEdgeSource));
-
-                    //We remove the inner edge of all edge
-                    for (AccessibleWeightEdge incomingEdge : incomingEdges)
-                    {
-                        innerGraph.removeEdge(incomingEdge);
-                    }
-
-                    //Run inner analysis
-                    final AnalysisBFSGraphIterator<Set<CompoundInstance>> iterator = new AnalysisBFSGraphIterator<>(innerGraph, startNode);
-                    final StatCollector innerStatCollector = new StatCollector("Inner node analysis.", innerGraph.vertexSet().size());
-                    while (iterator.hasNext())
-                    {
-                        iterator.next().collectStats(innerStatCollector);
-                    }
-
-                    //Re-add the original edges that where removed.
-                    sourceMap.forEach((edge, source) -> innerGraph.addEdge(source, startNode, edge));
-                });
+                innerGraph.removeEdge(incomingEdge);
             }
-        }
 
+            //Run inner analysis
+            final AnalysisBFSGraphIterator iterator = new AnalysisBFSGraphIterator(innerGraph, startNode);
+            final StatCollector innerStatCollector = new StatCollector("Inner node analysis.", innerGraph.vertexSet().size());
+            while (iterator.hasNext())
+            {
+                iterator.next().collectStats(innerStatCollector);
+            }
+
+            //Re-add the original edges that where removed.
+            sourceMap.forEach((edge, source) -> innerGraph.addEdge(source, startNode, edge));
+        }
     }
 
     @Override
@@ -248,6 +236,18 @@ public class InnerGraphNode
     public boolean isIncomplete()
     {
         return innerGraph.vertexSet().stream().anyMatch(INode::isIncomplete);
+    }
+
+    @Override
+    public void onNeighborReplaced(final INode originalNeighbor, final INode newNeighbor)
+    {
+        if (ioGraph.containsVertex(originalNeighbor))
+        {
+            ioGraph.addVertex(newNeighbor);
+            for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor)) ioGraph.addEdge(newNeighbor, ioGraph.getEdgeTarget(edge), edge);
+            for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor)) ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor, edge);
+            ioGraph.removeVertex(originalNeighbor);
+        }
     }
 
     private void setupGraphs(final IGraph graph, final List<INode> innerVertices) {
@@ -294,119 +294,32 @@ public class InnerGraphNode
         });
     }
 
-/*
-    @Override
-    public void determineResult(final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph)
-    {
-
-    }
-
-    @Override
-    public void setIncomplete()
-    {
-        this.inComplete = true;
-        innerGraph.vertexSet().forEach(IAnalysisGraphNode::setIncomplete);
-    }
-
-    @Override
-    public boolean isIncomplete()
-    {
-        return this.inComplete || innerGraph.vertexSet().stream().anyMatch(IAnalysisGraphNode::isIncomplete);
-    }
-
-    @Override
-    public void onNeighborReplaced(
-      final IAnalysisGraphNode<Set<CompoundInstance>> originalNeighbor, final IAnalysisGraphNode<Set<CompoundInstance>> newNeighbor)
-    {
-        if (incomingNeighbors.containsKey(originalNeighbor))
-        {
-            final Collection<IAnalysisGraphNode<Set<CompoundInstance>>> currentSources = incomingNeighbors.removeAll(originalNeighbor);
-            incomingNeighbors.putAll(newNeighbor, currentSources);
-
-            currentSources.forEach(inSource -> {
-                if (neighborsIncoming.containsKey(inSource))
-                {
-                    neighborsIncoming.remove(inSource, originalNeighbor);
-                    neighborsIncoming.put(inSource, newNeighbor);
-                }
-            });
-        }
-
-
-        if (outgoingNeighbors.containsKey(originalNeighbor))
-        {
-            final Collection<IAnalysisGraphNode<Set<CompoundInstance>>> currentTargets = outgoingNeighbors.removeAll(originalNeighbor);
-            outgoingNeighbors.putAll(newNeighbor, currentTargets);
-
-            currentTargets.forEach(outTarget -> {
-                if (neighborsOutgoing.containsKey(outTarget))
-                {
-                    neighborsOutgoing.remove(outTarget, originalNeighbor);
-                    neighborsOutgoing.put(outTarget, newNeighbor);
-                }
-            });
-        }
-    }
-
-    @Override
-    public Optional<ICompoundContainer<?>> getWrapper()
-    {
-        return Optional.empty();
-    }
-
-    @Override
-    public Set<ICompoundContainer<?>> getTargetedWrapper(final IAnalysisGraphNode<Set<CompoundInstance>> sourceNeighbor)
-    {
-        if (!incomingNeighbors.containsKey(sourceNeighbor))
-        {
-            return Collections.emptySet();
-        }
-
-        return incomingNeighbors.get(sourceNeighbor)
-          .stream()
-          .filter(Objects::nonNull)
-          .filter(IAnalysisNodeWithContainer.class::isInstance)
-          .flatMap(n -> ((IAnalysisNodeWithContainer<Set<CompoundInstance>>) n).getTargetedWrapper(sourceNeighbor).stream())
-          .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<ICompoundContainer<?>> getSourcedWrapper(final IAnalysisGraphNode<Set<CompoundInstance>> targetNeighbor)
-    {
-        if (!outgoingNeighbors.containsKey(targetNeighbor))
-        {
-            return Collections.emptySet();
-        }
-
-        return outgoingNeighbors.get(targetNeighbor)
-                 .stream()
-                 .filter(Objects::nonNull)
-                 .filter(IAnalysisNodeWithContainer.class::isInstance)
-                 .flatMap(n -> ((IAnalysisNodeWithContainer<Set<CompoundInstance>>) n).getSourcedWrapper(targetNeighbor).stream())
-                 .collect(Collectors.toSet());
-    }
-
     @Override
     public String toString()
     {
-        return "SubCycleGraphNode";
+        return "InnerGraphNode{}";
     }
 
     @Override
-    public Set<IAnalysisGraphNode<Set<CompoundInstance>>> getInnerNodes()
+    public boolean equals(final Object o)
     {
-        return innerGraph.vertexSet();
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        final InnerGraphNode that = (InnerGraphNode) o;
+        return Objects.equals(ioGraph, that.ioGraph) &&
+                 Objects.equals(innerGraph, that.innerGraph) &&
+                 Objects.equals(getCandidates(), that.getCandidates());
     }
 
     @Override
-    public Set<IAnalysisGraphNode<Set<CompoundInstance>>> getSourceNeighborOf(final IAnalysisGraphNode<Set<CompoundInstance>> neighbor)
+    public int hashCode()
     {
-        return Sets.newHashSet(outgoingNeighbors.get(neighbor));
+        return Objects.hash(ioGraph, innerGraph, getCandidates());
     }
-
-    @Override
-    public Set<IAnalysisGraphNode<Set<CompoundInstance>>> getTargetNeighborOf(final IAnalysisGraphNode<Set<CompoundInstance>> neighbor)
-    {
-        return Sets.newHashSet(incomingNeighbors.get(neighbor));
-    }*/
 }
