@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.recipe.equivalency;
 
+import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
@@ -9,10 +10,14 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.config.Configuration;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.nbt.CompoundNBT;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.function.Function;
@@ -90,7 +95,10 @@ public class RecipeCalculator implements IRecipeCalculator
                  });
     }
 
-    private List<SortedSet<IRecipeIngredient>> getAllInputVariants(final List<Ingredient> mcIngredients, final boolean checkSimple, final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler)
+    private List<SortedSet<IRecipeIngredient>> getAllInputVariants(
+      final List<Ingredient> mcIngredients,
+      final boolean checkSimple,
+      final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler)
     {
         if (mcIngredients.isEmpty() || (checkSimple && !Aequivaleo.getInstance().getConfiguration().getServer().allowNoneSimpleIngredients.get() && mcIngredients.stream().anyMatch(ingredient -> !ingredient.isSimple())))
         {
@@ -99,7 +107,10 @@ public class RecipeCalculator implements IRecipeCalculator
 
         if (mcIngredients.size() == 1)
         {
-            return ingredientHandler.apply(mcIngredients.get(0))
+            return IngredientHandler.getInstance().attemptIngredientConversion(
+              ingredientHandler,
+              mcIngredients.get(0)
+            )
                      .stream()
                      .map(iRecipeIngredient -> {
                          final SortedSet<IRecipeIngredient> ingredients = new TreeSet<>();
@@ -113,7 +124,10 @@ public class RecipeCalculator implements IRecipeCalculator
         final List<Ingredient> ingredients = new ArrayList<>(mcIngredients);
         ingredients.remove(0);
 
-        final List<IRecipeIngredient> targetIngredients = ingredientHandler.apply(target);
+        final List<IRecipeIngredient> targetIngredients = IngredientHandler.getInstance().attemptIngredientConversion(
+          ingredientHandler,
+          target
+        );
         final Set<IRecipeIngredient> targets = new TreeSet<>(targetIngredients);
 
         final List<SortedSet<IRecipeIngredient>> subVariants = getAllInputVariants(ingredients, false, ingredientHandler);
@@ -214,4 +228,112 @@ public class RecipeCalculator implements IRecipeCalculator
                      );
         }
     }
+
+    public static final class IngredientHandler {
+
+        private static final Logger LOGGER = LogManager.getLogger();
+
+        private static final IngredientHandler INSTANCE = new IngredientHandler();
+
+        public static IngredientHandler getInstance() {
+            return INSTANCE;
+        }
+
+        private final Map<Ingredient, Exception> cnfExceptions = Maps.newHashMap();
+        private final Map<Ingredient, Exception> genericExceptions = Maps.newHashMap();
+
+        public List<IRecipeIngredient> attemptIngredientConversion (
+          final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
+          final Ingredient ingredient
+        ) {
+            try
+            {
+                return this.attemptInternalIngredientConversion(
+                  ingredientHandler,
+                  ingredient
+                );
+            } catch (ClassNotFoundException cnfEx) {
+                cnfExceptions.put(ingredient, cnfEx);
+            } catch (Exception ex) {
+                genericExceptions.put(ingredient, ex);
+            }
+
+            return Collections.emptyList();
+        }
+
+        public void reset() {
+            this.cnfExceptions.clear();
+            this.genericExceptions.clear();
+        }
+
+        public void logErrors() {
+            switch (Aequivaleo.getInstance().getConfiguration().getServer().ingredientLogLevelEnumValue.get()) {
+                case NONE:
+                    NoopLoggingHandler.log(cnfExceptions);
+                    NoopLoggingHandler.log(genericExceptions);
+                    break;
+                case JUST_ITEMS:
+                    IngredientLoggingHandler.log(cnfExceptions);
+                    IngredientLoggingHandler.log(genericExceptions);
+                    break;
+                case FULL:
+                    FullLoggingHandler.log(cnfExceptions);
+                    FullLoggingHandler.log(genericExceptions);
+                    break;
+            }
+        }
+
+        public List<IRecipeIngredient> attemptInternalIngredientConversion (
+          final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
+          final Ingredient ingredient
+        ) throws ClassNotFoundException
+        {
+            return ingredientHandler.apply(ingredient);
+        }
+
+        private static final class IngredientLoggingHandler {
+            private static final Logger LOGGER = LogManager.getLogger();
+
+            private static void log(final Map<Ingredient, ? extends Exception> errorMap) {
+                errorMap.keySet()
+                  .forEach(ingredient -> {
+                      LOGGER.error(String.format("Failed to process Ingredient. IsVanilla?: %s - IsSimple?: %s. Contained ItemStacks:",
+                        ingredient.isVanilla() ? "Yes" : "No",
+                        ingredient.isSimple() ? "Yes" : "No"));
+                      for (final ItemStack matchingStack : ingredient.getMatchingStacks())
+                      {
+                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.write(new CompoundNBT()).toString()));
+                      }
+                  });
+            }
+        }
+
+        private static final class FullLoggingHandler {
+            private static final Logger LOGGER = LogManager.getLogger();
+
+            private static void log(final Map<Ingredient, ? extends Throwable> errorMap) {
+                errorMap.keySet()
+                  .forEach(ingredient -> {
+                      LOGGER.error(String.format("Failed to process Ingredient. IsVanilla?: %s - IsSimple?: %s. Contained ItemStacks:",
+                        ingredient.isVanilla() ? "Yes" : "No",
+                        ingredient.isSimple() ? "Yes" : "No"));
+                      for (final ItemStack matchingStack : ingredient.getMatchingStacks())
+                      {
+                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.write(new CompoundNBT()).toString()));
+                      }
+                      //noinspection PlaceholderCountMatchesArgumentCount
+                      LOGGER.error("Causing exception:", errorMap.get(ingredient));
+                      LOGGER.error("");
+                      LOGGER.error("");
+                  });
+            }
+        }
+
+        private static final class NoopLoggingHandler {
+            private static void log(final Map<Ingredient, ? extends Throwable> errorMap) {
+                //Noop
+            }
+        }
+    }
+
 }

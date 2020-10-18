@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.config;
 
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
+import com.ldtteam.aequivaleo.utils.IngredientLogLevel;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
@@ -12,6 +13,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
     public ForgeConfigSpec.BooleanValue exportGraph;
     public ForgeConfigSpec.BooleanValue writeResultsToLog;
     public ForgeConfigSpec.BooleanValue allowNoneSimpleIngredients;
+    public ForgeConfigSpec.EnumValue<IngredientLogLevel> ingredientLogLevelEnumValue;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
     {
@@ -20,6 +22,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
         writeResultsToLog = defineBoolean(builder, "debugging.write.graph", false);
         finishCategory(builder);
         createCategory(builder, "recipes");
+        ingredientLogLevelEnumValue = defineEnum(builder, "recipes.ingredients.error.logging", IngredientLogLevel.FULL);
         allowNoneSimpleIngredients = defineBoolean(builder, "recipes.ingredients.none-simple", true);
         finishCategory(builder);
     }

@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.network.NetworkChannel;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
+import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculatorLogHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -27,6 +28,8 @@ public class Aequivaleo
     public Aequivaleo()
     {
         LOGGER.info("Aequivaleo is being instantiated.");
+
+        RecipeCalculatorLogHandler.setupLogging();
 
         INSTANCE = this;
         IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
