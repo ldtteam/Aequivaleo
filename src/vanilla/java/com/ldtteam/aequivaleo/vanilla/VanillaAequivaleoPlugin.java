@@ -130,6 +130,10 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           recipeFactory
         ).collect(Collectors.toList());
 
+        if (variants.isEmpty()) {
+            LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
+        }
+
         variants.forEach(recipe -> {
             IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(recipe);
         });
