@@ -1,15 +1,22 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IRecipeInputNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IRecipeNode;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import org.jetbrains.annotations.NotNull;
 
-public class IngredientCandidateGraphNode extends AbstractNode
+import java.util.Collections;
+import java.util.Set;
+
+public class IngredientNode extends AbstractNode implements IRecipeInputNode
 {
     @NotNull
     private final IRecipeIngredient ingredient;
 
-    public IngredientCandidateGraphNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
+    public IngredientNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
 
     @NotNull
     public IRecipeIngredient getIngredient()
@@ -24,12 +31,12 @@ public class IngredientCandidateGraphNode extends AbstractNode
         {
             return true;
         }
-        if (!(o instanceof IngredientCandidateGraphNode))
+        if (!(o instanceof IngredientNode))
         {
             return false;
         }
 
-        final IngredientCandidateGraphNode that = (IngredientCandidateGraphNode) o;
+        final IngredientNode that = (IngredientNode) o;
 
         return getIngredient().equals(that.getIngredient());
     }
@@ -43,8 +50,7 @@ public class IngredientCandidateGraphNode extends AbstractNode
     @Override
     public String toString()
     {
-        return "IngredientCandidateGraphNode{" +
-                 "ingredient=" + ingredient +
+        return "IngredientNode{" + ingredient +
                  '}';
     }
 
@@ -53,4 +59,11 @@ public class IngredientCandidateGraphNode extends AbstractNode
     {
         statCollector.onVisitIngredientNode();
     }
+
+    @Override
+    public Set<CompoundInstance> getInputInstances(final IRecipeNode recipeNode)
+    {
+        return getResultingValue().orElse(Collections.emptySet());
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 
 public class SourceNode extends AbstractNode
 {
@@ -20,6 +21,12 @@ public class SourceNode extends AbstractNode
     public String toString()
     {
         return "SourceNode{}";
+    }
+
+    @Override
+    public void onReached(final IGraph graph)
+    {
+        //Noop
     }
 
     @Override

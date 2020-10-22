@@ -9,13 +9,13 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
-public class AequivaleoGraph extends DirectedWeightedMultigraph<INode, IEdge> implements IGraph
+public class AequivaleoGraph extends SimpleAnalysisGraph<INode, IEdge> implements IGraph
 {
     private static AtomicLong EDGE_ID_GEN = new AtomicLong();
 
     public AequivaleoGraph()
     {
-        super(null, createEdgeSupplier());
+        super(createEdgeSupplier());
     }
 
     private static Supplier<IEdge> createEdgeSupplier() {

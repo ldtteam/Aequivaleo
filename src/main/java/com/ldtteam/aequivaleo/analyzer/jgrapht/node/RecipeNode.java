@@ -1,26 +1,22 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
+import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithContainer;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithSubNodes;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import org.jetbrains.annotations.NotNull;
-import org.jgrapht.Graph;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class RecipeGraphNode extends AbstractNode
+public class RecipeNode extends AbstractNode implements IRecipeNode
 {
     @NotNull
     private final IEquivalencyRecipe recipe;
 
-    public RecipeGraphNode(@NotNull final IEquivalencyRecipe recipe) {this.recipe = recipe;}
+    public RecipeNode(@NotNull final IEquivalencyRecipe recipe) {this.recipe = recipe;}
 
     @NotNull
     public IEquivalencyRecipe getRecipe()
@@ -35,12 +31,12 @@ public class RecipeGraphNode extends AbstractNode
         {
             return true;
         }
-        if (!(o instanceof RecipeGraphNode))
+        if (!(o instanceof RecipeNode))
         {
             return false;
         }
 
-        final RecipeGraphNode that = (RecipeGraphNode) o;
+        final RecipeNode that = (RecipeNode) o;
 
         return getRecipe().equals(that.getRecipe());
     }
@@ -52,28 +48,29 @@ public class RecipeGraphNode extends AbstractNode
     }
 
     @Override
-    public void determineResult(final Graph<INode, IEdge> graph)
+    public void determineResult(final IGraph graph)
     {
-        final Set<ContainerNode> requiredKnownOutputs = extractRequiredKnownOutputNeighborsFromGraph(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(
-          Collectors.toSet()));
-        final Set<IngredientCandidateGraphNode> inputNeighbors = extractInputNeighborsFromGraph(graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+        final Set<IRecipeResidueNode> requiredKnownOutputs = graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource)
+                                                               .filter(IRecipeResidueNode.class::isInstance)
+                                                               .map(IRecipeResidueNode.class::cast)
+                                                               .collect(Collectors.toSet());
+        final Set<IRecipeInputNode> inputNeighbors = graph.incomingEdgesOf(this).stream().map(graph::getEdgeSource)
+                                                       .filter(IRecipeInputNode.class::isInstance)
+                                                       .map(IRecipeInputNode.class::cast)
+                                                       .collect(Collectors.toSet());
 
         final boolean isComplete = !hasIncompleteChildren(graph);
 
         final Set<CompoundInstance> summedCompoundInstances = new HashSet<>();
         for (Map.Entry<ICompoundType, Double> entry : inputNeighbors
                                                         .stream()
-                                                        .peek(n -> n.determineResult(graph))
                                                         .flatMap(inputNeighbor -> inputNeighbor
-                                                                                    .getResultingValue()
-                                                                                    .orElseThrow(() -> new IllegalStateException("Calculation of node value not completed."))
+                                                                                    .getInputInstances(this)
                                                                                     .stream()
                                                                                     .filter(compoundInstance -> isComplete || compoundInstance.getType()
                                                                                                                                 .getGroup()
                                                                                                                                 .shouldIncompleteRecipeBeProcessed(getRecipe()))
-                                                                                    .filter(compoundInstance -> compoundInstance.getType()
-                                                                                                                  .getGroup()
-                                                                                                                  .canContributeToRecipeAsInput(getRecipe(), compoundInstance))
+                                                                                    .filter(compoundInstance -> compoundInstance.getType().getGroup().canContributeToRecipeAsInput(recipe, compoundInstance))
                                                                                     .map(compoundInstance -> new HashMap.SimpleEntry<>(compoundInstance.getType(),
                                                                                       compoundInstance.getAmount()
                                                                                         * graph.getEdgeWeight(graph.getEdge(inputNeighbor, this)))))
@@ -81,9 +78,9 @@ public class RecipeGraphNode extends AbstractNode
                                                         .entrySet())
         {
             double amount = entry.getValue();
-            for (final ContainerNode requiredKnownOutput : requiredKnownOutputs)
+            for (final IRecipeResidueNode requiredKnownOutput : requiredKnownOutputs)
             {
-                for (final CompoundInstance compoundInstance : requiredKnownOutput.getResultingValue().orElse(Collections.emptySet()))
+                for (final CompoundInstance compoundInstance : requiredKnownOutput.getResidueInstances(this))
                 {
                     if (compoundInstance.getType().equals(entry.getKey()))
                     {
@@ -103,13 +100,18 @@ public class RecipeGraphNode extends AbstractNode
     }
 
     @Override
-    public void onReached(final Graph<INode, IEdge> graph)
+    public void onReached(final IGraph graph)
     {
-        super.onReached(graph);
+        for (IEdge accessibleWeightEdge : graph.outgoingEdgesOf(this))
+        {
+            INode v = graph.getEdgeTarget(accessibleWeightEdge);
+            if (this.isIncomplete())
+                v.setIncomplete();
+        }
 
         final Set<IRecipeOutputNode> resultNeighbors = new HashSet<>();
         for (IEdge weightEdge : graph
-                                                 .outgoingEdgesOf(this))
+                                  .outgoingEdgesOf(this))
         {
             INode edgeTarget = graph.getEdgeTarget(weightEdge);
             if (edgeTarget instanceof IRecipeOutputNode)
@@ -124,62 +126,26 @@ public class RecipeGraphNode extends AbstractNode
                                                  .mapToDouble(graph::getEdgeWeight)
                                                  .sum();
 
-        for (INode neighbor : resultNeighbors)
+        for (IRecipeOutputNode neighbor : resultNeighbors)
         {
             Set<CompoundInstance> set = new HashSet<>();
-            for (CompoundInstance compoundInstance : getResultingValue().orElse(Collections.emptySet()))
+            for (CompoundInstance totalCompoundInstance : getResultingValue().orElse(Collections.emptySet()))
             {
                 final Double unitAmount = Math.floor(
-                  compoundInstance.getAmount() / totalOutgoingEdgeWeight
+                  totalCompoundInstance.getAmount() / totalOutgoingEdgeWeight
                 );
 
-                CompoundInstance simpleCompoundInstance = new CompoundInstance(compoundInstance.getType(), unitAmount);
-                if (!simpleCompoundInstance.getType().getGroup().canContributeToRecipeAsOutput(getRecipe(), simpleCompoundInstance))
+                CompoundInstance compoundInstance = new CompoundInstance(totalCompoundInstance.getType(), unitAmount);
+                if (!compoundInstance.getType().getGroup().canContributeToRecipeAsOutput(recipe, compoundInstance))
+                {
                     continue;
+                }
 
-                set.add(simpleCompoundInstance);
+                set.add(compoundInstance);
             }
 
-            neighbor.addCandidateResult(this, set);
+            neighbor.addCandidateResult(this, graph.getEdge(this, neighbor), set);
         }
-    }
-
-    private Set<IngredientCandidateGraphNode> extractInputNeighborsFromGraph(
-      final Set<INode> targetVertices
-    ) {
-        final Set<IngredientCandidateGraphNode> inputNeighbors = new HashSet<>();
-        for (INode v : targetVertices)
-        {
-            if (v instanceof IInnerGraphNode)
-            {
-                final IInnerGraphNode s = (IInnerGraphNode) v;
-                inputNeighbors.addAll(extractInputNeighborsFromGraph(s.getSourceNeighborOf(this)));
-            }
-            else if (v instanceof IngredientCandidateGraphNode) {
-                inputNeighbors.add((IngredientCandidateGraphNode) v);
-            }
-        }
-
-        return inputNeighbors;
-    }
-
-    private Set<ContainerNode> extractRequiredKnownOutputNeighborsFromGraph(
-      final Set<INode> targetVertices
-    ) {
-        final Set<ContainerNode> requiredKnownOutputNeighbors = new HashSet<>();
-        for (INode v : targetVertices)
-        {
-            if (v instanceof IInnerGraphNode)
-            {
-                final IInnerGraphNode s = (IInnerGraphNode) v;
-                requiredKnownOutputNeighbors.addAll(extractRequiredKnownOutputNeighborsFromGraph(s.getSourceNeighborOf(this)));
-            }
-            else if (v instanceof ContainerNode) {
-                requiredKnownOutputNeighbors.add((ContainerNode) v);
-            }
-        }
-
-        return requiredKnownOutputNeighbors;
     }
 
     @Override
@@ -191,19 +157,14 @@ public class RecipeGraphNode extends AbstractNode
     @Override
     public String toString()
     {
-        return "RecipeGraphNode{" +
-                 "recipe=" + recipe +
+        return "RecipeNode{" + recipe +
                  '}';
     }
 
     @Override
-    public void addCandidateResult(final INode neighbor, final Set<CompoundInstance> instances)
+    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Set<CompoundInstance> instances)
     {
-        //Recipe nodes are special. They really do not care what their neighbor thinks of them selfs.
-        //It will determine the value on its own and then update
-        //Since the candidates are passed on as markers for when a neighbor is analyzed
-        //We still need to update the super class.
-        super.addCandidateResult(neighbor, Collections.emptySet());
+        super.addCandidateResult(neighbor, sourceEdge, Collections.emptySet());
     }
 
     @Override

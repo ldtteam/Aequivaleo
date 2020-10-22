@@ -19,16 +19,9 @@ public interface IAnalysisGraphNode<N, S extends IAnalysisGraphNode<N, S, E>, E 
     @NotNull
     Optional<N> getResultingValue();
 
-    default void addCandidateResult(
-      final S neighbor,
-      final E sourceEdge,
-      final Set<CompoundInstance> instances
-    ) {
-        addCandidateResult(neighbor, instances);
-    }
-
     void addCandidateResult(
-      final S neighbor,
+       final S neighbor,
+      final E sourceEdge,
       final Set<CompoundInstance> instances
     );
 
@@ -39,7 +32,7 @@ public interface IAnalysisGraphNode<N, S extends IAnalysisGraphNode<N, S, E>, E 
     Set<S> getAnalyzedNeighbors();
 
     default boolean canResultBeCalculated(final Graph<S, IEdge> graph) {
-        return getResultingValue().isPresent() || getAnalyzedNeighbors().equals(graph.incomingEdgesOf(getSelf()).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+        return getResultingValue().isPresent() || getAnalyzedNeighbors().containsAll(graph.incomingEdgesOf(getSelf()).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
     }
 
     void onReached(final Graph<S, IEdge> graph);

@@ -65,7 +65,7 @@ public class StatCollector
         }
     }
 
-    private void logState()
+    protected void logState()
     {
 
         if (totalNodes > 0)
