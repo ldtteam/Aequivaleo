@@ -131,10 +131,7 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
             Set<CompoundInstance> set = new HashSet<>();
             for (CompoundInstance totalCompoundInstance : getResultingValue().orElse(Collections.emptySet()))
             {
-                final Double unitAmount = Math.floor(
-                  totalCompoundInstance.getAmount() / totalOutgoingEdgeWeight
-                );
-
+                final Double unitAmount = totalCompoundInstance.getAmount() / totalOutgoingEdgeWeight;
                 CompoundInstance compoundInstance = new CompoundInstance(totalCompoundInstance.getType(), unitAmount);
                 if (!compoundInstance.getType().getGroup().canContributeToRecipeAsOutput(recipe, compoundInstance))
                 {
