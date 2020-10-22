@@ -14,6 +14,7 @@ import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceData;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
+import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -182,6 +184,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             return thread;
         });
 
+        RecipeCalculator.IngredientHandler.getInstance().reset();
+
         CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
           new AequivaleoWorldAnalysisRunner(
             world,
@@ -196,6 +200,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
           .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
           ))
+          .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors())
           .thenRunAsync(aequivaleoReloadExecutor::shutdown);
     }
 

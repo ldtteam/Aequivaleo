@@ -16,6 +16,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
