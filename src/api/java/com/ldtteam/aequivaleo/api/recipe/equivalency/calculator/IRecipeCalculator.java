@@ -8,6 +8,7 @@ import com.ldtteam.aequivaleo.api.util.TriFunction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.NonNullList;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -50,6 +51,7 @@ public interface IRecipeCalculator
 
     /**
      * Method used to calculate all variants of a recipe, taking the container items into account.
+     * This method uses {@link IRecipe#getIngredients()} to extract the ingredients from a given recipe as input.
      * This method allows you to pass in your own handler which converts a given itemstack into a list
      * of {@link IRecipeIngredient}.
      *
@@ -58,8 +60,35 @@ public interface IRecipeCalculator
      * @param recipeFactory The factory that is used to convert the ingredients, required known outputs, and outputs into a recipe.
      * @return A stream of recipes which represent all collapsed variants.
      */
+    default Stream<IEquivalencyRecipe> getAllVariants(
+      IRecipe<?> recipe,
+      Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
+      TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
+    ) {
+        return this.getAllVariants(
+          recipe,
+          IRecipe::getIngredients,
+          this::getAllVariantsFromSimpleIngredient,
+          recipeFactory
+        );
+    };
+
+
+    /**
+     * Method used to calculate all variants of a recipe, taking the container items into account.
+     * This method allows you to pass in your own extractor to be used to get the input ingredients from the recipe.
+     * This method allows you to pass in your own handler which converts a given itemstack into a list
+     * of {@link IRecipeIngredient}.
+     *
+     * @param recipe The recipe to calculate the variants for.
+     * @param ingredientExtractor The ingredient extractor.
+     * @param ingredientHandler The ingredient handler to convert the ingredient into recipe ingredients.
+     * @param recipeFactory The factory that is used to convert the ingredients, required known outputs, and outputs into a recipe.
+     * @return A stream of recipes which represent all collapsed variants.
+     */
     Stream<IEquivalencyRecipe> getAllVariants(
       IRecipe<?> recipe,
+      Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
       TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     );

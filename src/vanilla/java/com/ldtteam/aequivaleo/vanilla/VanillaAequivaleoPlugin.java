@@ -15,9 +15,12 @@ import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.FurnaceEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.VanillaCraftingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.CookingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SimpleEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SmithingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalencyRecipe;
 import net.minecraft.item.crafting.*;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
@@ -28,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.SortedSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @AequivaleoPlugin
@@ -67,7 +71,10 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         LOGGER.debug("Registering recipe processing types.");
         IRecipeTypeProcessingRegistry.getInstance()
           .registerAs(Constants.SIMPLE_RECIPE_TYPE, IRecipeType.CRAFTING)
-          .registerAs(Constants.COOKING_RECIPE_TYPE, IRecipeType.SMELTING, IRecipeType.BLASTING, IRecipeType.CAMPFIRE_COOKING, IRecipeType.SMOKING);
+          .registerAs(Constants.COOKING_RECIPE_TYPE, IRecipeType.SMELTING, IRecipeType.BLASTING, IRecipeType.CAMPFIRE_COOKING, IRecipeType.SMOKING)
+          .registerAs(Constants.STONE_CUTTING_RECIPE_TYPE, IRecipeType.STONECUTTING)
+          .registerAs(Constants.SMITHING_RECIPE_TYPE, IRecipeType.SMITHING);
+
     }
 
     @Override
@@ -95,6 +102,28 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         smeltingRecipe
           .parallelStream()
           .forEach(recipe -> processSmeltingRecipe(world, recipe));
+
+        final List<IRecipe<?>> stoneCuttingsRecipe = Lists.newArrayList();
+
+        IRecipeTypeProcessingRegistry
+          .getInstance()
+          .getRecipeTypesToBeProcessedAs(Constants.STONE_CUTTING_RECIPE_TYPE)
+          .forEach(type -> stoneCuttingsRecipe.addAll(getRecipes(type, world)));
+
+        stoneCuttingsRecipe
+          .parallelStream()
+          .forEach(recipe -> processStoneCuttingRecipe(world, recipe));
+
+        final List<IRecipe<?>> smithingRecipe = Lists.newArrayList();
+
+        IRecipeTypeProcessingRegistry
+          .getInstance()
+          .getRecipeTypesToBeProcessedAs(Constants.SMITHING_RECIPE_TYPE)
+          .forEach(type -> smithingRecipe.addAll(getRecipes(type, world)));
+
+        smithingRecipe
+          .parallelStream()
+          .forEach(recipe -> processSmithingRecipe(world, recipe));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -106,18 +135,40 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
     private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new FurnaceEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
-        processIRecipe(world, iRecipe, (inputs, requiredKnownOutputs, outputs) -> new VanillaCraftingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    }
+
+    private static void processStoneCuttingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    {
+        processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    }
+
+    private static void processSmithingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    {
+        processIRecipe(world,
+          iRecipe,
+          smithingRecipe -> {
+              if (!(smithingRecipe instanceof SmithingRecipe))
+                  throw new IllegalArgumentException("Recipe is not a smithing recipe.");
+
+              final NonNullList<Ingredient> ingredients = NonNullList.create();
+              ingredients.add(((SmithingRecipe) smithingRecipe).base);
+              ingredients.add(((SmithingRecipe) smithingRecipe).addition);
+              return ingredients;
+          },
+          (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processIRecipe(
       @NotNull final World world,
-      IRecipe<?> iRecipe,
-      TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
+      final IRecipe<?> iRecipe,
+      final Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
+      final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     )
     {
         if (iRecipe.getRecipeOutput().isEmpty())
@@ -127,6 +178,8 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
         final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
           iRecipe,
+          ingredientExtractor,
+          IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
           recipeFactory
         ).collect(Collectors.toList());
 

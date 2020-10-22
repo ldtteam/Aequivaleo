@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ISimpleEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ICookingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.Validate;
@@ -10,18 +10,16 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecipe
+public class CookingEquivalencyRecipe implements ICookingEquivalencyRecipe
 {
-    private final ResourceLocation           recipeName;
+    private final ResourceLocation recipeName;
     private final SortedSet<IRecipeIngredient> inputs;
     private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
-    public VanillaCraftingEquivalencyRecipe(
-      final ResourceLocation recipeName,
-      final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
-      final Set<ICompoundContainer<?>> outputs) {
+    public CookingEquivalencyRecipe(
+      final ResourceLocation recipeName, final Set<IRecipeIngredient> inputs,
+      final Set<ICompoundContainer<?>> requiredKnownOutputs, final Set<ICompoundContainer<?>> outputs) {
         this.recipeName = recipeName;
         this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
         this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
@@ -37,7 +35,7 @@ public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecip
     @Override
     public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
     {
-        return requiredKnownOutputs;
+        return this.requiredKnownOutputs;
     }
 
     @Override
@@ -58,12 +56,12 @@ public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecip
         {
             return true;
         }
-        if (!(o instanceof VanillaCraftingEquivalencyRecipe))
+        if (!(o instanceof CookingEquivalencyRecipe))
         {
             return false;
         }
 
-        final VanillaCraftingEquivalencyRecipe that = (VanillaCraftingEquivalencyRecipe) o;
+        final CookingEquivalencyRecipe that = (CookingEquivalencyRecipe) o;
 
         if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
         {
@@ -83,6 +81,6 @@ public class VanillaCraftingEquivalencyRecipe implements ISimpleEquivalencyRecip
     @Override
     public String toString()
     {
-        return String.format("Equivalent via vanilla crafting: %s", recipeName);
+        return String.format("Equivalent via smelting: %s", recipeName);
     }
 }

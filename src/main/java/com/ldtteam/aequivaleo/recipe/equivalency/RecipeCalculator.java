@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.NonNullList;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,6 +42,7 @@ public class RecipeCalculator implements IRecipeCalculator
     @Override
     public Stream<IEquivalencyRecipe> getAllVariants(
       final IRecipe<?> recipe,
+      final Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
       final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     )
@@ -59,7 +61,7 @@ public class RecipeCalculator implements IRecipeCalculator
         final SortedSet<ICompoundContainer<?>> resultSet = new TreeSet<>();
         resultSet.add(result);
 
-        final List<SortedSet<IRecipeIngredient>> variants = getAllInputVariants(recipe.getIngredients()
+        final List<SortedSet<IRecipeIngredient>> variants = getAllInputVariants(ingredientExtractor.apply(recipe)
                                                                                   .stream()
                                                                                   .filter(i -> i.getMatchingStacks().length > 0)
                                                                                   .collect(Collectors.toList()),
