@@ -1,27 +1,22 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IRecipeInputNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IRecipeNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.util.GroupingUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.jetbrains.annotations.NotNull;
-import org.jgrapht.Graph;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.Set;
 
-public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
+public class IngredientNode extends AbstractNode implements IRecipeInputNode
 {
     @NotNull
     private final IRecipeIngredient ingredient;
 
-    public IngredientCandidateGraphNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
+    public IngredientNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
 
     @NotNull
     public IRecipeIngredient getIngredient()
@@ -36,12 +31,12 @@ public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
         {
             return true;
         }
-        if (!(o instanceof IngredientCandidateGraphNode))
+        if (!(o instanceof IngredientNode))
         {
             return false;
         }
 
-        final IngredientCandidateGraphNode that = (IngredientCandidateGraphNode) o;
+        final IngredientNode that = (IngredientNode) o;
 
         return getIngredient().equals(that.getIngredient());
     }
@@ -55,8 +50,7 @@ public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
     @Override
     public String toString()
     {
-        return "IngredientCandidateGraphNode{" +
-                 "ingredient=" + ingredient +
+        return "IngredientNode{" + ingredient +
                  '}';
     }
 
@@ -65,4 +59,11 @@ public class IngredientCandidateGraphNode extends AbstractAnalysisGraphNode
     {
         statCollector.onVisitIngredientNode();
     }
+
+    @Override
+    public Set<CompoundInstance> getInputInstances(final IRecipeNode recipeNode)
+    {
+        return getResultingValue().orElse(Collections.emptySet());
+    }
+
 }

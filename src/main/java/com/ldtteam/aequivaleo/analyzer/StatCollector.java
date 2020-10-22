@@ -8,18 +8,19 @@ public class StatCollector
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final ResourceLocation worldName;
-    private final long             totalNodes;
+    private final String name;
+    private final long   totalNodes;
     private       long             lastReportingTime = 0;
     private       long             visitedNodes      = 0;
-    private       long sourceNodesVisited;
-    private       long containerNodesVisited;
-    private       long ingredientNodesVisited;
+    private       long             sourceNodesVisited;
+    private       long             containerNodesVisited;
+    private       long             ingredientNodesVisited;
     private       long             recipeNodesVisited;
+    private       long             subCycleNodesVisited;
 
-    public StatCollector(final ResourceLocation worldName, final int totalNodes)
+    public StatCollector(final String name, final int totalNodes)
     {
-        this.worldName = worldName;
+        this.name = name;
         this.totalNodes = totalNodes;
     }
 
@@ -47,6 +48,11 @@ public class StatCollector
         onVisitNode();
     }
 
+    public void onInnerGraphNode() {
+        subCycleNodesVisited++;
+        onVisitNode();
+    }
+
     private void onVisitNode()
     {
         visitedNodes++;
@@ -59,25 +65,26 @@ public class StatCollector
         }
     }
 
-    private void logState()
+    protected void logState()
     {
 
-        if (totalNodes > 0) {
+        if (totalNodes > 0)
+        {
             final int newPercentage = (int) Math.floorDiv(visitedNodes * 100, totalNodes);
 
-
-            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d of %d)",
+            LOGGER.info(String.format("Visited: %d%% of nodes during analysis of recipe graph for world: %s. (%d/%d/%d/%d/%d of %d)",
               newPercentage,
-              worldName,
+              name,
               sourceNodesVisited,
               containerNodesVisited,
               ingredientNodesVisited,
               recipeNodesVisited,
+              subCycleNodesVisited,
               totalNodes));
         }
         else
         {
-            LOGGER.info(String.format("No nodes required visiting for world: %s", worldName));
+            LOGGER.info(String.format("No nodes required visiting for world: %s", name));
         }
     }
 

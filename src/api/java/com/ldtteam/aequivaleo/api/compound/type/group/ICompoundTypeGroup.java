@@ -46,31 +46,30 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      *
      * @return True when the compound instance should contribute, false when not.
      */
-    boolean canContributeToRecipeAsInput(CompoundInstance compoundInstance, IEquivalencyRecipe recipe);
+    boolean canContributeToRecipeAsInput(IEquivalencyRecipe recipe, CompoundInstance compoundInstance);
 
     /**
      * Indicates if the given instance is allowed to contribute from a given recipe.
      *
-     * @param wrapper The target object.
      * @param recipe The recipe in question.
-     * @param simpleCompoundInstance The instance that should contribute or not.
+     * @param compoundInstance The instance that should contribute or not.
      *
      * @return True when the compound instance should contribute, false when not.
      */
-    boolean canContributeToRecipeAsOutput(ICompoundContainer<?> wrapper, IEquivalencyRecipe recipe, CompoundInstance simpleCompoundInstance);
+    boolean canContributeToRecipeAsOutput(IEquivalencyRecipe recipe, CompoundInstance compoundInstance);
 
     /**
      * Indicates if the given compound instance is valid for the compound container.
      *
      * @param wrapper The container.
-     * @param simpleCompoundInstance The instance.
+     * @param compoundInstance The instance.
      *
      * @return True when instance is valid, false when not.
      */
-    boolean isValidFor(ICompoundContainer<?> wrapper, CompoundInstance simpleCompoundInstance);
+    boolean isValidFor(ICompoundContainer<?> wrapper, CompoundInstance compoundInstance);
 
     @Override
-    default int compareTo(@NotNull ICompoundTypeGroup iCompoundTypeGroup) {
-        return Objects.requireNonNull(getRegistryName()).compareTo(iCompoundTypeGroup.getRegistryName());
+    default int compareTo(@NotNull ICompoundTypeGroup group) {
+        return Objects.requireNonNull(getRegistryName()).compareTo(group.getRegistryName());
     }
 }

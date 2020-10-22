@@ -19,6 +19,7 @@ public final class ClassUtils
         throw new IllegalStateException("Tried to initialize: ClassUtils but this is a Utility class.");
     }
 
+    @SuppressWarnings("unchecked")
     @Nullable
     public static <T> T createOrGetInstance(String className, Class<T> baseClass, Class<? extends Annotation> instanceAnnotation, Function<T, String> nameFunction) {
         //Try to create an instance of the class

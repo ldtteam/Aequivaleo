@@ -63,7 +63,7 @@ public final class PluginManger implements IAequivaleoPluginManager
             }
         }
 
-        final Collection<Collection<IAequivaleoPlugin>> groupedByIds = GroupingUtils.groupBy(plugins, IAequivaleoPlugin::getId);
+        final Collection<Collection<IAequivaleoPlugin>> groupedByIds = GroupingUtils.groupByUsingSet(plugins, IAequivaleoPlugin::getId);
         final Collection<String> idsWithDuplicates = groupedByIds.stream().filter(p -> p.size() > 1).map(p -> p.iterator().next()).map(IAequivaleoPlugin::getId).collect(Collectors.toSet());
         if (idsWithDuplicates.size() > 0) {
             throw new RuntimeException(String.format("Can not load Aequivaleo there are multiple instances of the plugins: [%s]", String.join(", ", idsWithDuplicates)));

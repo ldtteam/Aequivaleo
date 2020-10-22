@@ -78,6 +78,7 @@ public class RecipeCalculator implements IRecipeCalculator
                                                        .filter(integerPair -> integerPair.getKey() instanceof ItemStack)
                                                        .map(integerPair -> Pair.of((ItemStack) integerPair.getKey(), integerPair.getValue()))
                                                        .filter(itemStackIntegerPair -> !itemStackIntegerPair.getKey().isEmpty())
+                                                       .filter(itemStackIntegerPair -> itemStackIntegerPair.getKey().hasContainerItem())
                                                        .map(itemStackIntegerPair -> {
                                                            final ItemStack containerStack = itemStackIntegerPair.getKey().getContainerItem();
                                                            containerStack.setCount(itemStackIntegerPair.getValue());
@@ -161,7 +162,7 @@ public class RecipeCalculator implements IRecipeCalculator
     public List<IRecipeIngredient> getAllVariantsFromSimpleIngredient(final Ingredient ingredient) {
         final List<ItemStack> stacks = Arrays.asList(ingredient.getMatchingStacks());
         final Collection<Collection<ItemStack>> groupedByContainer =
-          GroupingUtils.groupBy(stacks, stack -> new ItemStackEqualityWrapper(stack.getContainerItem()));
+          GroupingUtils.groupByUsingSet(stacks, stack -> new ItemStackEqualityWrapper(stack.hasContainerItem() ? stack.getContainerItem() : ItemStack.EMPTY));
 
         return groupedByContainer
           .stream()
@@ -174,7 +175,7 @@ public class RecipeCalculator implements IRecipeCalculator
         final List<ICompoundContainer<?>> wrappedStacks =
           stacks.stream().map(stack -> CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, stack.getCount())).collect(Collectors.toList());
 
-        final Collection<Collection<ICompoundContainer<?>>> groupedStacks = GroupingUtils.groupBy(
+        final Collection<Collection<ICompoundContainer<?>>> groupedStacks = GroupingUtils.groupByUsingSet(
           wrappedStacks,
           s -> CompoundContainerFactoryManager.getInstance().wrapInContainer(s.getContents(), 1)
         );

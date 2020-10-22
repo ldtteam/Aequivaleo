@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.antlr.v4.runtime.misc.MultiMap;
@@ -19,9 +20,15 @@ public final class GroupingUtils
     }
 
 
-    public static <T, O> Collection<Collection<T>> groupBy(final Iterable<T> source, Function<T, O> extractor) {
-        final Multimap<O, T> groups = HashMultimap.create();
+    public static <T, O> Collection<Collection<T>> groupByUsingSet(final Iterable<T> source, Function<T, O> extractor) {
+        return groupBy(HashMultimap.create(), source, extractor);
+    }
 
+    public static <T, O> Collection<Collection<T>> groupByUsingList(final Iterable<T> source, Function<T, O> extractor) {
+        return groupBy(ArrayListMultimap.create(), source, extractor);
+    }
+
+    private static <T, O> Collection<Collection<T>> groupBy(final Multimap<O, T> groups, final Iterable<T> source, Function<T, O> extractor) {
         source.forEach(
           e -> {
               groups.put(extractor.apply(e), e);
@@ -29,9 +36,9 @@ public final class GroupingUtils
         );
 
         return groups
-          .keySet()
-          .stream()
-          .map(groups::get)
-          .collect(Collectors.toList());
+                 .keySet()
+                 .stream()
+                 .map(groups::get)
+                 .collect(Collectors.toList());
     }
 }

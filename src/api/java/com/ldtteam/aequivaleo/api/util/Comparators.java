@@ -1,9 +1,11 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -17,105 +19,149 @@ public final class Comparators
     }
 
     public static final Comparator<ItemStack> ITEM_STACK_COMPARATOR = (itemStack1, itemStack2) -> {
-
-        if (itemStack1 != null && itemStack2 != null) {
-            if (!ItemStackUtils.isEmpty(itemStack1)  && !ItemStackUtils.isEmpty(itemStack2)) {
+        if (itemStack1 != null && itemStack2 != null)
+        {
+            if (!ItemStackUtils.isEmpty(itemStack1) && !ItemStackUtils.isEmpty(itemStack2))
+            {
                 // Sort on id
-                if (Item.getIdFromItem(itemStack1.getItem()) - Item.getIdFromItem(itemStack2.getItem()) == 0) {
+                if (Item.getIdFromItem(itemStack1.getItem()) - Item.getIdFromItem(itemStack2.getItem()) == 0)
+                {
                     // Sort on item
-                    if (itemStack1.getItem() == itemStack2.getItem()) {
+                    if (itemStack1.getItem() == itemStack2.getItem())
+                    {
                         // Then sort on meta
-                        if ((itemStack1.getDamage() == itemStack2.getDamage())) {
+                        if ((itemStack1.getDamage() == itemStack2.getDamage()))
+                        {
                             // Then sort on NBT
-                            if (itemStack1.hasTag() && itemStack2.hasTag()) {
+                            if (itemStack1.hasTag() && itemStack2.hasTag())
+                            {
                                 // Then sort on stack size
-                                if (ItemStack.areItemStackTagsEqual(itemStack1, itemStack2)) {
+                                if (ItemStack.areItemStackTagsEqual(itemStack1, itemStack2))
+                                {
                                     return (itemStack1.getCount() - itemStack2.getCount());
                                 }
-                                else {
+                                else if (itemStack1.getTag() != null && itemStack2.getTag() == null)
+                                {
+                                    return -1;
+                                }
+                                else if (itemStack1.getTag() == null && itemStack2.getTag() != null)
+                                {
+                                    return 1;
+                                }
+                                else if (itemStack1.getTag() == null)
+                                {
+                                    return 0;
+                                }
+                                else
+                                {
                                     return itemStack1.getTag().toString().compareTo(itemStack2.getTag().toString());
                                 }
                             }
-                            else if (!(itemStack1.hasTag()) && itemStack2.hasTag()) {
+                            else if (!(itemStack1.hasTag()) && itemStack2.hasTag())
+                            {
                                 return -1;
                             }
-                            else if (itemStack1.hasTag() && !(itemStack2.hasTag())) {
+                            else if (itemStack1.hasTag() && !(itemStack2.hasTag()))
+                            {
                                 return 1;
                             }
-                            else {
+                            else
+                            {
                                 return (itemStack1.getCount() - itemStack2.getCount());
                             }
                         }
-                        else {
+                        else
+                        {
                             return (itemStack1.getDamage() - itemStack2.getDamage());
                         }
                     }
-                    else {
+                    else
+                    {
                         return itemStack1.getItem().getTranslationKey(itemStack1).compareToIgnoreCase(itemStack2.getItem().getTranslationKey(itemStack2));
                     }
                 }
-                else {
+                else
+                {
                     return Item.getIdFromItem(itemStack1.getItem()) - Item.getIdFromItem(itemStack2.getItem());
                 }
             }
-            else {
+            else
+            {
                 return 0;
             }
         }
-        else if (itemStack1 != null) {
+        else if (itemStack1 != null)
+        {
             return -1;
         }
-        else if (itemStack2 != null) {
+        else if (itemStack2 != null)
+        {
             return 1;
         }
-        else {
+        else
+        {
             return 0;
         }
     };
 
     public static final Comparator<FluidStack> FLUID_STACK_COMPARATOR = (fluidStack1, fluidStack2) -> {
 
-        if (fluidStack1 != null && fluidStack2 != null) {
+        if (fluidStack1 != null && fluidStack2 != null)
+        {
             // Sort on id
-            if (Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid()) == 0) {
+            if (((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid()) - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid()) == 0)
+            {
                 // Sort on fluid
-                if (fluidStack1.getFluid() == fluidStack2.getFluid()) {
+                if (fluidStack1.getFluid() == fluidStack2.getFluid())
+                {
                     // Then sort on meta
                     // Then sort on NBT
-                    if (fluidStack1.hasTag() && fluidStack2.hasTag()) {
+                    if (fluidStack1.hasTag() && fluidStack2.hasTag())
+                    {
                         // Then sort on stack size
-                        if (FluidStack.areFluidStackTagsEqual(fluidStack1, fluidStack2)) {
+                        if (FluidStack.areFluidStackTagsEqual(fluidStack1, fluidStack2))
+                        {
                             return (fluidStack1.getAmount() - fluidStack2.getAmount());
                         }
-                        else {
+                        else
+                        {
                             return fluidStack1.getTag().toString().compareTo(fluidStack2.getTag().toString());
                         }
                     }
-                    else if (!(fluidStack1.hasTag()) && fluidStack2.hasTag()) {
+                    else if (!(fluidStack1.hasTag()) && fluidStack2.hasTag())
+                    {
                         return -1;
                     }
-                    else if (fluidStack1.hasTag() && !(fluidStack2.hasTag())) {
+                    else if (fluidStack1.hasTag() && !(fluidStack2.hasTag()))
+                    {
                         return 1;
                     }
-                    else {
+                    else
+                    {
                         return (fluidStack1.getAmount() - fluidStack2.getAmount());
                     }
                 }
-                else {
+                else
+                {
                     return Objects.requireNonNull(fluidStack1.getFluid().getRegistryName()).compareTo(fluidStack2.getFluid().getRegistryName());
                 }
             }
-            else {
-                return Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid());
+            else
+            {
+                return ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid())
+                         - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid());
             }
         }
-        else if (fluidStack1 != null) {
+        else if (fluidStack1 != null)
+        {
             return -1;
         }
-        else if (fluidStack2 != null) {
+        else if (fluidStack2 != null)
+        {
             return 1;
         }
-        else {
+        else
+        {
             return 0;
         }
     };

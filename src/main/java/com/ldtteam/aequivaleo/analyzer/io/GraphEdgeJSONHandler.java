@@ -4,33 +4,31 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.node.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import org.jgrapht.Graph;
 
 import java.lang.reflect.Type;
-import java.util.Set;
 import java.util.function.Function;
 
-public class GraphEdgeJSONHandler implements JsonSerializer<AccessibleWeightEdge>
+public class GraphEdgeJSONHandler implements JsonSerializer<IEdge>
 {
 
-    private final Function<IAnalysisGraphNode<Set<CompoundInstance>>, String> nodeIdGetter;
-    private final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge>             graph;
+    private final Function<INode, String>                                                nodeIdGetter;
+    private final Graph<INode, IEdge> graph;
 
     public GraphEdgeJSONHandler(
-      final Function<IAnalysisGraphNode<Set<CompoundInstance>>, String> nodeIdGetter,
-      final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> graph) {
+      final Function<INode, String> nodeIdGetter,
+      final Graph<INode, IEdge> graph) {
         this.nodeIdGetter = nodeIdGetter;
         this.graph = graph;
     }
 
     @Override
-    public JsonElement serialize(final AccessibleWeightEdge src, final Type typeOfSrc, final JsonSerializationContext context)
+    public JsonElement serialize(final IEdge src, final Type typeOfSrc, final JsonSerializationContext context)
     {
-        final IAnalysisGraphNode<Set<CompoundInstance>> source = graph.getEdgeSource(src);
-        final IAnalysisGraphNode<Set<CompoundInstance>> target = graph.getEdgeTarget(src);
+        final INode source = graph.getEdgeSource(src);
+        final INode target = graph.getEdgeTarget(src);
 
         final String sourceId = nodeIdGetter.apply(source);
         final String targetId = nodeIdGetter.apply(target);
