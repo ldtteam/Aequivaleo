@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
@@ -29,7 +30,7 @@ public class InnerNode
     private final IGraph innerGraph = new AequivaleoGraph();
     private       int    hash;
 
-    private final Set<Set<CompoundInstance>> candidates = Sets.newHashSet();
+    private final Multimap<INode, Set<CompoundInstance>> candidates = ArrayListMultimap.create();
 
     public InnerNode(
       final IGraph sourceGraph,
@@ -148,7 +149,7 @@ public class InnerNode
                                                            ci.getAmount() * (ioGraph.getEdgeWeight(ioGraph.getEdge(neighbor, node)) / totalOutgoingEdgeWeight)))
                                                          .collect(Collectors.toSet());
               node.addCandidateResult(neighbor, sourceEdge, workingSet);
-              candidates.add(instances);
+              candidates.put(neighbor, instances);
           });
     }
 
@@ -156,18 +157,14 @@ public class InnerNode
     @Override
     public Set<Set<CompoundInstance>> getCandidates()
     {
-        return ImmutableSet.copyOf(candidates);
+        return new HashSet<>(candidates.values());
     }
 
     @NotNull
     @Override
     public Set<INode> getAnalyzedNeighbors()
     {
-        return ioGraph.edgeSet()
-                 .stream()
-                 .filter(edge -> !ioGraph.getEdgeTarget(edge).getAnalyzedNeighbors().isEmpty())
-                 .map(ioGraph::getEdgeSource)
-                 .collect(Collectors.toSet());
+        return candidates.keySet();
     }
 
     @Override
