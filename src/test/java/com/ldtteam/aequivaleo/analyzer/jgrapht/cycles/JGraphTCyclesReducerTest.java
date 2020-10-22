@@ -3,6 +3,10 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.cycles;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.SimpleAnalysisGraph;
+import com.ldtteam.aequivaleo.config.CommonConfiguration;
+import com.ldtteam.aequivaleo.config.Configuration;
+import com.ldtteam.aequivaleo.config.ServerConfiguration;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.jgrapht.Graph;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +20,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
 @SuppressStaticInitializationFor("net.minecraft.world.World")
@@ -27,8 +32,20 @@ public class JGraphTCyclesReducerTest
     JGraphTCyclesReducer<Graph<String, Edge>, String, Edge> reducer;
     AtomicInteger counter = new AtomicInteger();
     @Before
-    public void setUp() throws Exception
+    public void setUp()
     {
+        mockStatic(Aequivaleo.class);
+        Aequivaleo mod = mock(Aequivaleo.class);
+        when(Aequivaleo.getInstance()).thenReturn(mod);
+
+        Configuration config = mock(Configuration.class);
+        CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
+        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        when(alwaysTrueConfig.get()).thenReturn(true);
+        commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
+        when(config.getCommon()).thenReturn(commonConfiguration);
+        when(mod.getConfiguration()).thenReturn(config);
+
         reducer = new JGraphTCyclesReducer<>(
           (graph, vertices) -> {
               final Graph<String, Edge> innerGraph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));

@@ -13,11 +13,9 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryInternal;
 import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +26,7 @@ public final class CompoundContainerFactoryRegistrar
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
+    @SuppressWarnings("unchecked")
     @SubscribeEvent
     public static void onRegisterRegistry(@NotNull RegistryEvent.NewRegistry event) {
         LOGGER.info("Registering the container factory registry with forge.");

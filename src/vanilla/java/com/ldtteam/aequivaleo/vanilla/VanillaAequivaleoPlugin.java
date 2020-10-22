@@ -97,11 +97,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .forEach(recipe -> processSmeltingRecipe(world, recipe));
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static List<IRecipe<?>> getRecipes(final IRecipeType type, final World world)
     {
         final List<? extends IRecipe<?>> recipes = world.getRecipeManager().getRecipesForType(type);
-        final List<IRecipe<?>> result = Lists.newArrayList(recipes);
-        return result;
+        return Lists.newArrayList(recipes);
     }
 
     private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
@@ -134,8 +134,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
             LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
         }
 
-        variants.forEach(recipe -> {
-            IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(recipe);
-        });
+        variants.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(recipe));
     }
 }

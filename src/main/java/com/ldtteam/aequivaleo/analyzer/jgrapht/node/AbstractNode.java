@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,9 @@ public abstract class AbstractNode implements INode
     @Override
     public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Set<CompoundInstance> instances)
     {
+        if (neighbor == this)
+            this.candidates.removeAll(this);
+
         this.candidates.put(neighbor, instances);
     }
 
@@ -69,24 +73,24 @@ public abstract class AbstractNode implements INode
     @Override
     public void forceSetResult(final Set<CompoundInstance> compoundInstances)
     {
-        LOGGER.debug(String.format("Force setting the result of: %s to: %s", this, compoundInstances));
+        AnalysisLogHandler.debug(LOGGER, String.format("Force setting the result of: %s to: %s", this, compoundInstances));
         this.result = compoundInstances;
     }
 
     @Override
     public void determineResult(final IGraph graph)
     {
-        LOGGER.debug(String.format("Determining the result of: %s", this));
+        AnalysisLogHandler.debug(LOGGER, String.format("Determining the result of: %s", this));
         //Short cirquit empty result.
         if (getCandidates().size() == 0)
         {
             if (result != null)
             {
-                LOGGER.debug(String.format("  > No candidates available. Using current value: %s", this.result));
+                AnalysisLogHandler.debug(LOGGER, String.format("  > No candidates available. Using current value: %s", this.result));
             }
             else
             {
-                LOGGER.debug("  > No candidates available, and result not forced. Setting empty collection!");
+                AnalysisLogHandler.debug(LOGGER, "  > No candidates available, and result not forced. Setting empty collection!");
                 this.result = Collections.emptySet();
             }
             return;
@@ -94,9 +98,9 @@ public abstract class AbstractNode implements INode
 
         //Locking happens via the intrinsic value of node itself.
         //Return that value if it exists.
-        if (this.candidates.containsKey(this) && this.candidates.get(this).size() == 1) {
+        if (this.candidates.containsKey(this)) {
             this.result = this.candidates.get(this).iterator().next();
-            LOGGER.debug(String.format("  > Candidate data contained forced value: %s", this.result));
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Candidate data contained forced value: %s", this.result));
             return;
         }
 
@@ -105,11 +109,11 @@ public abstract class AbstractNode implements INode
         if (getCandidates().size() == 1)
         {
             this.result = getCandidates().iterator().next();
-            LOGGER.debug(String.format("  > Candidate data contained exactly one entry: %s", this.result));
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Candidate data contained exactly one entry: %s", this.result));
             return;
         }
 
-        LOGGER.debug("  > Candidate data contains more then one entry. Mediation is required. Invoking type group callbacks to determine value.");
+        AnalysisLogHandler.debug(LOGGER, "  > Candidate data contains more then one entry. Mediation is required. Invoking type group callbacks to determine value.");
         //If we have multiples we group them up by type group and then let it decide.
         //Then we collect them all back together into one list
         //Bit of a mess but works.
@@ -129,7 +133,7 @@ public abstract class AbstractNode implements INode
           .flatMap(Collection::stream)
           .collect(Collectors.toSet()); //Group all of them together.
 
-        LOGGER.debug(String.format("  > Mediation completed. Determined value is: %s", this.result));
+        AnalysisLogHandler.debug(LOGGER, String.format("  > Mediation completed. Determined value is: %s", this.result));
     }
 
     @Override

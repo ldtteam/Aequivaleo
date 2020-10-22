@@ -16,6 +16,7 @@ import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
+import com.ldtteam.aequivaleo.config.CommonConfiguration;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
@@ -93,6 +94,13 @@ public class JGraphTBasedCompoundAnalyzerTest
         serverConfig.exportGraph = alwaysFalseConfig;
         serverConfig.writeResultsToLog = alwaysFalseConfig;
         when(config.getServer()).thenReturn(serverConfig);
+
+        CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
+        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        when(alwaysTrueConfig.get()).thenReturn(true);
+        commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
+        when(config.getCommon()).thenReturn(commonConfiguration);
+
         when(mod.getConfiguration()).thenReturn(config);
 
         List<ICompoundContainerFactory<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Factory());

@@ -16,5 +16,5 @@ public interface IIOAwareNode extends INode
      * @param graph The complete graph in question.
      * @return The IO graph.
      */
-    Graph<INode, IEdge> getIOGraph(final Graph<INode, IEdge> graph);
+    IGraph getIOGraph(final IGraph graph);
 }

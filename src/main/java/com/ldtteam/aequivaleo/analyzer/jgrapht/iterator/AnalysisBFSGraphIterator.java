@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jgrapht.Graphs;
@@ -50,7 +51,7 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     @Override
     protected void encounterVertex(final INode vertex, final IEdge edge)
     {
-        LOGGER.debug(String.format("Initially encountered: %s", vertex));
+        AnalysisLogHandler.debug(LOGGER, String.format("Initially encountered: %s", vertex));
 
         int depth = (edge == null ? 0
                        : getSeenData(Graphs.getOppositeVertex(graph, edge, vertex)).depth + 1);
@@ -69,7 +70,7 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
 
         vertex.determineResult(getGraph());
         final Optional<Set<CompoundInstance>> result = vertex.getResultingValue();
-        LOGGER.debug(String.format("  > Determined result to be: %s", result.isPresent() ? result.get() : "<MISSING>"));
+        AnalysisLogHandler.debug(LOGGER, String.format("  > Determined result to be: %s", result.isPresent() ? result.get() : "<MISSING>"));
         vertex.onReached(getGraph());
 
         return vertex;
@@ -79,12 +80,12 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
         if (!completeQueue.isEmpty())
         {
             final INode complete = completeQueue.poll();
-            LOGGER.debug(String.format("Accessing next complete node: %s", complete));
+            AnalysisLogHandler.debug(LOGGER, String.format("Accessing next complete node: %s", complete));
             return complete;
         }
 
         final INode incomplete = incompleteQueue.poll();
-        LOGGER.debug(String.format("Accessing next incomplete node: %s", incomplete));
+        AnalysisLogHandler.debug(LOGGER, String.format("Accessing next incomplete node: %s", incomplete));
         return incomplete;
     }
 
@@ -92,7 +93,7 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     protected void encounterVertexAgain(final INode vertex, final IEdge edge)
     {
         if (!vertex.getResultingValue().isPresent() && incompleteQueue.contains(vertex) && vertex.canResultBeCalculated(getGraph())) {
-            LOGGER.debug(String.format("Upgrading completion state from incomplete to complete on the queued vertex: %s", vertex));
+            AnalysisLogHandler.debug(LOGGER, String.format("Upgrading completion state from incomplete to complete on the queued vertex: %s", vertex));
             incompleteQueue.remove(vertex);
             completeQueue.offer(vertex);
         }

@@ -18,6 +18,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,11 +91,11 @@ public class JGraphTBasedCompoundAnalyzer
                 final ICompoundContainer<?> unitOutputWrapper = createUnitWrapper(output);
                 if (compoundNodes.putIfAbsent(unitOutputWrapper, new ContainerNode(unitOutputWrapper)) == null)
                 {
-                    LOGGER.debug(String.format("Added new output node for: %s", output));
+                    AnalysisLogHandler.debug(LOGGER, String.format("Added new output node for: %s", output));
                 }
                 else
                 {
-                    LOGGER.debug(String.format("Reused existing output node for: %s", output));
+                    AnalysisLogHandler.debug(LOGGER, String.format("Reused existing output node for: %s", output));
                 }
 
                 final INode outputWrapperGraphNode = compoundNodes.get(unitOutputWrapper);
@@ -196,7 +197,7 @@ public class JGraphTBasedCompoundAnalyzer
         final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds = buildRecipeGraph.getResultingCompounds();
         final Map<ICompoundContainer<?>, INode>  compoundNodes = buildRecipeGraph.getCompoundNodes();
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
-        final SourceNode source = buildRecipeGraph.getSourceGraphNode();
+        final SourceNode source = buildRecipeGraph.getSourceNode();
 
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation().toString(), recipeGraph.vertexSet().size());
         final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
@@ -304,11 +305,11 @@ public class JGraphTBasedCompoundAnalyzer
         final ICompoundContainer<?> unitWrapper = createUnitWrapper(candidate);
         if (nodes.putIfAbsent(unitWrapper, new ContainerNode(unitWrapper)) == null)
         {
-            LOGGER.debug(String.format("Added new input node for: %s", candidate));
+            AnalysisLogHandler.debug(LOGGER, String.format("Added new input node for: %s", candidate));
         }
         else
         {
-            LOGGER.debug(String.format("Reused existing input node for: %s", candidate));
+            AnalysisLogHandler.debug(LOGGER, String.format("Reused existing input node for: %s", candidate));
         }
 
         final INode candidateNode = nodes.get(unitWrapper);

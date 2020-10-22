@@ -1,16 +1,12 @@
 package com.ldtteam.aequivaleo.analyzer.debug;
 
 import com.ldtteam.aequivaleo.analyzer.io.JSONGraphExporter;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.AccessibleWeightEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jgrapht.Graph;
 
 import java.nio.file.Paths;
-import java.util.Set;
 
 public class GraphIOHandler
 {
@@ -29,7 +25,7 @@ public class GraphIOHandler
 
     public void export(
       @NotNull final String name,
-      @NotNull final Graph<IAnalysisGraphNode<Set<CompoundInstance>>, AccessibleWeightEdge> recipeGraph
+      @NotNull final IGraph recipeGraph
     ) {
         final JSONGraphExporter exporter = new JSONGraphExporter();
 

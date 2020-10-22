@@ -1,9 +1,11 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -33,7 +35,7 @@ public final class Comparators
                                     return (itemStack1.getCount() - itemStack2.getCount());
                                 }
                                 else {
-                                    return itemStack1.getTag().toString().compareTo(itemStack2.getTag().toString());
+                                    return itemStack1.getOrCreateTag().toString().compareTo(itemStack2.getOrCreateTag().toString());
                                 }
                             }
                             else if (!(itemStack1.hasTag()) && itemStack2.hasTag()) {
@@ -77,7 +79,7 @@ public final class Comparators
 
         if (fluidStack1 != null && fluidStack2 != null) {
             // Sort on id
-            if (Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid()) == 0) {
+            if (((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid()) - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid()) == 0) {
                 // Sort on fluid
                 if (fluidStack1.getFluid() == fluidStack2.getFluid()) {
                     // Then sort on meta
@@ -106,7 +108,7 @@ public final class Comparators
                 }
             }
             else {
-                return Registry.FLUID.getId(fluidStack1.getFluid()) - Registry.FLUID.getId(fluidStack2.getFluid());
+                return ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid()) - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid());
             }
         }
         else if (fluidStack1 != null) {

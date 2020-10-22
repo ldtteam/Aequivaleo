@@ -10,4 +10,5 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisEdge;
  */
 public interface IEdge extends IAnalysisEdge
 {
+    long getEdgeIdentifier();
 }

@@ -5,6 +5,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisEdge;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -51,7 +52,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
 
     @VisibleForTesting
     public boolean reduceOnce(final G graph) {
-        LOGGER.debug("Reducing the graph");
+        AnalysisLogHandler.debug(LOGGER, "Reducing the graph");
 
         final DirectedSimpleCycles<V, E> cycleFinder = new HawickJamesSimpleCycles<>(graph);
         List<List<V>> sortedCycles = cycleFinder.findSimpleCycles();
@@ -60,7 +61,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
 
         if (sortedCycles.isEmpty() || (sortedCycles.size() == 1 && !reduceSingularCycle))
         {
-            LOGGER.debug(" > Reducing skipped.");
+            AnalysisLogHandler.debug(LOGGER, " > Reducing skipped.");
             return false;
         }
 
@@ -69,7 +70,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
         while(!sortedCycles.isEmpty()) {
             final List<V> cycle = sortedCycles.get(0);
 
-            LOGGER.debug(String.format(" > Removing cycle: %s", cycle));
+            AnalysisLogHandler.debug(LOGGER, String.format(" > Removing cycle: %s", cycle));
 
             final V replacementNode = vertexReplacerFunction.apply(graph, cycle);
 
@@ -107,8 +108,8 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
 
             incomingEdges.keySet().forEach(outgoingEdges::remove);
 
-            LOGGER.debug(String.format("  > Detected: %s as incoming edges to keep.", incomingEdges));
-            LOGGER.debug(String.format("  > Detected: %s as outgoing edges to keep.", outgoingEdges));
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as incoming edges to keep.", incomingEdges));
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as outgoing edges to keep.", outgoingEdges));
 
             //Create the new cycle construct.
             graph.addVertex(replacementNode);
@@ -130,7 +131,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
             incomingEdgesTo.forEach((cycleNode, edge) -> onNeighborNodeReplacedCallback.accept(incomingEdges.get(edge), cycleNode, replacementNode));
             outgoingEdgesOf.forEach((cycleNode, edge) -> onNeighborNodeReplacedCallback.accept(outgoingEdges.get(edge), cycleNode, replacementNode));
 
-            LOGGER.debug(String.format(" > Removed cycle: %s", cycle));
+            AnalysisLogHandler.debug(LOGGER, String.format(" > Removed cycle: %s", cycle));
         }
 
         return true;
@@ -143,7 +144,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
           .map(cycle -> {
               final List<V> intersectingNodes = cycle.stream().filter(replacedCycle::contains).collect(Collectors.toList());
               intersectingNodes.forEach(intersectingNode -> {
-                  LOGGER.debug("    > Replacing: " + intersectingNode + " with: " + replacementNode);
+                  AnalysisLogHandler.debug(LOGGER, "    > Replacing: " + intersectingNode + " with: " + replacementNode);
                   final int nodeIndex = cycle.indexOf(intersectingNode);
                   cycle.remove(nodeIndex);
                   cycle.add(nodeIndex, replacementNode);

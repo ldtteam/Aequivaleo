@@ -11,6 +11,7 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.CompoundInstanceCollectors;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public class InnerNode
     )
     {
         setupGraphs(sourceGraph, innerVertices);
-        LOGGER.debug(String.format("Created inner graph node: %s", toString()));
+        AnalysisLogHandler.debug(LOGGER, String.format("Created inner graph node: %s", toString()));
     }
 
     @Override
@@ -269,7 +270,7 @@ public class InnerNode
     {
         if (ioGraph.containsVertex(originalNeighbor))
         {
-            LOGGER.debug("Updating neighbor data from: " + originalNeighbor + " to: " + newNeighbor);
+            AnalysisLogHandler.debug(LOGGER, "Updating neighbor data from: " + originalNeighbor + " to: " + newNeighbor);
             ioGraph.addVertex(newNeighbor);
             for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor))
             {

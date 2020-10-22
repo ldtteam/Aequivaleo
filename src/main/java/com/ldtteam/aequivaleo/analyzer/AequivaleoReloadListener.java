@@ -64,14 +64,15 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         reloadResources(parseData(serverStartedEvent.getServer().getDataPackRegistries().getResourceManager()));
     }
 
+    @NotNull
     @Override
-    protected Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> prepare(final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> prepare(@NotNull final IResourceManager resourceManagerIn, @NotNull final IProfiler profilerIn)
     {
         return parseData(resourceManagerIn);
     }
 
     @Override
-    protected void apply(final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> objectIn, final IResourceManager resourceManagerIn, final IProfiler profilerIn)
+    protected void apply(@NotNull final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> objectIn, @NotNull final IResourceManager resourceManagerIn, @NotNull final IProfiler profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
         reloadResources(objectIn);
@@ -144,7 +145,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             try (
               IResource iresource = resourceManager.getResource(resourceLocation);
               InputStream inputstream = iresource.getInputStream();
-              Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8));
+              Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8))
             ) {
                 CompoundInstanceData data = gson.fromJson(reader, CompoundInstanceDataSerializer.HANDLED_TYPE);
                 if (data != null) {
@@ -152,8 +153,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
                 } else {
                     LOGGER.error("Couldn't load data file {} from {} as it's null or empty", resourceLocationWithoutExtension, resourceLocation);
                 }
-            } catch (IllegalArgumentException | IOException | JsonParseException jsonparseexception) {
-                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, jsonparseexception);
+            } catch (IllegalArgumentException | IOException | JsonParseException jsonParseException) {
+                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, jsonParseException);
             }
         });
 
@@ -193,12 +194,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
-          .thenRunAsync(() -> {
-              worlds.forEach(world -> {
-                  PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world));
-                }
-              );
-          })
+          .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
+          ))
           .thenRunAsync(aequivaleoReloadExecutor::shutdown);
     }
 
@@ -295,7 +292,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         }
 
         private static Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {
-            return GroupingUtils.groupBy(
+            return GroupingUtils.groupByUsingSet(
               data,
               CompoundInstanceData::getContainers
             )
