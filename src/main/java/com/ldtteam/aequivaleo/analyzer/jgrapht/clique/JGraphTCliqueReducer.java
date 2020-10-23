@@ -241,7 +241,7 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
                   if (target.containsEdge(input, output)) {
                       target.getEdge(input, output).getRecipeNodes().add(recipeNode);
                   }
-                  else
+                  else if (!input.equals(output))
                   {
                       target.addEdge(input, output, new CliqueDetectionEdge(recipeNode));
                   }
