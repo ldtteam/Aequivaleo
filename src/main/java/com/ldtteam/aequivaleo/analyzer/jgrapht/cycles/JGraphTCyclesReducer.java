@@ -12,6 +12,7 @@ import org.apache.logging.log4j.util.TriConsumer;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
+import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 
 import java.util.ArrayList;
 import java.util.Comparator;

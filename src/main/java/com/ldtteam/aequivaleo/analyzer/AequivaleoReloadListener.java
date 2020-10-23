@@ -176,7 +176,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         LOGGER.info("Analyzing information");
         final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
         final AtomicInteger genericThreadCounter = new AtomicInteger();
-        final int maxThreadCount = Math.max(4, Runtime.getRuntime().availableProcessors() - 2);
+        final int maxThreadCount = Math.max(1, Math.max(4, Runtime.getRuntime().availableProcessors() - 2));
         final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
             final Thread thread = new Thread(runnable);
             thread.setContextClassLoader(classLoader);
@@ -186,7 +186,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
 
         RecipeCalculator.IngredientHandler.getInstance().reset();
 
-        CompletableFuture.allOf(worlds.stream().map(world -> CompletableFuture.runAsync(
+        CompletableFuture.allOf(worlds.stream()
+                                  .map(world -> CompletableFuture.runAsync(
           new AequivaleoWorldAnalysisRunner(
             world,
             valueData.get(GENERAL_DATA_NAME),

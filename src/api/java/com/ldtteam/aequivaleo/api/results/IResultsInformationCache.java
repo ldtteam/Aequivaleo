@@ -50,6 +50,7 @@ public interface IResultsInformationCache
      * Gives access to the calculation result of a single in game object.
      *
      * @param object The in game object in question.
+     * @param <T> The type of object you wish to get the compound instances for.
      * @return A sets containing the results if present, else an empty set is returned.
      */
     @NotNull

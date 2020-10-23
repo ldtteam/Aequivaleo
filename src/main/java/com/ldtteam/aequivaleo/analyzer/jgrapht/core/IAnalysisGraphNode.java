@@ -31,7 +31,8 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     Set<S> getAnalyzedNeighbors();
 
     default boolean canResultBeCalculated(final Graph<S, IEdge> graph) {
-        return getResultingValue().isPresent() || getAnalyzedNeighbors().containsAll(graph.incomingEdgesOf(getSelf()).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+        //Either we already have a value, are forced analyzed or all our neighbors need to be analyzed.
+        return getResultingValue().isPresent() || !graph.containsVertex(getSelf()) || getAnalyzedNeighbors().containsAll(graph.incomingEdgesOf(getSelf()).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
     }
 
     void onReached(final G graph);

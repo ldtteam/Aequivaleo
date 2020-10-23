@@ -1,10 +1,12 @@
 package com.ldtteam.aequivaleo.analyzer;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.clique.JGraphTCliqueReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
@@ -18,7 +20,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class JGraphTBasedCompoundAnalyzer
 {
@@ -76,14 +79,14 @@ public class JGraphTBasedCompoundAnalyzer
 
                 for (final ICompoundContainer<?> candidate : input.getCandidates())
                 {
-                    handleCompoundContainerAsInput(recipeGraph, compoundNodes, inputNode, candidate);
+                    handleCompoundContainerAsInput(recipeGraph, compoundNodes, inputNode, candidate, recipe);
                 }
             }
 
             //Process outputs
             for (ICompoundContainer<?> output : recipe.getRequiredKnownOutputs())
             {
-                handleCompoundContainerAsInput(recipeGraph, compoundNodes, recipeGraphNode, output);
+                handleCompoundContainerAsInput(recipeGraph, compoundNodes, recipeGraphNode, output, recipe);
             }
 
             //Process outputs
@@ -159,6 +162,34 @@ public class JGraphTBasedCompoundAnalyzer
             recipeGraph.addEdge(source, rootNode);
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
+
+        LOGGER.warn("Starting clique reduction.");
+
+        final JGraphTCliqueReducer<IGraph> cliqueReducer = new JGraphTCliqueReducer<>(
+          (graph, iNodes, iRecipeNodes, iRecipeInputNodes) -> new CliqueNode(graph, iNodes),
+          sets -> {
+              if (sets.size() == 1)
+                  return Sets.newHashSet(); //Cover a weird etch case where a clique exists out of a single node........
+
+              //Short circuit if all of them have only one node.
+              if (sets.stream().allMatch(s -> s.size() == 1)) {
+                  return sets.stream().flatMap(Set::stream).collect(Collectors.toSet());
+              }
+
+              final Set<Class<?>> recipeTypes = sets.get(0).stream().map(IRecipeNode::getRecipe).map(Object::getClass).collect(Collectors.toSet());
+              final Optional<Class<?>> targetRecipeType =
+                recipeTypes.stream()
+                .filter(type -> sets.stream().allMatch(nodes -> nodes.stream().anyMatch(node -> node.getRecipe().getClass().equals(type))))
+                .findAny();
+
+              return targetRecipeType.map(type -> sets.stream()
+                                                      .map(nodes -> nodes.stream().filter(node -> node.getRecipe().getClass().equals(type)).findFirst().get())
+                                                      .collect(Collectors.toSet())).orElseGet(Sets::newHashSet);
+          }, INode::onNeighborReplaced);
+
+        cliqueReducer.reduce(recipeGraph);
+
+        LOGGER.warn("Finished clique reduction.");
 
         LOGGER.warn("Starting cycle reduction.");
 
@@ -300,7 +331,8 @@ public class JGraphTBasedCompoundAnalyzer
       final Graph<INode, IEdge> recipeGraph,
       final Map<ICompoundContainer<?>, INode> nodes,
       final INode target,
-      final ICompoundContainer<?> candidate
+      final ICompoundContainer<?> candidate,
+      final IEquivalencyRecipe recipe
     )
     {
         final ICompoundContainer<?> unitWrapper = createUnitWrapper(candidate);
@@ -317,8 +349,11 @@ public class JGraphTBasedCompoundAnalyzer
 
         recipeGraph.addVertex(candidateNode);
 
-        recipeGraph.addEdge(candidateNode, target);
-        recipeGraph.setEdgeWeight(candidateNode, target, candidate.getContentsCount());
+        if (!recipeGraph.containsEdge(candidateNode, target))
+        {
+            recipeGraph.addEdge(candidateNode, target);
+            recipeGraph.setEdgeWeight(candidateNode, target, candidate.getContentsCount());
+        }
     }
 
     public Map<ICompoundContainer<?>, Set<CompoundInstance>> calculateAndGet()
