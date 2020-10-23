@@ -225,6 +225,8 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
 
               final IContainerNode output = (IContainerNode) graph.getEdgeTarget(graph.outgoingEdgesOf(recipeNode).iterator().next());
 
+              inputs.remove(output);
+
               inputs.forEach(input -> {
                   if (!target.containsVertex(input))
                   {
