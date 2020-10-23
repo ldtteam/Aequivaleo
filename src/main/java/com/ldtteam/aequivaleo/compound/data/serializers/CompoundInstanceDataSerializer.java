@@ -1,16 +1,20 @@
 package com.ldtteam.aequivaleo.compound.data.serializers;
 
+import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Type;
 import java.util.Set;
 
 public final class CompoundInstanceDataSerializer implements JsonSerializer<CompoundInstanceData>, JsonDeserializer<CompoundInstanceData>
 {
+    public static final Logger LOGGER = LogManager.getLogger();
     public static final Type HANDLED_TYPE = CompoundInstanceData.class;
 
     @Override
@@ -21,8 +25,12 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
 
         final JsonObject object = json.getAsJsonObject();
         final CompoundInstanceData.Mode mode = object.has("mode") ? context.deserialize(object.get("mode"), CompoundInstanceDataModeSerializer.HANDLED_TYPE) : CompoundInstanceData.Mode.ADDITIVE;
-        final Set<ICompoundContainer<?>> container = context.deserialize(object.get("targets"), CompoundContainerSetSerializer.HANDLED_TYPE);
+        Set<ICompoundContainer<?>> container = context.deserialize(object.get("targets"), CompoundContainerSetSerializer.HANDLED_TYPE);
         final Set<CompoundInstanceRef> instances = context.deserialize(object.get("compounds"), CompoundInstanceRefSetSerializer.HANDLED_TYPE);
+
+        if (container == null) {
+            throw new JsonParseException("Container data not found");
+        }
 
         return new CompoundInstanceData(
           mode,
