@@ -62,12 +62,19 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
                         CliqueDetectionEdge detectionGraphEdge = detectionGraph.getEdge(cliqueEntry, secondEntry);
                         if (detectionGraphEdge != null)
                         {
-                            Set<IRecipeNode> recipeNodes = detectionGraphEdge.getRecipeNodes();
-                            list.add(recipeNodes);
+                            Set<IRecipeNode> recipeNodes = new HashSet<>(detectionGraphEdge.getRecipeNodes());
+                            recipeNodes.removeIf(n -> !graph.containsVertex(n));
+
+                            if (!recipeNodes.isEmpty())
+                            {
+                                list.add(recipeNodes);
+                            }
                         }
                     }
                 }
             }
+
+
             final Set<IRecipeNode> recipesToRemove = this.cliqueRecipeExtractor.apply(list);
 
             if (recipesToRemove.isEmpty())
