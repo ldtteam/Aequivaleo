@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.clique;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
@@ -19,7 +20,6 @@ import org.jgrapht.alg.interfaces.MaximalCliqueEnumerationAlgorithm;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
 {
@@ -40,49 +40,70 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
         this.onNeighborNodeReplacedCallback = onNeighborNodeReplacedCallback;
     }
 
-    @SuppressWarnings({"SuspiciousMethodCalls"})
+    @SuppressWarnings({"SuspiciousMethodCalls", "DuplicatedCode"})
     public void reduce(final G graph)
     {
         final CliqueDetectionGraph detectionGraph = buildDetectionGraph(graph);
 
         final MaximalCliqueEnumerationAlgorithm<INode, CliqueDetectionEdge> cliqueFinder = new BronKerboschCliqueFinder<>(detectionGraph);
-        LinkedHashSet<Set<INode>> cliques = StreamSupport.stream(cliqueFinder.spliterator(), false)
-                                                             .sorted(Comparator.comparing(Set::size))
-                                                             .collect(Collectors.toCollection(LinkedHashSet::new));
+        final List<Set<INode>> foundCliques = Lists.newArrayList(cliqueFinder);
+        foundCliques.sort(Comparator.comparing(Set::size));
+        LinkedHashSet<Set<INode>> sortedCliques = new LinkedHashSet<>(foundCliques);
 
-        while(!cliques.isEmpty()) {
-            final Set<INode> clique = cliques.iterator().next();
-            final Set<IRecipeNode> recipesToRemove = this.cliqueRecipeExtractor.apply(clique
-                                                       .stream()
-                                                       .flatMap(cliqueEntry -> clique.stream()
-                                                                                 .filter(secondEntry -> secondEntry != cliqueEntry)
-                                                                                 .map(secondEntry -> detectionGraph.getEdge(cliqueEntry, secondEntry))
-                                                                                 .filter(Objects::nonNull)
-                                                                                 .map(CliqueDetectionEdge::getRecipeNodes)
-                                                       )
-                                                       .collect(Collectors.toList()));
+        while(!sortedCliques.isEmpty()) {
+            final Set<INode> clique = sortedCliques.iterator().next();
+            List<Set<IRecipeNode>> list = new ArrayList<>();
+            for (INode cliqueEntry : clique)
+            {
+                for (INode secondEntry : clique)
+                {
+                    if (secondEntry != cliqueEntry)
+                    {
+                        CliqueDetectionEdge detectionGraphEdge = detectionGraph.getEdge(cliqueEntry, secondEntry);
+                        if (detectionGraphEdge != null)
+                        {
+                            Set<IRecipeNode> recipeNodes = detectionGraphEdge.getRecipeNodes();
+                            list.add(recipeNodes);
+                        }
+                    }
+                }
+            }
+            final Set<IRecipeNode> recipesToRemove = this.cliqueRecipeExtractor.apply(list);
 
             if (recipesToRemove.isEmpty())
             {
-                cliques.remove(clique);
+                sortedCliques.remove(clique);
                 continue;
             }
 
-            final Set<IRecipeInputNode> relevantInputNodes = recipesToRemove.stream()
-              .flatMap(cliqueRecipeNode -> graph.incomingEdgesOf(cliqueRecipeNode).stream())
-              .map(graph::getEdgeSource)
-              .filter(IRecipeInputNode.class::isInstance)
-              .map(IRecipeInputNode.class::cast)
-              .collect(Collectors.toSet());
+            final Set<IRecipeInputNode> relevantInputNodes = new HashSet<>();
+            for (IRecipeNode cliqueRecipeNode : recipesToRemove)
+            {
+                for (IEdge iEdge : graph.incomingEdgesOf(cliqueRecipeNode))
+                {
+                    INode edgeSource = graph.getEdgeSource(iEdge);
+                    if (edgeSource instanceof IRecipeInputNode)
+                    {
+                        IRecipeInputNode iRecipeInputNode = (IRecipeInputNode) edgeSource;
+                        relevantInputNodes.add(iRecipeInputNode);
+                    }
+                }
+            }
 
-            final Set<IRecipeInputNode> inputNodesToDelete = relevantInputNodes
-              .stream()
-              .filter(inputNode -> recipesToRemove.containsAll(graph.outgoingEdgesOf(inputNode)
-                .stream()
-                .map(graph::getEdgeTarget)
-                .collect(Collectors.toSet()))
-              )
-              .collect(Collectors.toSet());
+            final Set<IRecipeInputNode> inputNodesToDelete = new HashSet<>();
+            for (IRecipeInputNode inputNode : relevantInputNodes)
+            {
+                Set<INode> set = new HashSet<>();
+                for (IEdge iEdge : graph.outgoingEdgesOf(inputNode))
+                {
+                    INode edgeTarget = graph.getEdgeTarget(iEdge);
+                    set.add(edgeTarget);
+                }
+                if (recipesToRemove.containsAll(set))
+                {
+                    inputNodesToDelete.add(inputNode);
+                }
+            }
 
             final INode replacementNode = vertexReplacerFunction.apply(
               graph,
@@ -91,8 +112,8 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
               inputNodesToDelete
             );
 
-            cliques = updateRemainingCliquesAfterReplacement(
-              cliques,
+            sortedCliques = updateRemainingCliquesAfterReplacement(
+              sortedCliques,
               clique,
               replacementNode
             );
@@ -108,39 +129,67 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
             final Multimap<INode, CliqueDetectionEdge> outgoingEdgesToDetection = HashMultimap.create();
 
             //Collect all the edges which are relevant to keep.
-            clique.forEach(cycleNode -> {
-                graph.incomingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !clique.contains(graph.getEdgeSource(edge)))
-                  .filter(edge -> !recipesToRemove.contains(graph.getEdgeSource(edge)))
-                  .filter(edge -> !inputNodesToDelete.contains(graph.getEdgeSource(edge)))
-                  .filter(edge -> !incomingEdgesTo.containsEntry(cycleNode, edge))
-                  .peek(edge -> incomingEdgesTo.put(cycleNode, edge))
-                  .peek(edge -> incomingEdgesOf.put(graph.getEdgeSource(edge), edge))
-                  .forEach(edge -> incomingEdges.put(edge, graph.getEdgeSource(edge)));
+            for (INode iNode : clique)
+            {
+                for (IEdge iEdge : graph.incomingEdgesOf(iNode))
+                {
+                    if (!clique.contains(graph.getEdgeSource(iEdge)))
+                    {
+                        if (!recipesToRemove.contains(graph.getEdgeSource(iEdge)))
+                        {
+                            if (!inputNodesToDelete.contains(graph.getEdgeSource(iEdge)))
+                            {
+                                if (!incomingEdgesTo.containsEntry(iNode, iEdge))
+                                {
+                                    incomingEdgesTo.put(iNode, iEdge);
+                                    incomingEdgesOf.put(graph.getEdgeSource(iEdge), iEdge);
+                                    incomingEdges.put(iEdge, graph.getEdgeSource(iEdge));
+                                }
+                            }
+                        }
+                    }
+                }
 
-                graph.outgoingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !clique.contains(graph.getEdgeTarget(edge)))
-                  .filter(edge -> !recipesToRemove.contains(graph.getEdgeTarget(edge)))
-                  .filter(edge -> !inputNodesToDelete.contains(graph.getEdgeTarget(edge)))
-                  .filter(edge -> !outgoingEdgesOf.containsEntry(cycleNode, edge))
-                  .peek(edge -> outgoingEdgesOf.put(cycleNode, edge))
-                  .peek(edge -> outgoingEdgesTo.put(graph.getEdgeTarget(edge), edge))
-                  .forEach(edge -> outgoingEdges.put(edge, graph.getEdgeTarget(edge)));
+                for (IEdge iEdge : graph.outgoingEdgesOf(iNode))
+                {
+                    if (!clique.contains(graph.getEdgeTarget(iEdge)))
+                    {
+                        if (!recipesToRemove.contains(graph.getEdgeTarget(iEdge)))
+                        {
+                            if (!inputNodesToDelete.contains(graph.getEdgeTarget(iEdge)))
+                            {
+                                if (!outgoingEdgesOf.containsEntry(iNode, iEdge))
+                                {
+                                    outgoingEdgesOf.put(iNode, iEdge);
+                                    outgoingEdgesTo.put(graph.getEdgeTarget(iEdge), iEdge);
+                                    outgoingEdges.put(iEdge, graph.getEdgeTarget(iEdge));
+                                }
+                            }
+                        }
+                    }
+                }
 
-                detectionGraph.incomingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !clique.contains(detectionGraph.getEdgeSource(edge)))
-                  .forEach(edge -> incomingEdgesOfDetection.put(detectionGraph.getEdgeSource(edge), edge));
+                for (CliqueDetectionEdge cliqueDetectionEdge : detectionGraph.incomingEdgesOf(iNode))
+                {
+                    if (!clique.contains(detectionGraph.getEdgeSource(cliqueDetectionEdge)))
+                    {
+                        incomingEdgesOfDetection.put(detectionGraph.getEdgeSource(cliqueDetectionEdge), cliqueDetectionEdge);
+                    }
+                }
 
-                detectionGraph.outgoingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !clique.contains(detectionGraph.getEdgeTarget(edge)))
-                  .forEach(edge -> outgoingEdgesToDetection.put(detectionGraph.getEdgeTarget(edge), edge));
-            });
+                for (CliqueDetectionEdge edge : detectionGraph.outgoingEdgesOf(iNode))
+                {
+                    if (!clique.contains(detectionGraph.getEdgeTarget(edge)))
+                    {
+                        outgoingEdgesToDetection.put(detectionGraph.getEdgeTarget(edge), edge);
+                    }
+                }
+            }
 
-            incomingEdges.keySet().forEach(outgoingEdges::remove);
+            for (IEdge iEdge : incomingEdges.keySet())
+            {
+                outgoingEdges.remove(iEdge);
+            }
 
             AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as incoming edges to keep.", incomingEdges));
             AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as outgoing edges to keep.", outgoingEdges));
@@ -148,32 +197,60 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
             //Create the new cycle construct.
             graph.addVertex(replacementNode);
             detectionGraph.addVertex(replacementNode);
-            incomingEdgesOf.keySet()
-              .forEach(incomingSource -> {
-                  final double newEdgeWeight = incomingEdgesOf.get(incomingSource).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                  graph.addEdge(incomingSource, replacementNode);
-                  graph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
-              });
-            outgoingEdgesTo.keySet()
-              .forEach(outgoingTarget -> {
-                  final double newEdgeWeight = outgoingEdgesTo.get(outgoingTarget).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                  graph.addEdge(replacementNode, outgoingTarget);
-                  graph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
-              });
-            incomingEdgesOfDetection.keySet()
-              .forEach(incomingSource -> {
-                  final double newEdgeWeight = incomingEdgesOfDetection.get(incomingSource).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                  final Set<IRecipeNode> newRecipes = incomingEdgesOfDetection.get(incomingSource).stream().flatMap(e -> e.getRecipeNodes().stream()).collect(Collectors.toSet());
-                  detectionGraph.addEdge(incomingSource, replacementNode, new CliqueDetectionEdge(newRecipes));
-                  detectionGraph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
-              });
-            outgoingEdgesToDetection.keySet()
-              .forEach(outgoingTarget -> {
-                  final double newEdgeWeight = outgoingEdgesToDetection.get(outgoingTarget).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                  final Set<IRecipeNode> newRecipes = outgoingEdgesToDetection.get(outgoingTarget).stream().flatMap(e -> e.getRecipeNodes().stream()).collect(Collectors.toSet());
-                  detectionGraph.addEdge(replacementNode, outgoingTarget, new CliqueDetectionEdge(newRecipes));
-                  detectionGraph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
-              });
+            for (INode iNode : incomingEdgesOf.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (IEdge iEdge : incomingEdgesOf.get(iNode))
+                {
+                    double weight = iEdge.getWeight();
+                    newEdgeWeight += weight;
+                }
+                graph.addEdge(iNode, replacementNode);
+                graph.setEdgeWeight(iNode, replacementNode, newEdgeWeight);
+            }
+            for (INode iNode : outgoingEdgesTo.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (IEdge iEdge : outgoingEdgesTo.get(iNode))
+                {
+                    double weight = iEdge.getWeight();
+                    newEdgeWeight += weight;
+                }
+                graph.addEdge(replacementNode, iNode);
+                graph.setEdgeWeight(replacementNode, iNode, newEdgeWeight);
+            }
+            for (INode incomingSource : incomingEdgesOfDetection.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (CliqueDetectionEdge cliqueDetectionEdge : incomingEdgesOfDetection.get(incomingSource))
+                {
+                    double weight = cliqueDetectionEdge.getWeight();
+                    newEdgeWeight += weight;
+                }
+                final Set<IRecipeNode> newRecipes = new HashSet<>();
+                for (CliqueDetectionEdge e : incomingEdgesOfDetection.get(incomingSource))
+                {
+                    newRecipes.addAll(e.getRecipeNodes());
+                }
+                detectionGraph.addEdge(incomingSource, replacementNode, new CliqueDetectionEdge(newRecipes));
+                detectionGraph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
+            }
+            for (INode outgoingTarget : outgoingEdgesToDetection.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (CliqueDetectionEdge cliqueDetectionEdge : outgoingEdgesToDetection.get(outgoingTarget))
+                {
+                    double weight = cliqueDetectionEdge.getWeight();
+                    newEdgeWeight += weight;
+                }
+                final Set<IRecipeNode> newRecipes = new HashSet<>();
+                for (CliqueDetectionEdge e : outgoingEdgesToDetection.get(outgoingTarget))
+                {
+                    newRecipes.addAll(e.getRecipeNodes());
+                }
+                detectionGraph.addEdge(replacementNode, outgoingTarget, new CliqueDetectionEdge(newRecipes));
+                detectionGraph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
+            }
 
             graph.removeAllVertices(clique);
             detectionGraph.removeAllVertices(clique);
@@ -190,63 +267,87 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
     private LinkedHashSet<Set<INode>> updateRemainingCliquesAfterReplacement(final LinkedHashSet<Set<INode>> cliques, final Set<INode> replacedClique, final INode replacementNode) {
         cliques.remove(replacedClique);
 
-        return cliques.stream()
-                 .peek(cycle -> {
-                     final List<INode> intersectingNodes = cycle.stream().filter(replacedClique::contains).collect(Collectors.toList());
-                     if (!intersectingNodes.isEmpty()) {
-                         cycle.removeAll(intersectingNodes);
-                         cycle.add(replacementNode);
-                     }
-                 })
-                 .filter(cycle -> cycle.size() > 1)
-                 .sorted(Comparator.comparing(Set::size))
-                 .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<Set<INode>> toSort = new ArrayList<>();
+        for (Set<INode> cycle : cliques)
+        {
+            final List<INode> intersectingNodes = new ArrayList<>();
+            for (INode iNode : cycle)
+            {
+                if (replacedClique.contains(iNode))
+                {
+                    intersectingNodes.add(iNode);
+                }
+            }
+            if (!intersectingNodes.isEmpty())
+            {
+                cycle.removeAll(intersectingNodes);
+                cycle.add(replacementNode);
+            }
+            if (cycle.size() > 1)
+            {
+                toSort.add(cycle);
+            }
+        }
+        toSort.sort(Comparator.comparing(Set::size));
+        return new LinkedHashSet<>(toSort);
     }
 
-    @SuppressWarnings("unchecked")
     public CliqueDetectionGraph buildDetectionGraph(final G graph)
     {
         final CliqueDetectionGraph target = new CliqueDetectionGraph();
-        graph.vertexSet()
-          .stream()
-          .filter(IRecipeNode.class::isInstance)
-          .map(IRecipeNode.class::cast)
-          .filter(r -> graph.incomingEdgesOf(r).size() == 1)
-          .filter(r -> graph.outgoingEdgesOf(r).size() == 1)
-          .filter(r -> graph.outgoingEdgesOf(r).iterator().next().getWeight() == graph.incomingEdgesOf(r).iterator().next().getWeight())
-          .forEach(recipeNode -> {
-              final Set<IContainerNode> inputs = graph.incomingEdgesOf(
-                graph.getEdgeSource(
-                  graph.incomingEdgesOf(recipeNode).iterator().next()
-                )
-              ).stream().map(graph::getEdgeSource)
-                                                   .map(IContainerNode.class::cast)
-                                                   .collect(Collectors.toSet());
+        for (INode iNode : graph.vertexSet())
+        {
+            if (iNode instanceof IRecipeNode)
+            {
+                IRecipeNode r = (IRecipeNode) iNode;
+                if (graph.incomingEdgesOf(r).size() == 1)
+                {
+                    if (graph.outgoingEdgesOf(r).size() == 1)
+                    {
+                        if (graph.outgoingEdgesOf(r).iterator().next().getWeight() == graph.incomingEdgesOf(r).iterator().next().getWeight())
+                        {
+                            final Set<IContainerNode> inputs = new HashSet<>();
+                            for (IEdge iEdge : graph.incomingEdgesOf(
+                              graph.getEdgeSource(
+                                graph.incomingEdgesOf(r).iterator().next()
+                              )
+                            ))
+                            {
+                                INode edgeSource = graph.getEdgeSource(iEdge);
+                                IContainerNode containerNode = (IContainerNode) edgeSource;
+                                inputs.add(containerNode);
+                            }
 
-              final IContainerNode output = (IContainerNode) graph.getEdgeTarget(graph.outgoingEdgesOf(recipeNode).iterator().next());
+                            final IContainerNode output = (IContainerNode) graph.getEdgeTarget(graph.outgoingEdgesOf(r).iterator().next());
 
-              inputs.remove(output);
+                            inputs.remove(output);
 
-              inputs.forEach(input -> {
-                  if (!target.containsVertex(input))
-                  {
-                      target.addVertex(input);
-                  }
+                            for (IContainerNode input : inputs)
+                            {
+                                if (!target.containsVertex(input))
+                                {
+                                    target.addVertex(input);
+                                }
 
-                  if (!target.containsVertex(output))
-                  {
-                      target.addVertex(output);
-                  }
+                                if (!target.containsVertex(output))
+                                {
+                                    target.addVertex(output);
+                                }
 
-                  if (target.containsEdge(input, output)) {
-                      target.getEdge(input, output).getRecipeNodes().add(recipeNode);
-                  }
-                  else if (!input.equals(output))
-                  {
-                      target.addEdge(input, output, new CliqueDetectionEdge(recipeNode));
-                  }
-              });
-          });
+                                if (target.containsEdge(input, output))
+                                {
+                                    target.getEdge(input, output).getRecipeNodes().add(r);
+                                }
+                                else if (!input.equals(output))
+                                {
+                                    target.addEdge(input, output, new CliqueDetectionEdge(r));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return target;
     }

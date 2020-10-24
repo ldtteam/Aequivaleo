@@ -6,9 +6,9 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 //Marker interface indicating that this is a possible component of a graph.
 public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysisGraphNode<G, N, S, E>, E extends IAnalysisEdge>
@@ -21,7 +21,7 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     void addCandidateResult(
        final S neighbor,
       final E sourceEdge,
-      final Set<CompoundInstance> instances
+      final Optional<Set<CompoundInstance>> instances
     );
 
     @NotNull
@@ -32,7 +32,18 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
 
     default boolean canResultBeCalculated(final Graph<S, IEdge> graph) {
         //Either we already have a value, are forced analyzed or all our neighbors need to be analyzed.
-        return getResultingValue().isPresent() || !graph.containsVertex(getSelf()) || getAnalyzedNeighbors().containsAll(graph.incomingEdgesOf(getSelf()).stream().map(graph::getEdgeSource).collect(Collectors.toSet()));
+        if (getResultingValue().isPresent() || !graph.containsVertex(getSelf()))
+        {
+            return true;
+        }
+
+        Set<S> set = new HashSet<>();
+        for (IEdge iEdge : graph.incomingEdgesOf(getSelf()))
+        {
+            S edgeSource = graph.getEdgeSource(iEdge);
+            set.add(edgeSource);
+        }
+        return getAnalyzedNeighbors().containsAll(set);
     }
 
     void onReached(final G graph);
@@ -42,6 +53,8 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     void forceSetResult(N compoundInstances);
 
     void determineResult(G graph);
+
+    void clearIncompletionState();
 
     void setIncomplete();
 

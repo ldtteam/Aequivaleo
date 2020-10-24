@@ -15,8 +15,12 @@ public class IngredientNode extends AbstractNode implements IRecipeInputNode
 {
     @NotNull
     private final IRecipeIngredient ingredient;
+    private final int hashCode;
 
-    public IngredientNode(@NotNull final IRecipeIngredient ingredient) {this.ingredient = ingredient;}
+    public IngredientNode(@NotNull final IRecipeIngredient ingredient) {
+        this.ingredient = ingredient;
+        this.hashCode = ingredient.hashCode();
+    }
 
     @NotNull
     public IRecipeIngredient getIngredient()
@@ -44,7 +48,7 @@ public class IngredientNode extends AbstractNode implements IRecipeInputNode
     @Override
     public int hashCode()
     {
-        return getIngredient().hashCode();
+        return hashCode;
     }
 
     @Override

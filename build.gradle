@@ -230,6 +230,14 @@ javadoc {
     source += sourceSets.api.allSource
     source += sourceSets.vanillaApi.allSource
     source += sourceSets.vanilla.allSource
+
+    configure( options ) {
+        tags(
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+        )
+    }
 }
 
 task packageJavadoc(type: Jar) {
@@ -240,11 +248,31 @@ task packageJavadoc(type: Jar) {
 task apiJavadocs(type: Javadoc) {
     source = sourceSets.api.allJava
     classpath = sourceSets.api.compileClasspath
+
+    destinationDir = project.buildDir.toPath().resolve("docs/main/api").toFile()
+
+    configure( options ) {
+        tags(
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+        )
+    }
 }
 
 task vanillaApiJavadocs(type: Javadoc) {
     source = sourceSets.vanillaApi.allJava
     classpath = sourceSets.vanillaApi.compileClasspath
+
+    destinationDir = project.buildDir.toPath().resolve("docs/vanilla/api").toFile()
+
+    configure( options ) {
+        tags(
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+        )
+    }
 }
 
 task packageApiJavadoc(type: Jar) {

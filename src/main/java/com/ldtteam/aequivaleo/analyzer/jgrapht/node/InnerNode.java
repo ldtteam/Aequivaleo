@@ -12,6 +12,7 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.CompoundInstanceCollectors;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ public class InnerNode
     private final IGraph innerGraph = new AequivaleoGraph();
     private       int    hash;
 
-    private final Multimap<INode, Set<CompoundInstance>> candidates = ArrayListMultimap.create();
+    private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates = ArrayListMultimap.create();
 
     public InnerNode(
       final IGraph sourceGraph,
@@ -61,13 +62,17 @@ public class InnerNode
             return Collections.emptySet();
         }
 
-        return ioGraph.outgoingEdgesOf(sourceNeighbor)
-                 .stream()
-                 .map(ioGraph::getEdgeTarget)
-                 .filter(IContainerNode.class::isInstance)
-                 .map(IContainerNode.class::cast)
-                 .flatMap(cn -> cn.getTargetedWrapper(sourceNeighbor).stream())
-                 .collect(Collectors.toSet());
+        Set<ICompoundContainer<?>> set = new HashSet<>();
+        for (IEdge iEdge : ioGraph.outgoingEdgesOf(sourceNeighbor))
+        {
+            INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
+            if (edgeTarget instanceof IContainerNode)
+            {
+                IContainerNode cn = (IContainerNode) edgeTarget;
+                set.addAll(cn.getTargetedWrapper(sourceNeighbor));
+            }
+        }
+        return set;
     }
 
     @Override
@@ -78,13 +83,17 @@ public class InnerNode
             return Collections.emptySet();
         }
 
-        return ioGraph.incomingEdgesOf(targetNeighbor)
-                 .stream()
-                 .map(ioGraph::getEdgeSource)
-                 .filter(IContainerNode.class::isInstance)
-                 .map(IContainerNode.class::cast)
-                 .flatMap(cn -> cn.getSourcedWrapper(targetNeighbor).stream())
-                 .collect(Collectors.toSet());
+        Set<ICompoundContainer<?>> set = new HashSet<>();
+        for (IEdge iEdge : ioGraph.incomingEdgesOf(targetNeighbor))
+        {
+            INode edgeSource = ioGraph.getEdgeSource(iEdge);
+            if (edgeSource instanceof IContainerNode)
+            {
+                IContainerNode cn = (IContainerNode) edgeSource;
+                set.addAll(cn.getSourcedWrapper(targetNeighbor));
+            }
+        }
+        return set;
     }
 
     @Override
@@ -115,10 +124,13 @@ public class InnerNode
             return Collections.emptySet();
         }
 
-        return ioGraph.outgoingEdgesOf(neighbor)
-                 .stream()
-                 .map(ioGraph::getEdgeTarget)
-                 .collect(Collectors.toSet());
+        Set<INode> set = new HashSet<>();
+        for (IEdge iEdge : ioGraph.outgoingEdgesOf(neighbor))
+        {
+            INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
+            set.add(edgeTarget);
+        }
+        return set;
     }
 
     @NotNull
@@ -129,7 +141,7 @@ public class InnerNode
     }
 
     @Override
-    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Set<CompoundInstance> instances)
+    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Optional<Set<CompoundInstance>> instances)
     {
         if (!ioGraph.containsVertex(neighbor))
         {
@@ -143,11 +155,16 @@ public class InnerNode
           .map(ioGraph::getEdgeTarget)
           .findFirst()
           .ifPresent(node -> {
-              final Set<CompoundInstance> workingSet = instances
-                                                         .stream()
-                                                         .map(ci -> new CompoundInstance(ci.getType(),
-                                                           ci.getAmount() * (ioGraph.getEdgeWeight(ioGraph.getEdge(neighbor, node)) / totalOutgoingEdgeWeight)))
-                                                         .collect(Collectors.toSet());
+              final Optional<Set<CompoundInstance>> workingSet = instances.map(innerInstances -> {
+                  Set<CompoundInstance> set = new HashSet<>();
+                  for (CompoundInstance ci : innerInstances)
+                  {
+                      CompoundInstance instance = new CompoundInstance(ci.getType(),
+                        ci.getAmount() * (ioGraph.getEdgeWeight(ioGraph.getEdge(neighbor, node)) / totalOutgoingEdgeWeight));
+                      set.add(instance);
+                  }
+                  return set;
+              });
               node.addCandidateResult(neighbor, sourceEdge, workingSet);
               candidates.put(neighbor, instances);
           });
@@ -157,7 +174,7 @@ public class InnerNode
     @Override
     public Set<Set<CompoundInstance>> getCandidates()
     {
-        return new HashSet<>(candidates.values());
+        return candidates.values().stream().filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
     }
 
     @NotNull
@@ -172,19 +189,20 @@ public class InnerNode
     {
         final boolean inComplete = isIncomplete();
 
-        ioGraph.edgeSet()
-          .stream()
-          .filter(edge -> !innerGraph.containsVertex(ioGraph.getEdgeTarget(edge)))
-          .forEach(edge -> {
-              final INode source = ioGraph.getEdgeSource(edge);
-              final INode target = ioGraph.getEdgeTarget(edge);
+        for (IEdge edge : ioGraph.edgeSet())
+        {
+            if (!innerGraph.containsVertex(ioGraph.getEdgeTarget(edge)))
+            {
+                final INode source = ioGraph.getEdgeSource(edge);
+                final INode target = ioGraph.getEdgeTarget(edge);
 
-              target.addCandidateResult(this, graph.getEdge(this, target), source.getResultingValue().orElse(Collections.emptySet()));
-              if (inComplete)
-              {
-                  target.setIncomplete();
-              }
-          });
+                target.addCandidateResult(this, graph.getEdge(this, target), source.getResultingValue());
+                if (inComplete)
+                {
+                    target.setIncomplete();
+                }
+            }
+        }
     }
 
     @Override
@@ -196,24 +214,44 @@ public class InnerNode
     @Override
     public void forceSetResult(final Set<CompoundInstance> compoundInstances)
     {
-        innerGraph.vertexSet().forEach(node -> node.forceSetResult(compoundInstances));
+        for (INode node : innerGraph.vertexSet())
+        {
+            node.forceSetResult(compoundInstances);
+        }
     }
 
     @Override
     public void determineResult(final IGraph graph)
     {
-        final Set<INode> startingNodes = innerGraph.vertexSet().stream().filter(node -> !node.getCandidates().isEmpty()).collect(Collectors.toSet());
-        final Map<INode, Integer> nodeCandidateCounts = startingNodes.stream().collect(Collectors.toMap(
-          Function.identity(),
-          n -> n.getCandidates().size()
-          )
-        );
+        final Set<INode> startingNodes = new HashSet<>();
+        for (INode iNode : innerGraph.vertexSet())
+        {
+            if (!iNode.getCandidates().isEmpty())
+            {
+                startingNodes.add(iNode);
+            }
+        }
+        final Map<INode, Integer> nodeCandidateCounts = new HashMap<>();
+        for (INode n : startingNodes)
+        {
+            if (nodeCandidateCounts.put(n, n.getCandidates().size()) != null)
+            {
+                throw new IllegalStateException("Duplicate key");
+            }
+        }
         for (final INode startNode : startingNodes)
         {
             //NOTE: Due to the way our system works, every node will have only one incoming edge!
             final Set<IEdge> incomingEdges = Sets.newHashSet(innerGraph.incomingEdgesOf(startNode));
             final Map<IEdge, INode> sourceMap =
-              incomingEdges.stream().collect(Collectors.toMap(Function.identity(), innerGraph::getEdgeSource));
+              new HashMap<>();
+            for (IEdge iEdge : incomingEdges)
+            {
+                if (sourceMap.put(iEdge, innerGraph.getEdgeSource(iEdge)) != null)
+                {
+                    throw new IllegalStateException("Duplicate key");
+                }
+            }
 
             //We remove the inner edge of all edge
             for (IEdge incomingEdge : incomingEdges)
@@ -238,7 +276,12 @@ public class InnerNode
             }
 
             //Re-add the original edges that where removed.
-            sourceMap.forEach((edge, source) -> innerGraph.addEdge(source, startNode, edge));
+            for (Map.Entry<IEdge, INode> entry : sourceMap.entrySet())
+            {
+                IEdge edge = entry.getKey();
+                INode source = entry.getValue();
+                innerGraph.addEdge(source, startNode, edge);
+            }
 
             if (startingNodes.stream().allMatch(node -> node.getCandidates().size() == nodeCandidateCounts.get(node)))
             {
@@ -248,18 +291,45 @@ public class InnerNode
                 break;
             }
         }
+
+        if (!getResultingValue().isPresent()) {
+            setIncomplete();
+        }
+        else
+        {
+            clearIncompletionState();
+        }
+    }
+
+    @Override
+    public void clearIncompletionState()
+    {
+        for (INode iNode : innerGraph.vertexSet())
+        {
+            iNode.clearIncompletionState();
+        }
     }
 
     @Override
     public void setIncomplete()
     {
-        innerGraph.vertexSet().forEach(INode::setIncomplete);
+        for (INode iNode : innerGraph.vertexSet())
+        {
+            iNode.setIncomplete();
+        }
     }
 
     @Override
     public boolean isIncomplete()
     {
-        return innerGraph.vertexSet().stream().anyMatch(INode::isIncomplete);
+        for (INode iNode : innerGraph.vertexSet())
+        {
+            if (iNode.isIncomplete())
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -295,13 +365,22 @@ public class InnerNode
 
     private void setupInnerGraph(final IGraph graph, final List<INode> innerVertices)
     {
-        innerVertices.forEach(innerGraph::addVertex);
-        innerVertices.stream()
-          .map(graph::outgoingEdgesOf)
-          .flatMap(Collection::stream)
-          .filter(e -> innerVertices.contains(graph.getEdgeTarget(e)))
-          .peek(e -> innerGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e), new Edge(e.getEdgeIdentifier())))
-          .forEach(e -> innerGraph.setEdgeWeight(graph.getEdgeSource(e), graph.getEdgeTarget(e), graph.getEdgeWeight(e)));
+        for (INode iNode : innerVertices)
+        {
+            innerGraph.addVertex(iNode);
+        }
+        for (INode innerVertex : innerVertices)
+        {
+            Set<IEdge> iEdges = graph.outgoingEdgesOf(innerVertex);
+            for (IEdge e : iEdges)
+            {
+                if (innerVertices.contains(graph.getEdgeTarget(e)))
+                {
+                    innerGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e), new Edge(e.getEdgeIdentifier()));
+                    innerGraph.setEdgeWeight(graph.getEdgeSource(e), graph.getEdgeTarget(e), graph.getEdgeWeight(e));
+                }
+            }
+        }
 
         final JGraphTCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new JGraphTCyclesReducer<>(
           InnerNode::new,
@@ -313,67 +392,84 @@ public class InnerNode
 
     private void setupIOGraph(final IGraph graph, final List<INode> innerVertices)
     {
-        innerVertices.forEach(node -> {
-            graph.incomingEdgesOf(node)
-              .stream()
-              .filter(edge -> !innerVertices.contains(graph.getEdgeSource(edge)))
-              .peek(edge -> {
-                  if (!ioGraph.containsVertex(graph.getEdgeSource(edge)))
-                  {
-                      ioGraph.addVertex(graph.getEdgeSource(edge));
-                  }
+        for (INode node : innerVertices)
+        {
+            for (IEdge iEdge : graph.incomingEdgesOf(node))
+            {
+                if (!innerVertices.contains(graph.getEdgeSource(iEdge)))
+                {
+                    if (!ioGraph.containsVertex(graph.getEdgeSource(iEdge)))
+                    {
+                        ioGraph.addVertex(graph.getEdgeSource(iEdge));
+                    }
 
-                  if (!ioGraph.containsVertex(graph.getEdgeTarget(edge)))
-                  {
-                      ioGraph.addVertex(graph.getEdgeTarget(edge));
-                  }
-              })
-              .peek(edge -> ioGraph.addEdge(graph.getEdgeSource(edge), node, new Edge(edge.getEdgeIdentifier())))
-              .forEach(edge -> ioGraph.setEdgeWeight(graph.getEdgeSource(edge), node, edge.getWeight()));
+                    if (!ioGraph.containsVertex(graph.getEdgeTarget(iEdge)))
+                    {
+                        ioGraph.addVertex(graph.getEdgeTarget(iEdge));
+                    }
+                    ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge(iEdge.getEdgeIdentifier()));
+                    ioGraph.setEdgeWeight(graph.getEdgeSource(iEdge), node, iEdge.getWeight());
+                }
+            }
 
-            graph.outgoingEdgesOf(node)
-              .stream()
-              .filter(edge -> !innerVertices.contains(graph.getEdgeTarget(edge)))
-              .peek(edge -> {
-                  if (!ioGraph.containsVertex(graph.getEdgeSource(edge)))
-                  {
-                      ioGraph.addVertex(graph.getEdgeSource(edge));
-                  }
+            for (IEdge edge : graph.outgoingEdgesOf(node))
+            {
+                if (!innerVertices.contains(graph.getEdgeTarget(edge)))
+                {
+                    if (!ioGraph.containsVertex(graph.getEdgeSource(edge)))
+                    {
+                        ioGraph.addVertex(graph.getEdgeSource(edge));
+                    }
 
-                  if (!ioGraph.containsVertex(graph.getEdgeTarget(edge)))
-                  {
-                      ioGraph.addVertex(graph.getEdgeTarget(edge));
-                  }
-              })
-              .peek(edge -> ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge(edge.getEdgeIdentifier())))
-              .forEach(edge -> ioGraph.setEdgeWeight(node, graph.getEdgeTarget(edge), edge.getWeight()));
-        });
+                    if (!ioGraph.containsVertex(graph.getEdgeTarget(edge)))
+                    {
+                        ioGraph.addVertex(graph.getEdgeTarget(edge));
+                    }
+                    ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge(edge.getEdgeIdentifier()));
+                    ioGraph.setEdgeWeight(node, graph.getEdgeTarget(edge), edge.getWeight());
+                }
+            }
+        }
 
         validateIOGraph();
     }
 
     private void validateIOGraph() {
-        ioGraph.vertexSet().forEach(node -> {
-            if (innerGraph.containsVertex(node)) {
-                ioGraph.incomingEdgesOf(node)
-                  .stream()
-                  .map(ioGraph::getEdgeSource)
-                  .filter(innerGraph::containsVertex)
-                  .findAny()
+        for (INode node : ioGraph.vertexSet())
+        {
+            if (innerGraph.containsVertex(node))
+            {
+                Optional<INode> found = Optional.empty();
+                for (IEdge iEdge : ioGraph.incomingEdgesOf(node))
+                {
+                    INode edgeSource = ioGraph.getEdgeSource(iEdge);
+                    if (innerGraph.containsVertex(edgeSource))
+                    {
+                        found = Optional.of(edgeSource);
+                        break;
+                    }
+                }
+                found
                   .ifPresent(illegalNode -> {
                       throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
                   });
 
-                ioGraph.outgoingEdgesOf(node)
-                  .stream()
-                  .map(ioGraph::getEdgeTarget)
-                  .filter(innerGraph::containsVertex)
-                  .findAny()
+                Optional<INode> result = Optional.empty();
+                for (IEdge iEdge : ioGraph.outgoingEdgesOf(node))
+                {
+                    INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
+                    if (innerGraph.containsVertex(edgeTarget))
+                    {
+                        result = Optional.of(edgeTarget);
+                        break;
+                    }
+                }
+                result
                   .ifPresent(illegalNode -> {
                       throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
                   });
             }
-        });
+        }
     }
 
     @Override
@@ -411,14 +507,27 @@ public class InnerNode
             return Collections.emptySet();
         }
 
-        return ioGraph.incomingEdgesOf(recipeNode)
-                 .stream()
-                 .map(ioGraph::getEdgeSource)
-                 .filter(IRecipeInputNode.class::isInstance)
-                 .map(IRecipeInputNode.class::cast)
-                 .map(n -> n.getInputInstances(recipeNode))
-                 .flatMap(Set::stream)
-                 .collect(CompoundInstanceCollectors.reduceToSet());
+        final Set<CompoundInstance> result = Sets.newHashSet();
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
+        {
+            final INode source = ioGraph.getEdgeSource(iEdge);
+            if (source instanceof IRecipeInputNode)
+            {
+                final IRecipeInputNode residueNode = (IRecipeInputNode) source;
+                result.addAll(residueNode.getInputInstances(recipeNode));
+            }
+        }
+
+        Set<CompoundInstance> compoundedResult = new HashSet<>();
+        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType))
+        {
+            if (!sameType.isEmpty())
+            {
+                CompoundInstance instance = new CompoundInstance(sameType.iterator().next().getType(), sameType.stream().mapToDouble(CompoundInstance::getAmount).sum());
+                compoundedResult.add(instance);
+            }
+        }
+        return compoundedResult;
     }
 
     @Override
@@ -429,13 +538,26 @@ public class InnerNode
             return Collections.emptySet();
         }
 
-        return ioGraph.incomingEdgesOf(recipeNode)
-                 .stream()
-                 .map(ioGraph::getEdgeSource)
-                 .filter(IRecipeResidueNode.class::isInstance)
-                 .map(IRecipeResidueNode.class::cast)
-                 .map(n -> n.getResidueInstances(recipeNode))
-                 .flatMap(Set::stream)
-                 .collect(CompoundInstanceCollectors.reduceToSet());
+        final Set<CompoundInstance> result = Sets.newHashSet();
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
+        {
+            final INode source = ioGraph.getEdgeSource(iEdge);
+            if (source instanceof IRecipeResidueNode)
+            {
+                final IRecipeResidueNode residueNode = (IRecipeResidueNode) source;
+                result.addAll(residueNode.getResidueInstances(recipeNode));
+            }
+        }
+
+        Set<CompoundInstance> compoundedResult = new HashSet<>();
+        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType))
+        {
+            if (!sameType.isEmpty())
+            {
+                CompoundInstance instance = new CompoundInstance(sameType.iterator().next().getType(), sameType.stream().mapToDouble(CompoundInstance::getAmount).sum());
+                compoundedResult.add(instance);
+            }
+        }
+        return compoundedResult;
     }
 }

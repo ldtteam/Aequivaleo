@@ -9,17 +9,13 @@ import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
-import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisEdge>
 {
@@ -51,6 +47,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
         reduceOnce(graph);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     @VisibleForTesting
     public boolean reduceOnce(final G graph) {
         AnalysisLogHandler.debug(LOGGER, "Reducing the graph");
@@ -58,7 +55,16 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
         final DirectedSimpleCycles<V, E> cycleFinder = new HawickJamesSimpleCycles<>(graph);
         List<List<V>> sortedCycles = cycleFinder.findSimpleCycles();
 
-        sortedCycles = sortedCycles.stream().distinct().collect(Collectors.toList());
+        List<List<V>> list = new ArrayList<>();
+        Set<List<V>> uniqueValues = new HashSet<>();
+        for (List<V> sortedCycle : sortedCycles)
+        {
+            if (uniqueValues.add(sortedCycle))
+            {
+                list.add(sortedCycle);
+            }
+        }
+        sortedCycles = list;
 
         if (sortedCycles.isEmpty() || (sortedCycles.size() == 1 && !reduceSingularCycle))
         {
@@ -89,43 +95,67 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
             final Multimap<V, E> outgoingEdgesTo = HashMultimap.create();
 
             //Collect all the edges which are relevant to keep.
-            cycle.forEach(cycleNode -> {
-                graph.incomingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !cycle.contains(graph.getEdgeSource(edge)))
-                  .filter(edge -> !incomingEdgesTo.containsEntry(cycleNode, edge))
-                  .peek(edge -> incomingEdgesTo.put(cycleNode, edge))
-                  .peek(edge -> incomingEdgesOf.put(graph.getEdgeSource(edge), edge))
-                  .forEach(edge -> incomingEdges.put(edge, graph.getEdgeSource(edge)));
+            for (V v : cycle)
+            {
+                for (E e : graph.incomingEdgesOf(v))
+                {
+                    if (!cycle.contains(graph.getEdgeSource(e)))
+                    {
+                        if (!incomingEdgesTo.containsEntry(v, e))
+                        {
+                            incomingEdgesTo.put(v, e);
+                            incomingEdgesOf.put(graph.getEdgeSource(e), e);
+                            incomingEdges.put(e, graph.getEdgeSource(e));
+                        }
+                    }
+                }
 
-                graph.outgoingEdgesOf(cycleNode)
-                  .stream()
-                  .filter(edge -> !cycle.contains(graph.getEdgeTarget(edge)))
-                  .filter(edge -> !outgoingEdgesOf.containsEntry(cycleNode, edge))
-                  .peek(edge -> outgoingEdgesOf.put(cycleNode, edge))
-                  .peek(edge -> outgoingEdgesTo.put(graph.getEdgeTarget(edge), edge))
-                  .forEach(edge -> outgoingEdges.put(edge, graph.getEdgeTarget(edge)));
-            });
+                for (E edge : graph.outgoingEdgesOf(v))
+                {
+                    if (!cycle.contains(graph.getEdgeTarget(edge)))
+                    {
+                        if (!outgoingEdgesOf.containsEntry(v, edge))
+                        {
+                            outgoingEdgesOf.put(v, edge);
+                            outgoingEdgesTo.put(graph.getEdgeTarget(edge), edge);
+                            outgoingEdges.put(edge, graph.getEdgeTarget(edge));
+                        }
+                    }
+                }
+            }
 
-            incomingEdges.keySet().forEach(outgoingEdges::remove);
+            for (E e1 : incomingEdges.keySet())
+            {
+                outgoingEdges.remove(e1);
+            }
 
             AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as incoming edges to keep.", incomingEdges));
             AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as outgoing edges to keep.", outgoingEdges));
 
             //Create the new cycle construct.
             graph.addVertex(replacementNode);
-            incomingEdgesOf.keySet()
-                .forEach(incomingSource -> {
-                    final double newEdgeWeight = incomingEdgesOf.get(incomingSource).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                    graph.addEdge(incomingSource, replacementNode);
-                    graph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
-                });
-            outgoingEdgesTo.keySet()
-                .forEach(outgoingTarget -> {
-                    final double newEdgeWeight = outgoingEdgesTo.get(outgoingTarget).stream().mapToDouble(IAnalysisEdge::getWeight).sum();
-                    graph.addEdge(replacementNode, outgoingTarget);
-                    graph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
-                });
+            for (V incomingSource : incomingEdgesOf.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (E e : incomingEdgesOf.get(incomingSource))
+                {
+                    double weight = e.getWeight();
+                    newEdgeWeight += weight;
+                }
+                graph.addEdge(incomingSource, replacementNode);
+                graph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
+            }
+            for (V outgoingTarget : outgoingEdgesTo.keySet())
+            {
+                double newEdgeWeight = 0.0;
+                for (E e : outgoingEdgesTo.get(outgoingTarget))
+                {
+                    double weight = e.getWeight();
+                    newEdgeWeight += weight;
+                }
+                graph.addEdge(replacementNode, outgoingTarget);
+                graph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
+            }
 
             graph.removeAllVertices(cycle);
 
@@ -141,32 +171,49 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
     private List<List<V>> updateRemainingCyclesAfterReplacement(final List<List<V>> cycles, final List<V> replacedCycle, final V replacementNode) {
         cycles.remove(replacedCycle);
 
-        return cycles.stream()
-          .map(cycle -> {
-              final List<V> intersectingNodes = cycle.stream().filter(replacedCycle::contains).collect(Collectors.toList());
-              intersectingNodes.forEach(intersectingNode -> {
-                  AnalysisLogHandler.debug(LOGGER, "    > Replacing: " + intersectingNode + " with: " + replacementNode);
-                  final int nodeIndex = cycle.indexOf(intersectingNode);
-                  cycle.remove(nodeIndex);
-                  cycle.add(nodeIndex, replacementNode);
-              });
+        List<List<V>> list = new ArrayList<>();
+        for (List<V> cycle : cycles)
+        {
+            List<V> vs = updateCycleWithReplacement(replacedCycle, replacementNode, cycle);
+            if (vs.size() > 1)
+            {
+                list.add(vs);
+            }
+        }
+        list.sort(Comparator.comparing(List::size));
+        return list;
+    }
 
-              List<V> result = new ArrayList<>();
-              V lastAdded = null;
-              for (int i = 0; i < cycle.size(); i++)
-              {
-                  final V v = cycle.get(i);
-                  if (!v.equals(lastAdded) && (i != cycle.size() -1 || cycle.get(0) != v))
-                  {
-                      lastAdded = v;
-                      result.add(lastAdded);
-                  }
-              }
-              return result;
+    @NotNull
+    private List<V> updateCycleWithReplacement(final List<V> replacedCycle, final V replacementNode, final List<V> cycle)
+    {
+        final List<V> intersectingNodes = new ArrayList<>();
+        for (V v1 : cycle)
+        {
+            if (replacedCycle.contains(v1))
+            {
+                intersectingNodes.add(v1);
+            }
+        }
+        for (V intersectingNode : intersectingNodes)
+        {
+            AnalysisLogHandler.debug(LOGGER, "    > Replacing: " + intersectingNode + " with: " + replacementNode);
+            final int nodeIndex = cycle.indexOf(intersectingNode);
+            cycle.remove(nodeIndex);
+            cycle.add(nodeIndex, replacementNode);
+        }
 
-          })
-          .filter(cycle -> cycle.size() > 1)
-          .sorted(Comparator.comparing(List::size))
-          .collect(Collectors.toList());
+        List<V> result = new ArrayList<>();
+        V lastAdded = null;
+        for (int i = 0; i < cycle.size(); i++)
+        {
+            final V v = cycle.get(i);
+            if (!v.equals(lastAdded) && (i != cycle.size() -1 || cycle.get(0) != v))
+            {
+                lastAdded = v;
+                result.add(lastAdded);
+            }
+        }
+        return result;
     }
 }

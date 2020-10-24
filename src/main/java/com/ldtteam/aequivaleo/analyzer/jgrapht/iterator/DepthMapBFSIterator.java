@@ -51,10 +51,16 @@ public class DepthMapBFSIterator extends CrossComponentIterator<INode, IEdge, De
     }
 
     private boolean isComplete(final INode node) {
-        return getGraph().incomingEdgesOf(node)
-          .stream()
-          .map(getGraph()::getEdgeSource)
-          .allMatch(depthMap::containsKey);
+        IGraph iGraph = getGraph();
+        for (IEdge iEdge : getGraph().incomingEdgesOf(node))
+        {
+            INode edgeSource = iGraph.getEdgeSource(iEdge);
+            if (!depthMap.containsKey(edgeSource))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -62,13 +68,21 @@ public class DepthMapBFSIterator extends CrossComponentIterator<INode, IEdge, De
     {
         final INode vertex = innerProvideNextVertex();
 
+        boolean seen = false;
+        int best = 0;
+        for (IEdge iEdge : graph.incomingEdgesOf(vertex))
+        {
+            INode edgeSource = graph.getEdgeSource(iEdge);
+            int i = depthMap.get(edgeSource);
+            if (!seen || i > best)
+            {
+                seen = true;
+                best = i;
+            }
+        }
         depthMap.put(
           vertex,
-          graph.incomingEdgesOf(vertex)
-          .stream().map(graph::getEdgeSource)
-          .mapToInt(depthMap::get)
-          .max()
-          .orElse(-1)
+          (seen ? best : -1)
           +1
         );
 

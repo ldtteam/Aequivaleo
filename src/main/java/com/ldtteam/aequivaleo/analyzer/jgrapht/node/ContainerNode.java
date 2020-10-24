@@ -2,24 +2,25 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisNodeWithContainer;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ContainerNode extends AbstractNode implements IContainerNode, IRecipeResidueNode, IRecipeOutputNode
 {
     @NotNull
     private final ICompoundContainer<?> wrapper;
+    private final int hashCode;
 
-    public ContainerNode(@NotNull final ICompoundContainer<?> wrapper) {this.wrapper = wrapper;}
+    public ContainerNode(@NotNull final ICompoundContainer<?> wrapper) {
+        this.wrapper = wrapper;
+        this.hashCode = getWrapper().map(Object::hashCode).orElse(0);
+    }
 
     @NotNull
     public Optional<ICompoundContainer<?>> getWrapper()
@@ -45,15 +46,25 @@ public class ContainerNode extends AbstractNode implements IContainerNode, IReci
     }
 
     @Override
-    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Set<CompoundInstance> instances)
+    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Optional<Set<CompoundInstance>> instances)
     {
-        super.addCandidateResult(neighbor, sourceEdge, instances.stream().filter(i -> i.getType().getGroup().isValidFor(wrapper, i)).collect(Collectors.toSet()));
+        super.addCandidateResult(neighbor, sourceEdge, instances.map(innerInstances -> {
+            Set<CompoundInstance> set = new HashSet<>();
+            for (CompoundInstance i : innerInstances)
+            {
+                if (i.getType().getGroup().isValidFor(wrapper, i))
+                {
+                    set.add(i);
+                }
+            }
+            return set;
+        }));
     }
 
     @Override
     public int hashCode()
     {
-        return getWrapper().hashCode();
+        return hashCode;
     }
 
     @Override
