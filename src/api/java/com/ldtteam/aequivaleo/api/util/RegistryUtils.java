@@ -1,10 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryEntry;
-import net.minecraftforge.registries.RegistryBuilder;
-import net.minecraftforge.registries.RegistryManager;
+import net.minecraftforge.registries.*;
 
 public final class RegistryUtils
 {
@@ -24,5 +21,9 @@ public final class RegistryUtils
 
     public static <T extends IForgeRegistryEntry<T>> ForgeRegistry<T> getFull(final Class<T> clz) {
         return (ForgeRegistry<T>) RegistryManager.ACTIVE.getRegistry(clz);
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> int getId(final IForgeRegistry<T> registry, final T instance) {
+        return ((ForgeRegistry<T>) registry).getID(instance);
     }
 }

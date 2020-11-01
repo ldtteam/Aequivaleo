@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 
 public class SourceNode extends AbstractNode
 {
@@ -33,5 +34,12 @@ public class SourceNode extends AbstractNode
     public void collectStats(final StatCollector statCollector)
     {
         statCollector.onVisitSourceNode();
+    }
+
+    @Override
+    public boolean hasMissingData(final IGraph graph, ICompoundTypeGroup group)
+    {
+        //We are always complete.
+        return false;
     }
 }

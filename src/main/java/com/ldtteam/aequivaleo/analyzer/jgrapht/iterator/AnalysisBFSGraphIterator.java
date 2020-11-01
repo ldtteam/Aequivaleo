@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INodeWithoutResult;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
@@ -23,19 +24,40 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
 
     private final Queue<INode> completeQueue = new ArrayDeque<>();
     private final PriorityQueue<INode> incompleteQueue = new PriorityQueue<>(Comparator.comparing(n -> depthMap.getOrDefault(n, Integer.MAX_VALUE)));
+    private final IGraph analysisGraph;
 
+    public AnalysisBFSGraphIterator(final IGraph iteratingGraph, final INode sourceGraphNode) {
+        this(iteratingGraph, sourceGraphNode, iteratingGraph);
+    }
 
-    public AnalysisBFSGraphIterator(final IGraph g, final INode sourceGraphNode)
+    public AnalysisBFSGraphIterator(final IGraph iteratingGraph, final INode sourceGraphNode, final IGraph analysisGraph)
     {
-        super(g, sourceGraphNode);
+        super(iteratingGraph, sourceGraphNode);
 
-        final DepthMapBFSIterator depthMapBFSIterator = new DepthMapBFSIterator(g, sourceGraphNode);
+        final DepthMapBFSIterator depthMapBFSIterator = new DepthMapBFSIterator(iteratingGraph, sourceGraphNode);
         while(depthMapBFSIterator.hasNext())
         {
             depthMapBFSIterator.next();
         }
-        depthMap.putAll(depthMapBFSIterator.getDepthMap());
-        startNode = sourceGraphNode;
+        this.depthMap.putAll(depthMapBFSIterator.getDepthMap());
+        this.startNode = sourceGraphNode;
+        this.analysisGraph = analysisGraph;
+
+        if (this.getGraph() != this.analysisGraph) {
+            validateGraphs();
+        }
+    }
+
+    public void validateGraphs() {
+        for (INode node : getGraph().vertexSet()) {
+            if (!this.analysisGraph.containsVertex(node))
+                throw new IllegalStateException("The analysis iterators iterating graph contains a vertex which is not in its analysis graph: " + node);
+        }
+
+        for (IEdge edge : getGraph().edgeSet()) {
+            if (!this.analysisGraph.containsEdge(edge))
+                throw new IllegalStateException("The analysis iterators iterating graph contains an edge which is not in its analysis graph: " + edge);
+        }
     }
 
     @Override
@@ -68,10 +90,16 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     {
         final INode vertex = innerProvideNextVertex();
 
-        vertex.determineResult(getGraph());
-        final Optional<Set<CompoundInstance>> result = vertex.getResultingValue();
-        AnalysisLogHandler.debug(LOGGER, String.format("  > Determined result to be: %s", result.isPresent() ? result.get() : "<MISSING>"));
-        vertex.onReached(getGraph());
+        vertex.determineResult(this.analysisGraph);
+        if (vertex instanceof INodeWithoutResult) {
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Processed node without result: %s", vertex));
+        }
+        else
+        {
+            final Optional<Set<CompoundInstance>> result = vertex.getResultingValue();
+            AnalysisLogHandler.debug(LOGGER, String.format("  > Determined result to be: %s", result.isPresent() ? result.get() : "<MISSING>"));
+        }
+        vertex.onReached(this.analysisGraph);
 
         return vertex;
     }

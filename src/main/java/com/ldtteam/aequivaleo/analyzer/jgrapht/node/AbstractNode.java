@@ -1,14 +1,16 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
+import com.ldtteam.aequivaleo.api.mediation.IMediationContext;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.mediation.SimpleMediationCandidate;
+import com.ldtteam.aequivaleo.mediation.SimpleMediationContext;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,8 +27,7 @@ public abstract class AbstractNode implements INode
     @Nullable
     private       Set<CompoundInstance>                            result       = null;
     @NotNull
-    private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates   = HashMultimap.create();
-    private       boolean                                          isIncomplete = false;
+    private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates    = HashMultimap.create();
 
     @NotNull
     @Override
@@ -88,11 +89,6 @@ public abstract class AbstractNode implements INode
               accessibleWeightEdge,
               getResultingValue()
             );
-
-            if (this.isIncomplete())
-            {
-                v.setIncomplete();
-            }
         }
     }
 
@@ -116,14 +112,11 @@ public abstract class AbstractNode implements INode
             }
             else
             {
-                this.isIncomplete = true;
                 AnalysisLogHandler.debug(LOGGER, "  > No candidates available, and result not forced. Setting empty collection!");
                 this.result = null;
             }
             return;
         }
-
-        this.isIncomplete = false;
 
         //Locking happens via the intrinsic value of node itself.
         //Return that value if it exists.
@@ -144,93 +137,52 @@ public abstract class AbstractNode implements INode
         }
 
         AnalysisLogHandler.debug(LOGGER, "  > Candidate data contains more then one entry. Mediation is required. Invoking type group callbacks to determine value.");
-        //If we have multiples we group them up by type group and then let it decide.
-        //Then we collect them all back together into one list
-        //Bit of a mess but works.
-        //
-        Set<CompoundInstance> set = new HashSet<>();
-        //Group each of the list again on their group, so that all candidates with the same group are together.
-        //For each type invoke the determination routine.
-        Set<Set<CompoundInstance>> set1 = new HashSet<>();
-        //Split apart each of the initial candidate lists into several smaller list based on their group.
-        List<Set<CompoundInstance>> list = new ArrayList<>();
-        for (Set<CompoundInstance> candidate : getCandidates())
-        {
-            for (Collection<CompoundInstance> collection : GroupingUtils.groupByUsingSet(candidate,
-              compoundInstance -> compoundInstance.getType().getGroup()))
-            {
-                if (!collection.isEmpty())
-                {
-                    Set<CompoundInstance> instances = Sets.newHashSet(collection);
-                    list.add(instances);
-                }
-            }
-        }
-        for (Collection<Set<CompoundInstance>> sets : GroupingUtils.groupByUsingSet(list,
-          compoundInstances -> compoundInstances.iterator()
-                                 .next()
-                                 .getType()
-                                 .getGroup()))
-        {
-            HashSet<Set<CompoundInstance>> s = Sets.newHashSet(sets);
-            if (!s.isEmpty())
-            {
-                Optional<Set<CompoundInstance>> compoundInstanceSet = s.iterator()
-                                                                        .next()
-                                                                        .iterator()
-                                                                        .next()
-                                                                        .getType()
-                                                                        .getGroup()
-                                                                        .determineResult(s, canResultBeCalculated(graph), isIncomplete());
-                if (compoundInstanceSet.isPresent())
-                {
-                    Set<CompoundInstance> instanceSet = compoundInstanceSet.get();
-                    set1.add(instanceSet);
-                }
-            }
-        }
-        for (Set<CompoundInstance> instances : set1)
-        {
-            set.addAll(instances);
-        }
-        this.result = set; //Group all of them together.
 
-        if (this.result.isEmpty()) {
-            this.result = null;
-            this.isIncomplete = true;
-        }
+        final Table<ICompoundTypeGroup, INode, Set<CompoundInstance>> typeNodeCandidates = HashBasedTable.create();
+        this.candidates.forEach((node, optionalResult) -> {
+            if (optionalResult.isPresent()) {
+                final Map<ICompoundTypeGroup, Collection<CompoundInstance>> groupedInstances = GroupingUtils.groupByUsingSetToMap(
+                  optionalResult.get(),
+                  compoundInstance -> compoundInstance.getType().getGroup()
+                );
 
+                groupedInstances.forEach((group, candidates) -> typeNodeCandidates.put(group, node, new HashSet<>(candidates)));
+            }
+        });
+
+        final boolean hasUncalculatedChildren = hasUncalculatedChildren(graph);
+
+        final Map<ICompoundTypeGroup, Set<CompoundInstance>> mediatedValues = Maps.newHashMap();
+        typeNodeCandidates.rowKeySet().forEach(compoundTypeGroup -> {
+            final Map<INode, Set<CompoundInstance>> instancesForGroup = typeNodeCandidates.row(compoundTypeGroup);
+
+            final Set<IMediationCandidate> mediationCandidates =
+              new HashSet<>();
+            for (INode node : instancesForGroup.keySet())
+            {
+                SimpleMediationCandidate simpleMediationCandidate = new SimpleMediationCandidate(instancesForGroup.get(node), () -> node.hasMissingData(graph, compoundTypeGroup));
+                mediationCandidates.add(simpleMediationCandidate);
+            }
+
+            final IMediationContext context = new SimpleMediationContext(
+              mediationCandidates,
+              () -> !hasUncalculatedChildren
+            );
+
+            final Optional<Set<CompoundInstance>> mediatedValue = compoundTypeGroup.getMediationEngine().determineMediationResult(context);
+
+            mediatedValue.ifPresent(instances -> mediatedValues.put(
+              compoundTypeGroup,
+              instances
+            ));
+        });
+
+        Set<CompoundInstance> workingResult = new HashSet<>();
+        for (Set<CompoundInstance> compoundInstances : mediatedValues.values())
+        {
+            workingResult.addAll(compoundInstances);
+        }
+        this.result = workingResult;
         AnalysisLogHandler.debug(LOGGER, String.format("  > Mediation completed. Determined value is: %s", this.result));
-    }
-
-    @Override
-    public void clearIncompletionState()
-    {
-        this.isIncomplete = false;
-    }
-
-    @Override
-    public void setIncomplete()
-    {
-        this.isIncomplete = true;
-    }
-
-    @Override
-    public boolean isIncomplete()
-    {
-        return this.isIncomplete;
-    }
-
-    public boolean hasIncompleteChildren(final IGraph graph)
-    {
-        for (IEdge iEdge : graph.incomingEdgesOf(this))
-        {
-            INode edgeSource = graph.getEdgeSource(iEdge);
-            if (edgeSource.isIncomplete())
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }

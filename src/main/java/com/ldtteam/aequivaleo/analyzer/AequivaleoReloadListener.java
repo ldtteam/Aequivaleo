@@ -90,6 +90,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         final Map<ResourceLocation, List<CompoundInstanceData>> lockedData = new HashMap<>();
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
+        worlds.removeIf(world -> !world.getDimensionKey().getLocation().getPath().contains("overworld"));
+
         valueData.put(
           GENERAL_DATA_NAME,
           read(

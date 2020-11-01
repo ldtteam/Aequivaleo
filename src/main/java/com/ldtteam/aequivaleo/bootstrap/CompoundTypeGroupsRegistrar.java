@@ -25,7 +25,7 @@ public final class CompoundTypeGroupsRegistrar
     {
         LOGGER.info("Registering the compound type group registry with forge.");
         makeRegistry("compound_type_group", ICompoundTypeGroup.class).create();
-        ModRegistries.COMPOUND_TYPE = RegistryManager.ACTIVE.getRegistry(ICompoundType.class);
+        ModRegistries.COMPOUND_TYPE_GROUP = RegistryManager.ACTIVE.getRegistry(ICompoundTypeGroup.class);
     }
 
     private static <T extends IForgeRegistryEntry<T>> RegistryBuilder<T> makeRegistry(String name, Class<T> type) {

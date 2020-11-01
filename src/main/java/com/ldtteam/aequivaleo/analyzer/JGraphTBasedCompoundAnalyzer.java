@@ -1,23 +1,23 @@
 package com.ldtteam.aequivaleo.analyzer;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.clique.JGraphTCliqueReducer;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisGraphNode;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JGraphTBasedCompoundAnalyzer
@@ -152,8 +151,6 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        notDefinedGraphNodes.forEach(IAnalysisGraphNode::setIncomplete);
-
         final SourceNode source = new SourceNode();
         recipeGraph.addVertex(source);
 
@@ -183,8 +180,19 @@ public class JGraphTBasedCompoundAnalyzer
                 .findAny();
 
               return targetRecipeType.map(type -> sets.stream()
-                                                      .map(nodes -> nodes.stream().filter(node -> node.getRecipe().getClass().equals(type)).findFirst().get())
-                                                      .collect(Collectors.toSet())).orElseGet(Sets::newHashSet);
+                                                      .map(nodes -> {
+                                                          for (IRecipeNode node : nodes)
+                                                          {
+                                                              if (node.getRecipe().getClass().equals(type))
+                                                              {
+                                                                  return Optional.of(node).get();
+                                                              }
+                                                          }
+                                                          return null;
+                                                      })
+                                                      .filter(Objects::nonNull)
+                                                      .collect(Collectors.toSet()))
+                       .orElseGet(Sets::newHashSet);
           }, INode::onNeighborReplaced);
 
         cliqueReducer.reduce(recipeGraph);

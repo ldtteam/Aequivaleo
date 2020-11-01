@@ -73,29 +73,35 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
             }
         }
 
-        final boolean isComplete = !hasIncompleteChildren(graph);
-
         final Set<CompoundInstance> summedCompoundInstances = new HashSet<>();
+        boolean atLeastOneValidIngredient = false;
         Map<ICompoundType, Double> map = new HashMap<>();
         for (IRecipeInputNode inputNeighbor : inputNeighbors)
         {
             for (CompoundInstance compoundInstance1 : inputNeighbor
                                                         .getInputInstances(this))
             {
-                if (isComplete || compoundInstance1.getType()
+                if (!hasParentsWithMissingData(graph, compoundInstance1.getType().getGroup()) || compoundInstance1.getType()
                                     .getGroup()
                                     .shouldIncompleteRecipeBeProcessed(getRecipe()))
                 {
                     if (compoundInstance1.getType().getGroup().canContributeToRecipeAsInput(recipe, compoundInstance1))
                     {
+                        atLeastOneValidIngredient = true;
                         AbstractMap.SimpleEntry<ICompoundType, Double> iCompoundTypeDoubleSimpleEntry = new HashMap.SimpleEntry<>(compoundInstance1.getType(),
                           compoundInstance1.getAmount()
-                            * graph.getEdgeWeight(graph.getEdge(inputNeighbor, this)));
+                             * graph.getEdgeWeight(graph.getEdge(inputNeighbor, this)));
                         map.merge(iCompoundTypeDoubleSimpleEntry.getKey(), iCompoundTypeDoubleSimpleEntry.getValue(), Double::sum);
                     }
                 }
             }
         }
+
+        if (!atLeastOneValidIngredient) {
+            this.forceSetResult(null, false);
+            return;
+        }
+
         for (Map.Entry<ICompoundType, Double> entry : map
                                                         .entrySet())
         {
@@ -124,12 +130,8 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
     @Override
     public void onReached(final IGraph graph)
     {
-        for (IEdge accessibleWeightEdge : graph.outgoingEdgesOf(this))
-        {
-            INode v = graph.getEdgeTarget(accessibleWeightEdge);
-            if (this.isIncomplete())
-                v.setIncomplete();
-        }
+        if (!this.getResultingValue().isPresent())
+            return;
 
         final Set<IRecipeOutputNode> resultNeighbors = new HashSet<>();
         for (IEdge weightEdge : graph

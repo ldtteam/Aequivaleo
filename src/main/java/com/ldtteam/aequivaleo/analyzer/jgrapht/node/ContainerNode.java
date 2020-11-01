@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class ContainerNode extends AbstractNode implements IContainerNode, IRecipeResidueNode, IRecipeOutputNode
+public class ContainerNode extends AbstractNode implements IContainerNode, IRecipeResidueNode, IRecipeOutputNode, IStartAnalysisNode
 {
     @NotNull
     private final ICompoundContainer<?> wrapper;

@@ -11,19 +11,18 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.util.CompoundInstanceCollectors;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
+import com.ldtteam.aequivaleo.utils.GraphUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InnerNode
-  implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode
+  implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode, INodeWithoutResult, IStartAnalysisNode
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -133,13 +132,6 @@ public class InnerNode
         return set;
     }
 
-    @NotNull
-    @Override
-    public Optional<Set<CompoundInstance>> getResultingValue()
-    {
-        return Optional.empty();
-    }
-
     @Override
     public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Optional<Set<CompoundInstance>> instances)
     {
@@ -187,8 +179,6 @@ public class InnerNode
     @Override
     public void onReached(final IGraph graph)
     {
-        final boolean inComplete = isIncomplete();
-
         for (IEdge edge : ioGraph.edgeSet())
         {
             if (!innerGraph.containsVertex(ioGraph.getEdgeTarget(edge)))
@@ -197,10 +187,6 @@ public class InnerNode
                 final INode target = ioGraph.getEdgeTarget(edge);
 
                 target.addCandidateResult(this, graph.getEdge(this, target), source.getResultingValue());
-                if (inComplete)
-                {
-                    target.setIncomplete();
-                }
             }
         }
     }
@@ -224,43 +210,60 @@ public class InnerNode
     public void determineResult(final IGraph graph)
     {
         final Set<INode> startingNodes = new HashSet<>();
-        for (INode iNode : innerGraph.vertexSet())
+        for (INode node : innerGraph.vertexSet())
         {
-            if (!iNode.getCandidates().isEmpty())
+            if (!node.getCandidates().isEmpty() && node instanceof IStartAnalysisNode)
             {
-                startingNodes.add(iNode);
+                startingNodes.add(node);
             }
         }
         final Map<INode, Integer> nodeCandidateCounts = new HashMap<>();
-        for (INode n : startingNodes)
+        for (INode startNode : startingNodes)
         {
-            if (nodeCandidateCounts.put(n, n.getCandidates().size()) != null)
+            if (nodeCandidateCounts.put(startNode, startNode.getCandidates().size()) != null)
             {
-                throw new IllegalStateException("Duplicate key");
+                throw new IllegalStateException("Duplicate node");
             }
         }
+
+        final IGraph workingGraph = GraphUtils.mergeGraphs(this.innerGraph, this.ioGraph);
+
         for (final INode startNode : startingNodes)
         {
             //NOTE: Due to the way our system works, every node will have only one incoming edge!
-            final Set<IEdge> incomingEdges = Sets.newHashSet(innerGraph.incomingEdgesOf(startNode));
-            final Map<IEdge, INode> sourceMap =
+            final Set<IEdge> workingGraphIncomingEdges = Sets.newHashSet(workingGraph.incomingEdgesOf(startNode));
+            final Map<IEdge, INode> workingGraphSourceMap =
               new HashMap<>();
-            for (IEdge iEdge : incomingEdges)
+            final Set<IEdge> innerGraphIncomingEdges = Sets.newHashSet(innerGraph.incomingEdgesOf(startNode));
+            final Map<IEdge, INode> innerGraphSourceMap =
+              new HashMap<>();
+            for (IEdge edge : workingGraphIncomingEdges)
             {
-                if (sourceMap.put(iEdge, innerGraph.getEdgeSource(iEdge)) != null)
+                if (workingGraphSourceMap.put(edge, workingGraph.getEdgeSource(edge)) != null)
                 {
-                    throw new IllegalStateException("Duplicate key");
+                    throw new IllegalStateException("Duplicate edge.");
+                }
+            }
+            for (IEdge edge : innerGraphIncomingEdges)
+            {
+                if (innerGraphSourceMap.put(edge, innerGraph.getEdgeSource(edge)) != null)
+                {
+                    throw new IllegalStateException("Duplicate edge.");
                 }
             }
 
             //We remove the inner edge of all edge
-            for (IEdge incomingEdge : incomingEdges)
+            for (IEdge incomingEdge : workingGraphIncomingEdges)
+            {
+                workingGraph.removeEdge(incomingEdge);
+            }
+            for (IEdge incomingEdge : innerGraphIncomingEdges)
             {
                 innerGraph.removeEdge(incomingEdge);
             }
 
             //Run inner analysis
-            final AnalysisBFSGraphIterator iterator = new AnalysisBFSGraphIterator(innerGraph, startNode);
+            final AnalysisBFSGraphIterator iterator = new AnalysisBFSGraphIterator(innerGraph, startNode, workingGraph);
             final StatCollector innerStatCollector = new StatCollector("Inner node analysis.", innerGraph.vertexSet().size())
             {
 
@@ -276,7 +279,13 @@ public class InnerNode
             }
 
             //Re-add the original edges that where removed.
-            for (Map.Entry<IEdge, INode> entry : sourceMap.entrySet())
+            for (Map.Entry<IEdge, INode> entry : workingGraphSourceMap.entrySet())
+            {
+                IEdge edge = entry.getKey();
+                INode source = entry.getValue();
+                workingGraph.addEdge(source, startNode, edge);
+            }
+            for (Map.Entry<IEdge, INode> entry : innerGraphSourceMap.entrySet())
             {
                 IEdge edge = entry.getKey();
                 INode source = entry.getValue();
@@ -291,45 +300,6 @@ public class InnerNode
                 break;
             }
         }
-
-        if (!getResultingValue().isPresent()) {
-            setIncomplete();
-        }
-        else
-        {
-            clearIncompletionState();
-        }
-    }
-
-    @Override
-    public void clearIncompletionState()
-    {
-        for (INode iNode : innerGraph.vertexSet())
-        {
-            iNode.clearIncompletionState();
-        }
-    }
-
-    @Override
-    public void setIncomplete()
-    {
-        for (INode iNode : innerGraph.vertexSet())
-        {
-            iNode.setIncomplete();
-        }
-    }
-
-    @Override
-    public boolean isIncomplete()
-    {
-        for (INode iNode : innerGraph.vertexSet())
-        {
-            if (iNode.isIncomplete())
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -528,6 +498,29 @@ public class InnerNode
             }
         }
         return compoundedResult;
+    }
+
+
+    @Override
+    public Set<IRecipeInputNode> getInputNodes(final IRecipeNode recipeNode)
+    {
+        if (!ioGraph.containsVertex(recipeNode))
+        {
+            return Collections.emptySet();
+        }
+
+        final Set<IRecipeInputNode> result = Sets.newHashSet();
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
+        {
+            final INode source = ioGraph.getEdgeSource(iEdge);
+            if (source instanceof IRecipeInputNode)
+            {
+                final IRecipeInputNode residueNode = (IRecipeInputNode) source;
+                result.addAll(residueNode.getInputNodes(recipeNode));
+            }
+        }
+
+        return result;
     }
 
     @Override

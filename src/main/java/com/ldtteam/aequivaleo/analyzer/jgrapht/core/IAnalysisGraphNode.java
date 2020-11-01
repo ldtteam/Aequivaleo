@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.core;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 
@@ -30,7 +30,7 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     @NotNull
     Set<S> getAnalyzedNeighbors();
 
-    default boolean canResultBeCalculated(final Graph<S, IEdge> graph) {
+    default boolean canResultBeCalculated(final G graph) {
         //Either we already have a value, are forced analyzed or all our neighbors need to be analyzed.
         if (getResultingValue().isPresent() || !graph.containsVertex(getSelf()))
         {
@@ -38,13 +38,15 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
         }
 
         Set<S> set = new HashSet<>();
-        for (IEdge iEdge : graph.incomingEdgesOf(getSelf()))
+        for (E iEdge : graph.incomingEdgesOf(getSelf()))
         {
             S edgeSource = graph.getEdgeSource(iEdge);
             set.add(edgeSource);
         }
         return getAnalyzedNeighbors().containsAll(set);
     }
+
+    boolean hasUncalculatedChildren(final G graph);
 
     void onReached(final G graph);
 
@@ -54,11 +56,19 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
 
     void determineResult(G graph);
 
-    void clearIncompletionState();
+    boolean hasMissingData(G graph, ICompoundTypeGroup group);
 
-    void setIncomplete();
-
-    boolean isIncomplete();
+    default boolean hasParentsWithMissingData(G graph, ICompoundTypeGroup group) {
+        for (E e : graph.incomingEdgesOf(getSelf()))
+        {
+            S edgeSource = graph.getEdgeSource(e);
+            if (edgeSource.hasMissingData(graph, group))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     default void onNeighborReplaced(final S originalNeighbor, final S newNeighbor) {}
 }

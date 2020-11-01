@@ -1,17 +1,18 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.util.CompoundInstanceCollectors;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
+import com.ldtteam.aequivaleo.api.mediation.IMediationContext;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.mediation.SimpleMediationCandidate;
+import com.ldtteam.aequivaleo.mediation.SimpleMediationContext;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +22,7 @@ import java.util.*;
 
 @SuppressWarnings("SuspiciousMethodCalls")
 public class CliqueNode
-  implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode
+  implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode, IStartAnalysisNode
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -199,8 +200,6 @@ public class CliqueNode
     @Override
     public void onReached(final IGraph graph)
     {
-        final boolean inComplete = isIncomplete();
-
         for (IEdge edge : ioGraph.edgeSet())
         {
             if (!innerCliqueNodes.contains(ioGraph.getEdgeTarget(edge)))
@@ -209,10 +208,6 @@ public class CliqueNode
                 final INode target = ioGraph.getEdgeTarget(edge);
 
                 target.addCandidateResult(this, graph.getEdge(this, target), source.getResultingValue());
-                if (inComplete)
-                {
-                    target.setIncomplete();
-                }
             }
         }
     }
@@ -256,8 +251,6 @@ public class CliqueNode
         //Short circuit empty result.
         if (candidates.size() == 0)
         {
-            setIncomplete();
-
             if (result != null)
             {
                 AnalysisLogHandler.debug(LOGGER, String.format("  > No candidates available. Using current value: %s", result));
@@ -274,11 +267,9 @@ public class CliqueNode
             return;
         }
 
-        clearIncompletionState();
-
         //If we have only one other data set we have nothing to choose from.
         //So we take that.
-        if (candidates.size() == 1)
+        if (getCandidates().size() == 1)
         {
             result = candidates.iterator().next();
             finalResult = result;
@@ -291,60 +282,51 @@ public class CliqueNode
         }
 
         AnalysisLogHandler.debug(LOGGER, "  > Candidate data contains more then one entry. Mediation is required. Invoking type group callbacks to determine value.");
-        //If we have multiples we group them up by type group and then let it decide.
-        //Then we collect them all back together into one list
-        //Bit of a mess but works.
-        //
-        Set<CompoundInstance> set = new HashSet<>();
-        //Split apart each of the initial candidate lists into several smaller list based on their group.
-        List<Set<CompoundInstance>> list = new ArrayList<>();
-        for (Set<CompoundInstance> candidate : candidates)
-        {
-            for (Collection<CompoundInstance> collection : GroupingUtils.groupByUsingSet(candidate,
-              compoundInstance -> compoundInstance.getType().getGroup()))
-            {
-                if (!collection.isEmpty())
-                {
-                    Set<CompoundInstance> compoundInstanceSet = Sets.newHashSet(collection);
-                    list.add(compoundInstanceSet);
-                }
-            }
-        }
-        //Group each of the list again on their group, so that all candidates with the same group are together.
-        //For each type invoke the determination routine.
-        Set<Set<CompoundInstance>> set1 = new HashSet<>();
-        for (Collection<Set<CompoundInstance>> sets : GroupingUtils.groupByUsingSet(list,
-          compoundInstances -> compoundInstances.iterator()
-                                 .next()
-                                 .getType()
-                                 .getGroup()))
-        {
-            HashSet<Set<CompoundInstance>> s = Sets.newHashSet(sets);
-            if (!s.isEmpty())
-            {
-                Optional<Set<CompoundInstance>> compoundInstanceSet = s.iterator()
-                                                                        .next()
-                                                                        .iterator()
-                                                                        .next()
-                                                                        .getType()
-                                                                        .getGroup()
-                                                                        .determineResult(s, canResultBeCalculated(graph), isIncomplete());
-                if (compoundInstanceSet.isPresent())
-                {
-                    Set<CompoundInstance> instanceSet = compoundInstanceSet.get();
-                    set1.add(instanceSet);
-                }
-            }
-        }
-        for (Set<CompoundInstance> instances : set1)
-        {
-            set.addAll(instances);
-        }
-        result = set; //Group all of them together.
+        final Table<ICompoundTypeGroup, INode, Set<CompoundInstance>> typeNodeCandidates = HashBasedTable.create();
+        this.candidates.forEach((node, optionalResult) -> {
+            if (optionalResult.isPresent()) {
+                final Map<ICompoundTypeGroup, Collection<CompoundInstance>> groupedInstances = GroupingUtils.groupByUsingSetToMap(
+                  optionalResult.get(),
+                  compoundInstance -> compoundInstance.getType().getGroup()
+                );
 
-        AnalysisLogHandler.debug(LOGGER, String.format("  > Mediation completed. Determined value is: %s", result));
+                groupedInstances.forEach((group, candidateValues) -> typeNodeCandidates.put(group, node, new HashSet<>(candidateValues)));
+            }
+        });
 
-        finalResult = result;
+        final boolean hasUncalculatedChildren = hasUncalculatedChildren(graph);
+
+        final Map<ICompoundTypeGroup, Set<CompoundInstance>> mediatedValues = Maps.newHashMap();
+        typeNodeCandidates.rowKeySet().forEach(compoundTypeGroup -> {
+            final Map<INode, Set<CompoundInstance>> instancesForGroup = typeNodeCandidates.row(compoundTypeGroup);
+
+            final Set<IMediationCandidate> mediationCandidates =
+              new HashSet<>();
+            for (INode node : instancesForGroup.keySet())
+            {
+                SimpleMediationCandidate simpleMediationCandidate = new SimpleMediationCandidate(instancesForGroup.get(node), () -> node.hasMissingData(graph, compoundTypeGroup));
+                mediationCandidates.add(simpleMediationCandidate);
+            }
+
+            final IMediationContext context = new SimpleMediationContext(
+              mediationCandidates,
+              () -> !hasUncalculatedChildren
+            );
+
+            final Optional<Set<CompoundInstance>> mediatedValue = compoundTypeGroup.getMediationEngine().determineMediationResult(context);
+
+            mediatedValue.ifPresent(instances -> mediatedValues.put(
+              compoundTypeGroup,
+              instances
+            ));
+        });
+
+        Set<CompoundInstance> workingResult = new HashSet<>();
+        for (Set<CompoundInstance> compoundInstances : mediatedValues.values())
+        {
+            workingResult.addAll(compoundInstances);
+        }
+        this.finalResult = workingResult;
 
         if (this.finalResult.isEmpty()) {
             this.finalResult = null;
@@ -354,46 +336,6 @@ public class CliqueNode
         {
             node.forceSetResult(finalResult);
         }
-
-        if (this.finalResult == null)
-        {
-            this.setIncomplete();
-        }
-        else
-        {
-            this.clearIncompletionState();
-        }
-    }
-
-    @Override
-    public void clearIncompletionState()
-    {
-        for (IContainerNode innerCliqueNode : innerCliqueNodes)
-        {
-            innerCliqueNode.clearIncompletionState();
-        }
-    }
-
-    @Override
-    public void setIncomplete()
-    {
-        for (IContainerNode innerCliqueNode : innerCliqueNodes)
-        {
-            innerCliqueNode.setIncomplete();
-        }
-    }
-
-    @Override
-    public boolean isIncomplete()
-    {
-        for (IContainerNode innerCliqueNode : innerCliqueNodes)
-        {
-            if (innerCliqueNode.isIncomplete())
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -582,6 +524,28 @@ public class CliqueNode
             }
         }
         return compoundedResult;
+    }
+
+    @Override
+    public Set<IRecipeInputNode> getInputNodes(final IRecipeNode recipeNode)
+    {
+        if (!ioGraph.containsVertex(recipeNode))
+        {
+            return Collections.emptySet();
+        }
+
+        final Set<IRecipeInputNode> result = Sets.newHashSet();
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
+        {
+            final INode source = ioGraph.getEdgeSource(iEdge);
+            if (source instanceof IRecipeInputNode)
+            {
+                final IRecipeInputNode residueNode = (IRecipeInputNode) source;
+                result.addAll(residueNode.getInputNodes(recipeNode));
+            }
+        }
+
+        return result;
     }
 
     @Override

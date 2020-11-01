@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analyzer;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
@@ -10,6 +11,9 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
+import com.ldtteam.aequivaleo.api.mediation.IMediationContext;
+import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -25,13 +29,17 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.ForgeRegistryEntry;
 import net.minecraftforge.registries.IForgeRegistry;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -86,7 +94,6 @@ public class JGraphTBasedCompoundAnalyzerTest
         Aequivaleo mod = mock(Aequivaleo.class);
         when(Aequivaleo.getInstance()).thenReturn(mod);
 
-
         Configuration config = mock(Configuration.class);
         ServerConfiguration serverConfig = mock(ServerConfiguration.class);
         ForgeConfigSpec.BooleanValue alwaysFalseConfig = mock(ForgeConfigSpec.BooleanValue.class);
@@ -114,22 +121,19 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(groupUnknownIsZero.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
-        when(groupUnknownIsZero.determineResult(any(), any()))
-          .thenAnswer((Answer<Set<CompoundInstance>>) invocation -> {
-            final Set<Set<CompoundInstance>> data = invocation.getArgumentAt(0, Set.class);
-
-            return data
-                     .stream()
-                     .filter(i -> !i.isEmpty())
-                     .min((left, right) -> (int) (left
-                                                             .stream()
-                                                             .mapToDouble(CompoundInstance::getAmount)
-                                                             .sum() - right
-                                                                        .stream()
-                                                                        .mapToDouble(CompoundInstance::getAmount)
-                                                                        .sum()))
-                     .orElse(Sets.newHashSet());
-        });
+        when(groupUnknownIsZero.getMediationEngine()).thenReturn(context -> Optional.of(context.getCandidates()
+                             .stream()
+                             .map(IMediationCandidate::getValues)
+                             .filter(i -> !i.isEmpty())
+                             .min((left, right) -> (int) (left
+                                                            .stream()
+                                                            .mapToDouble(CompoundInstance::getAmount)
+                                                            .sum() - right
+                                                                       .stream()
+                                                                       .mapToDouble(CompoundInstance::getAmount)
+                                                                       .sum()))
+                             .orElse(Sets.newHashSet())
+        ));
         when(groupUnknownIsZero.shouldIncompleteRecipeBeProcessed(any())).thenReturn(true);
 
         when(typeUnknownIsInvalid.getGroup()).thenReturn(groupUnknownIsInvalid);
@@ -138,26 +142,40 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(groupUnknownIsInvalid.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
-        when(groupUnknownIsInvalid.determineResult(any(), any())).thenAnswer((Answer<Set<CompoundInstance>>) invocation -> {
-            final Set<Set<CompoundInstance>> data = invocation.getArgumentAt(0, Set.class);
-            final boolean isComplete = invocation.getArgumentAt(1, Boolean.class);
+        when(groupUnknownIsInvalid.getMediationEngine()).thenReturn(context -> {
+            if (!context.areTargetParentsAnalyzed())
+                return Optional.of(Collections.emptySet());
 
-            if (!isComplete)
-                return Collections.emptySet();
+            return Optional.of(context
+                                 .getCandidates()
+                                 .stream()
+                                 .min((o1, o2) -> {
+                                     if (o1.isSourceIncomplete() && !o2.isSourceIncomplete())
+                                         return 1;
 
-            return data
-                     .stream()
-                     .filter(i -> !i.isEmpty())
-                     .min((left, right) -> (int) (left
-                                                    .stream()
-                                                    .mapToDouble(CompoundInstance::getAmount)
-                                                    .sum() - right
-                                                               .stream()
-                                                               .mapToDouble(CompoundInstance::getAmount)
-                                                               .sum()))
-                     .orElse(Sets.newHashSet());
+                                     if (!o1.isSourceIncomplete() && o2.isSourceIncomplete())
+                                         return -1;
+
+                                     if (o1.getValues().isEmpty() && !o2.getValues().isEmpty())
+                                         return 1;
+
+                                     if (!o1.getValues().isEmpty() && o2.getValues().isEmpty())
+                                         return -1;
+
+                                     return (int) (o1.getValues().stream().mapToDouble(CompoundInstance::getAmount).sum() -
+                                                                                           o2.getValues().stream().mapToDouble(CompoundInstance::getAmount).sum());
+                                 })
+              .map(IMediationCandidate::getValues)
+              .orElse(Sets.newHashSet()));
         });
+
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
+
+        ForgeRegistry<ICompoundType> typeReg = mock(ForgeRegistry.class);
+        when(typeReg.getID(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgumentAt(0, ICompoundType.class)));
+        when(typeReg.getKeys()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
+        when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
+        ModRegistries.COMPOUND_TYPE = typeReg;
     }
 
     @After
