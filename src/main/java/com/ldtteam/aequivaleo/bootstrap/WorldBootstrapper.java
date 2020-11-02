@@ -5,12 +5,12 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
@@ -41,7 +41,7 @@ public final class WorldBootstrapper
 
         doBootstrapTagInformation(world);
         doBootstrapDefaultCraftingRecipes(world);
-        doBootstrapItemStackItemEquivalencies(world);
+        doBootstrapInstancedEquivalencies(world);
 
         doHandlePluginLoad(world);
     }
@@ -90,36 +90,43 @@ public final class WorldBootstrapper
     {
     }
 
-    private static void doBootstrapItemStackItemEquivalencies(
+    private static void doBootstrapInstancedEquivalencies(
       @NotNull final ServerWorld world
     ) {
         StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> {
-            final NonNullList<ItemStack> group = NonNullList.create();
-            if (item.getGroup() == null)
-                return;
+            InstancedEquivalencyHandlerRegistry.getInstance().process(
+              item,
+              o -> {
+                  final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
+                  final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
-            item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
+                  try {
+                      EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+                        .register(new InstancedEquivalency(
+                          sourceContainer, targetContainer
+                        ))
+                        .register(new InstancedEquivalency(
+                          targetContainer, sourceContainer
+                        ));
+                  } catch (Exception ex) {
+                      LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
+                        item.getRegistryName(),
+                        o), ex);
+                  }
+              },
+              consumer -> {
+                  final NonNullList<ItemStack> group = NonNullList.create();
+                  if (item.getGroup() == null)
+                      return;
 
-            if (group.size() == 1)
-            {
-                final ICompoundContainer<?> itemContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
-                final ICompoundContainer<?> itemStackContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(group.get(0), group.get(0).getCount());
+                  item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
 
-                try {
-                    EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
-                      .register(new InstancedEquivalency(
-                        false, itemContainer, itemStackContainer
-                      ))
-                      .register(new InstancedEquivalency(
-                        false, itemStackContainer, itemContainer
-                      ));
-                } catch (Exception ex) {
-                    LOGGER.error(String.format("Failed to register equivalency between the Item: %s and its ItemStack (in NBT form): %s",
-                      item.getRegistryName(),
-                      group.get(0).write(new CompoundNBT()).toString()));
-                }
-
-            }
+                  if (group.size() == 1)
+                  {
+                      consumer.accept(group.get(0));
+                  }
+              }
+            );
         });
     }
 

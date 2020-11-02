@@ -30,7 +30,6 @@ public class JGraphTCyclesReducerTest
 {
 
     JGraphTCyclesReducer<Graph<String, Edge>, String, Edge> reducer;
-    AtomicInteger counter = new AtomicInteger();
     @Before
     public void setUp()
     {
@@ -48,7 +47,7 @@ public class JGraphTCyclesReducerTest
 
         reducer = new JGraphTCyclesReducer<>(
           (graph, vertices) -> {
-              final Graph<String, Edge> innerGraph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+              final Graph<String, Edge> innerGraph = new SimpleAnalysisGraph<>(Edge::new);
               vertices.forEach(innerGraph::addVertex);
               vertices.stream()
                 .map(graph::outgoingEdgesOf)
@@ -65,7 +64,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceOnlyCycleToSingleNode() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addEdge("cycle-1", "cycle-2");
@@ -80,7 +79,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceCycleWithAppendix() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("appendix");
@@ -97,7 +96,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceOnceCycleWithPrefixAndAppendix() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("prefix");
@@ -116,7 +115,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceDualCycleCompletely() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-a-1");
         graph.addVertex("cycle-ab-2");
         graph.addVertex("cycle-b-1");
@@ -135,7 +134,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceCycleWithMultipleInputsFromDifferentNodes() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("prefix-1");
@@ -158,7 +157,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceCycleWithMultipleInputsFromSameNodes() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("prefix");
@@ -181,7 +180,7 @@ public class JGraphTCyclesReducerTest
 
     @Test
     public void reduceLargeCycleWithSmallerInnerCycle() {
-        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(() -> new Edge(counter.getAndIncrement()));
+        final Graph<String, Edge> graph = new SimpleAnalysisGraph<>(Edge::new);
         graph.addVertex("cycle-1");
         graph.addVertex("cycle-2");
         graph.addVertex("cycle-3");

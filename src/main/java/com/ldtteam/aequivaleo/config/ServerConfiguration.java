@@ -14,6 +14,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
     public ForgeConfigSpec.BooleanValue writeResultsToLog;
     public ForgeConfigSpec.BooleanValue allowNoneSimpleIngredients;
     public ForgeConfigSpec.EnumValue<IngredientLogLevel> ingredientLogLevelEnumValue;
+    public ForgeConfigSpec.IntValue maxCacheFilesToKeep;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
     {
@@ -24,6 +25,9 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
         createCategory(builder, "recipes");
         ingredientLogLevelEnumValue = defineEnum(builder, "recipes.ingredients.error.logging", IngredientLogLevel.FULL);
         allowNoneSimpleIngredients = defineBoolean(builder, "recipes.ingredients.none-simple", true);
+        finishCategory(builder);
+        createCategory(builder, "cache");
+        maxCacheFilesToKeep = defineInteger(builder, "cache.max", 5, 1, Integer.MAX_VALUE);
         finishCategory(builder);
     }
 }

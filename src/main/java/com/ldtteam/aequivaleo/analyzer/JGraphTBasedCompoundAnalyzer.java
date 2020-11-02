@@ -12,18 +12,19 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.iterator.AnalysisBFSGraphIterator
 import com.ldtteam.aequivaleo.analyzer.jgrapht.node.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
-import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
+import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 
@@ -38,10 +39,16 @@ public class JGraphTBasedCompoundAnalyzer
     private static final Object ANALYSIS_LOCK = new Object();
 
     private final World world;
+    private final boolean forceReload;
+    private final boolean writeCachedData;
 
     private Map<ICompoundContainer<?>, Set<CompoundInstance>> results = new TreeMap<>();
 
-    public JGraphTBasedCompoundAnalyzer(final World world) {this.world = world;}
+    public JGraphTBasedCompoundAnalyzer(final World world, final boolean forceReload, final boolean writeCachedData) {
+        this.world = world;
+        this.forceReload = forceReload;
+        this.writeCachedData = writeCachedData;
+    }
 
     public BuildRecipeGraph createGraph() {
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new TreeMap<>();
@@ -78,14 +85,14 @@ public class JGraphTBasedCompoundAnalyzer
 
                 for (final ICompoundContainer<?> candidate : input.getCandidates())
                 {
-                    handleCompoundContainerAsInput(recipeGraph, compoundNodes, inputNode, candidate, recipe);
+                    handleCompoundContainerAsInput(recipeGraph, compoundNodes, inputNode, candidate);
                 }
             }
 
             //Process outputs
             for (ICompoundContainer<?> output : recipe.getRequiredKnownOutputs())
             {
-                handleCompoundContainerAsInput(recipeGraph, compoundNodes, recipeGraphNode, output, recipe);
+                handleCompoundContainerAsInput(recipeGraph, compoundNodes, recipeGraphNode, output);
             }
 
             //Process outputs
@@ -160,6 +167,17 @@ public class JGraphTBasedCompoundAnalyzer
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
 
+        return new BuildRecipeGraph(
+          recipeGraph,
+          resultingCompounds,
+          compoundNodes,
+          ingredientNodes,
+          notDefinedGraphNodes,
+          source);
+    }
+
+    private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode) {
+
         LOGGER.warn("Starting clique reduction.");
 
         final JGraphTCliqueReducer<IGraph> cliqueReducer = new JGraphTCliqueReducer<>(
@@ -176,22 +194,22 @@ public class JGraphTBasedCompoundAnalyzer
               final Set<Class<?>> recipeTypes = sets.get(0).stream().map(IRecipeNode::getRecipe).map(Object::getClass).collect(Collectors.toSet());
               final Optional<Class<?>> targetRecipeType =
                 recipeTypes.stream()
-                .filter(type -> sets.stream().allMatch(nodes -> nodes.stream().anyMatch(node -> node.getRecipe().getClass().equals(type))))
-                .findAny();
+                  .filter(type -> sets.stream().allMatch(nodes -> nodes.stream().anyMatch(node -> node.getRecipe().getClass().equals(type))))
+                  .findAny();
 
               return targetRecipeType.map(type -> sets.stream()
-                                                      .map(nodes -> {
-                                                          for (IRecipeNode node : nodes)
-                                                          {
-                                                              if (node.getRecipe().getClass().equals(type))
-                                                              {
-                                                                  return Optional.of(node).get();
-                                                              }
-                                                          }
-                                                          return null;
-                                                      })
-                                                      .filter(Objects::nonNull)
-                                                      .collect(Collectors.toSet()))
+                                                    .map(nodes -> {
+                                                        for (IRecipeNode node : nodes)
+                                                        {
+                                                            if (node.getRecipe().getClass().equals(type))
+                                                            {
+                                                                return Optional.of(node).get();
+                                                            }
+                                                        }
+                                                        return null;
+                                                    })
+                                                    .filter(Objects::nonNull)
+                                                    .collect(Collectors.toSet()))
                        .orElseGet(Sets::newHashSet);
           }, INode::onNeighborReplaced);
 
@@ -209,35 +227,43 @@ public class JGraphTBasedCompoundAnalyzer
 
         LOGGER.warn("Finished cycle reduction.");
 
-        recipeGraph.removeVertex(source);
+        recipeGraph.removeVertex(sourceNode);
 
         final Set<INode> sourceNodeLinks = findDanglingNodes(recipeGraph);
 
-        recipeGraph.addVertex(source);
+        recipeGraph.addVertex(sourceNode);
 
         for (INode rootNode : sourceNodeLinks)
         {
-            recipeGraph.addEdge(source, rootNode);
-            recipeGraph.setEdgeWeight(source, rootNode, 1d);
+            recipeGraph.addEdge(sourceNode, rootNode);
+            recipeGraph.setEdgeWeight(sourceNode, rootNode, 1d);
         }
 
-        return new BuildRecipeGraph(
-          recipeGraph,
-          resultingCompounds,
-          compoundNodes,
-          ingredientNodes,
-          notDefinedGraphNodes,
-          source);
+        return recipeGraph;
     }
 
     public void calculate()
     {
         final BuildRecipeGraph buildRecipeGraph = createGraph();
-        final IGraph recipeGraph = buildRecipeGraph.getRecipeGraph();
+        final IGraph noneReducedGraph = buildRecipeGraph.getRecipeGraph();
         final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds = buildRecipeGraph.getResultingCompounds();
         final Map<ICompoundContainer<?>, INode>  compoundNodes = buildRecipeGraph.getCompoundNodes();
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
         final SourceNode source = buildRecipeGraph.getSourceNode();
+
+        final int graphHash = noneReducedGraph.hashCode();
+        if (!forceReload && getWorld() instanceof ServerWorld) {
+            //We are allowed to lookup cached values
+            final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults((ServerWorld) getWorld(), graphHash);
+            if (cachedResults.isPresent()) {
+                LOGGER.warn(String.format("Using cached results for: %s", getWorld().getDimensionKey().getLocation()));
+                this.results = cachedResults.get();
+                LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), getWorld().getDimensionKey().getLocation()));
+                return;
+            }
+        }
+
+        final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
 
         final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation().toString(), recipeGraph.vertexSet().size());
         final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
@@ -254,6 +280,7 @@ public class JGraphTBasedCompoundAnalyzer
             INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
             {
+                LOGGER.debug(String.format("Adding missing locking node for container: %s", valueWrapper));
                 compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
                 resultingCompounds.computeIfAbsent(valueWrapper, wrapper -> Sets.newHashSet()).addAll(CompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().get(valueWrapper));
             }
@@ -302,6 +329,11 @@ public class JGraphTBasedCompoundAnalyzer
             AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", getWorld().getDimensionKey().getLocation()));
         }
 
+        if (writeCachedData && getWorld() instanceof ServerWorld) {
+            LOGGER.warn(String.format("Writing results to cache for: %s", getWorld().getDimensionKey().getLocation()));
+            WorldCacheUtils.writeCachedResults((ServerWorld) getWorld(), graphHash, resultingCompounds);
+            LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), getWorld().getDimensionKey().getLocation()));
+        }
         this.results = resultingCompounds;
     }
 
@@ -339,8 +371,7 @@ public class JGraphTBasedCompoundAnalyzer
       final Graph<INode, IEdge> recipeGraph,
       final Map<ICompoundContainer<?>, INode> nodes,
       final INode target,
-      final ICompoundContainer<?> candidate,
-      final IEquivalencyRecipe recipe
+      final ICompoundContainer<?> candidate
     )
     {
         final ICompoundContainer<?> unitWrapper = createUnitWrapper(candidate);

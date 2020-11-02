@@ -31,6 +31,7 @@ public interface IResultsInformationCache
      */
     Map<ICompoundContainer<?>, Set<CompoundInstance>> getAll();
 
+
     /**
      * Gives access to the calculation result of a single container.
      * If the container is not in unit form, he will be turned into a container that is in unit form, by using a duplicate.
@@ -39,12 +40,7 @@ public interface IResultsInformationCache
      * @return A sets containing the results if present, else an empty set is returned.
      */
     @NotNull
-    default Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container) {
-       final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
-                 IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
-
-       return getAll().getOrDefault(unitContainer, Collections.emptySet());
-    }
+    Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container);
 
     /**
      * Gives access to the calculation result of a single in game object.
@@ -56,6 +52,6 @@ public interface IResultsInformationCache
     @NotNull
     default <T> Set<CompoundInstance> getFor(@NotNull final T object) throws IllegalArgumentException {
         final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(object, 1d);
-        return getAll().getOrDefault(unitContainer, Collections.emptySet());
+        return getFor(unitContainer);
     }
 }

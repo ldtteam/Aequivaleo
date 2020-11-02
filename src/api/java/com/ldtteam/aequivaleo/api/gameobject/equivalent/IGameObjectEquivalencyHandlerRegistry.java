@@ -29,12 +29,35 @@ public interface IGameObjectEquivalencyHandlerRegistry
      * Registers a handler that can validate if two game objects contained in wrapper are actually equal to one another.
      * The callback should not check the wrapper or the internal size of the game object.
      *
-     * @param canHandlePredicate Invoked by the system to figure out if a given compound container can be handled by this handler.
+     * @param <L> The left type of game object that the handler can check.
+     * @param <R> The right type of game object that the handler can check.
+     * @param canHandleLeftPredicate Invoked by the system to figure out if a given compound container can be handled by the left side of this handler.
+     * @param canHandleRightPredicate Invoked by the system to figure out if a given compound container can be handled by the right side of this handler.
      * @param handler The callback to add to the registry, which can help with equivalency checking for game objects.
-     * @param <T> The type of game object that the handler can check.
      * @return The registry with the handler added.
      */
-    <T> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
+    <L, R> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
+      @NotNull final Predicate<ICompoundContainer<?>> canHandleLeftPredicate,
+      final Predicate<ICompoundContainer<?>> canHandleRightPredicate,
+      @NotNull final BiFunction<ICompoundContainer<L>, ICompoundContainer<R>, Optional<Boolean>> handler);
+
+    /**
+     * Registers a handler that can validate if two game objects contained in wrapper are actually equal to one another.
+     * The callback should not check the wrapper or the internal size of the game object.
+     *
+     * @param <T> The type of game object that the handler can check.
+     * @param canHandlePredicate Invoked by the system to figure out if a given compound container can be handled by this handler.
+     * @param handler The callback to add to the registry, which can help with equivalency checking for game objects.
+     * @return The registry with the handler added.
+     */
+    default <T> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
       @NotNull final Predicate<ICompoundContainer<?>> canHandlePredicate,
-      @NotNull final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler);
+      @NotNull final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler) {
+        return this.registerNewHandler(
+          canHandlePredicate,
+          canHandlePredicate,
+          handler
+        );
+    }
+
 }

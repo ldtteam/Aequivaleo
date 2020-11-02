@@ -11,14 +11,12 @@ import java.util.function.Supplier;
 
 public class AequivaleoGraph extends SimpleAnalysisGraph<INode, IEdge> implements IGraph
 {
-    private static AtomicLong EDGE_ID_GEN = new AtomicLong();
-
     public AequivaleoGraph()
     {
         super(createEdgeSupplier());
     }
 
     private static Supplier<IEdge> createEdgeSupplier() {
-        return () -> new Edge(EDGE_ID_GEN.getAndIncrement());
+        return Edge::new;
     }
 }

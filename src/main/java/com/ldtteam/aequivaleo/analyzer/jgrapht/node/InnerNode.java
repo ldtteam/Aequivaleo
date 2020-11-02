@@ -346,7 +346,7 @@ public class InnerNode
             {
                 if (innerVertices.contains(graph.getEdgeTarget(e)))
                 {
-                    innerGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e), new Edge(e.getEdgeIdentifier()));
+                    innerGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e), new Edge());
                     innerGraph.setEdgeWeight(graph.getEdgeSource(e), graph.getEdgeTarget(e), graph.getEdgeWeight(e));
                 }
             }
@@ -377,7 +377,7 @@ public class InnerNode
                     {
                         ioGraph.addVertex(graph.getEdgeTarget(iEdge));
                     }
-                    ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge(iEdge.getEdgeIdentifier()));
+                    ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge());
                     ioGraph.setEdgeWeight(graph.getEdgeSource(iEdge), node, iEdge.getWeight());
                 }
             }
@@ -395,7 +395,7 @@ public class InnerNode
                     {
                         ioGraph.addVertex(graph.getEdgeTarget(edge));
                     }
-                    ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge(edge.getEdgeIdentifier()));
+                    ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge());
                     ioGraph.setEdgeWeight(node, graph.getEdgeTarget(edge), edge.getWeight());
                 }
             }

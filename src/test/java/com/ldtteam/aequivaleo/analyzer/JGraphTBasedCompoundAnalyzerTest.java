@@ -12,8 +12,6 @@ import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegis
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
-import com.ldtteam.aequivaleo.api.mediation.IMediationContext;
-import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -28,18 +26,16 @@ import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecip
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.registries.ForgeRegistry;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -56,7 +52,7 @@ import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor("net.minecraft.world.World")
+@SuppressStaticInitializationFor({"net.minecraft.world.World"})
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
 @PrepareForTest({Aequivaleo.class})
 public class JGraphTBasedCompoundAnalyzerTest
@@ -84,9 +80,9 @@ public class JGraphTBasedCompoundAnalyzerTest
     {
         key = mock(RegistryKey.class);
         when(key.getLocation()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase()));
-        world = mock(net.minecraft.world.World.class);
+        world = mock(World.class);
         when(world.getDimensionKey()).thenReturn(key);
-        analyzer = new JGraphTBasedCompoundAnalyzer(world);
+        analyzer = new JGraphTBasedCompoundAnalyzer(world, true, false);
 
         input = CompoundInformationRegistry.getInstance(key);
 

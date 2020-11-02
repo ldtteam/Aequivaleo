@@ -5,11 +5,8 @@ import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.state.Property;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,47 +33,14 @@ public final class CommonBootstrapper
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
             (container) -> container.getContents() instanceof ItemStack,
-            (ICompoundContainer<ItemStack> left, ICompoundContainer<ItemStack> right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents()))
-          );
+            (ICompoundContainer<ItemStack> left, ICompoundContainer<ItemStack> right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents())));
 
         //Handle item equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
           .registerNewHandler(
             (container) -> container.getContents() instanceof Item,
             (ICompoundContainer<Item> left, ICompoundContainer<Item> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
-                                                                                                                                                 .getRegistryName()).toString()))
-          );
-
-        //Handle block equivalency:
-        GameObjectEquivalencyHandlerRegistry.getInstance()
-          .registerNewHandler(
-            (container) -> container.getContents() instanceof Block,
-            (ICompoundContainer<Block> left, ICompoundContainer<Block> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
-                                                                                                                                                 .getRegistryName()).toString()))
-          );
-
-        //Handle blockstate equivalency:
-        GameObjectEquivalencyHandlerRegistry.getInstance()
-          .registerNewHandler(
-            (container) -> container.getContents() instanceof BlockState,
-            (ICompoundContainer<BlockState> left, ICompoundContainer<BlockState> right) -> {
-                if (left.getContents().getBlock() != right.getContents().getBlock())
-                    return Optional.of(false);
-
-                for (final Property<?> property : left.getContents().getProperties())
-                {
-                    if (!right.getContents().getProperties().contains(property))
-                        return Optional.of(false);
-
-                    final Object leftValue = left.getContents().get(property);
-                    final Object rightValue = right.getContents().get(property);
-
-                    if (leftValue != rightValue)
-                        return Optional.of(false);
-                }
-
-                return Optional.of(true);
-            });
+                                                                                                                                                 .getRegistryName()).toString())));
     }
 
     private static void doHandlePluginLoad() {

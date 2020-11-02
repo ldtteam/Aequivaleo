@@ -204,40 +204,37 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
             //Create the new cycle construct.
             graph.addVertex(replacementNode);
             detectionGraph.addVertex(replacementNode);
-            for (INode iNode : incomingEdgesOf.keySet())
+            for (INode node : incomingEdgesOf.keySet())
             {
                 double newEdgeWeight = 0.0;
-                for (IEdge iEdge : incomingEdgesOf.get(iNode))
+                for (IEdge edge : incomingEdgesOf.get(node))
                 {
-                    double weight = iEdge.getWeight();
+                    double weight = graph.getEdgeWeight(edge);
                     newEdgeWeight += weight;
                 }
-                graph.addEdge(iNode, replacementNode);
-                graph.setEdgeWeight(iNode, replacementNode, newEdgeWeight);
+                graph.addEdge(node, replacementNode);
+                graph.setEdgeWeight(node, replacementNode, newEdgeWeight);
             }
-            for (INode iNode : outgoingEdgesTo.keySet())
+            for (INode node : outgoingEdgesTo.keySet())
             {
                 double newEdgeWeight = 0.0;
-                for (IEdge iEdge : outgoingEdgesTo.get(iNode))
+                for (IEdge edge : outgoingEdgesTo.get(node))
                 {
-                    double weight = iEdge.getWeight();
+                    double weight = graph.getEdgeWeight(edge);
                     newEdgeWeight += weight;
                 }
-                graph.addEdge(replacementNode, iNode);
-                graph.setEdgeWeight(replacementNode, iNode, newEdgeWeight);
+                graph.addEdge(replacementNode, node);
+                graph.setEdgeWeight(replacementNode, node, newEdgeWeight);
             }
             for (INode incomingSource : incomingEdgesOfDetection.keySet())
             {
                 double newEdgeWeight = 0.0;
+                final Set<IRecipeNode> newRecipes = new HashSet<>();
                 for (CliqueDetectionEdge cliqueDetectionEdge : incomingEdgesOfDetection.get(incomingSource))
                 {
-                    double weight = cliqueDetectionEdge.getWeight();
+                    double weight = detectionGraph.getEdgeWeight(cliqueDetectionEdge);
                     newEdgeWeight += weight;
-                }
-                final Set<IRecipeNode> newRecipes = new HashSet<>();
-                for (CliqueDetectionEdge e : incomingEdgesOfDetection.get(incomingSource))
-                {
-                    newRecipes.addAll(e.getRecipeNodes());
+                    newRecipes.addAll(cliqueDetectionEdge.getRecipeNodes());
                 }
                 detectionGraph.addEdge(incomingSource, replacementNode, new CliqueDetectionEdge(newRecipes));
                 detectionGraph.setEdgeWeight(incomingSource, replacementNode, newEdgeWeight);
@@ -259,15 +256,27 @@ public class JGraphTCliqueReducer<G extends Graph<INode, IEdge>>
                 detectionGraph.setEdgeWeight(replacementNode, outgoingTarget, newEdgeWeight);
             }
 
-            graph.removeAllVertices(clique);
-            detectionGraph.removeAllVertices(clique);
-            graph.removeAllVertices(recipesToRemove);
-            graph.removeAllVertices(inputNodesToDelete);
+            removeNodes(graph, clique);
+            removeNodes(detectionGraph, clique);
+            removeNodes(graph, new HashSet<>(recipesToRemove));
+            removeNodes(graph, new HashSet<>(inputNodesToDelete));
 
             incomingEdgesTo.forEach((cycleNode, edge) -> onNeighborNodeReplacedCallback.accept(incomingEdges.get(edge), cycleNode, replacementNode));
             outgoingEdgesOf.forEach((cycleNode, edge) -> onNeighborNodeReplacedCallback.accept(outgoingEdges.get(edge), cycleNode, replacementNode));
 
             AnalysisLogHandler.debug(LOGGER, String.format(" > Removed clique: %s", clique));
+        }
+    }
+
+    private <V, E> void removeNodes(final Graph<V, E> graph, final Set<V> nodes) {
+        for (final V node : nodes)
+        {
+            final Set<E> incomingEdgesToRemove = new HashSet<>(graph.incomingEdgesOf(node));
+            final Set<E> outgoingEdgesToRemove = new HashSet<>(graph.outgoingEdgesOf(node));
+
+            graph.removeAllEdges(incomingEdgesToRemove);
+            graph.removeAllEdges(outgoingEdgesToRemove);
+            graph.removeVertex(node);
         }
     }
 

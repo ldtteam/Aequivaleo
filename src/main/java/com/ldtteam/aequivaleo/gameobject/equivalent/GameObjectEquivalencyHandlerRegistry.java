@@ -22,7 +22,7 @@ public class GameObjectEquivalencyHandlerRegistry implements IGameObjectEquivale
     {
     }
 
-    private final LinkedList<EquivalencyHandler<?>> handlers = new LinkedList<>();
+    private final LinkedList<EquivalencyHandler<?, ?>> handlers = new LinkedList<>();
 
     public boolean areGameObjectsEquivalent(
       @NotNull final ICompoundContainer<?> left, @NotNull final ICompoundContainer<?> right)
@@ -30,9 +30,9 @@ public class GameObjectEquivalencyHandlerRegistry implements IGameObjectEquivale
         if (left.getContents().getClass() != right.getContents().getClass())
             return false;
 
-        for (Iterator<EquivalencyHandler<?>> iterator = handlers.descendingIterator(); iterator.hasNext(); )
+        for (Iterator<EquivalencyHandler<?, ?>> iterator = handlers.descendingIterator(); iterator.hasNext(); )
         {
-            final EquivalencyHandler<?> handler = iterator.next();
+            final EquivalencyHandler<?, ?> handler = iterator.next();
             Optional<Boolean> handleResult = attemptHandle(handler, left, right);
             if (handleResult.isPresent())
             {
@@ -43,43 +43,53 @@ public class GameObjectEquivalencyHandlerRegistry implements IGameObjectEquivale
     }
 
     @SuppressWarnings(Suppression.UNCHECKED)
-    private static <T> Optional<Boolean> attemptHandle(
-      final EquivalencyHandler<T> handler,
+    private static <L, R> Optional<Boolean> attemptHandle(
+      final EquivalencyHandler<L, R> handler,
       final ICompoundContainer<?> left,
       final ICompoundContainer<?> right
     ) {
-        if (handler.getCanHandlePredicate().test((ICompoundContainer<T>) left) && handler.getCanHandlePredicate().test((ICompoundContainer<T>) right))
-            return handler.getHandler().apply((ICompoundContainer<T>) left, (ICompoundContainer<T>) right);
+        if (handler.getCanHandleLeftPredicate().test(left) && handler.getCanHandleRightPredicate().test(right))
+            return handler.getHandler().apply((ICompoundContainer<L>) left, (ICompoundContainer<R>) right);
 
         return Optional.empty();
     }
 
 
     @Override
-    public <T> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
-      @NotNull final Predicate<ICompoundContainer<?>> canHandlePredicate, @NotNull final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler)
+    public <L, R> IGameObjectEquivalencyHandlerRegistry registerNewHandler(
+      @NotNull final Predicate<ICompoundContainer<?>> canHandleLeftPredicate,
+      final Predicate<ICompoundContainer<?>> canHandleRightPredicate,
+      @NotNull final BiFunction<ICompoundContainer<L>, ICompoundContainer<R>, Optional<Boolean>> handler)
     {
-        this.handlers.add(new EquivalencyHandler<>(canHandlePredicate, handler));
+        this.handlers.add(new EquivalencyHandler<>(canHandleLeftPredicate, canHandleRightPredicate, handler));
         return this;
     }
 
-    private static final class EquivalencyHandler<T> {
-        private final Predicate<ICompoundContainer<?>> canHandlePredicate;
-        private final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler;
+    private static final class EquivalencyHandler<L, R> {
+        private final Predicate<ICompoundContainer<?>> canHandleLeftPredicate;
+        private final Predicate<ICompoundContainer<?>> canHandleRightPredicate;
+        private final BiFunction<ICompoundContainer<L>, ICompoundContainer<R>, Optional<Boolean>> handler;
 
         private EquivalencyHandler(
-          final Predicate<ICompoundContainer<?>> canHandlePredicate,
-          final BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> handler) {
-            this.canHandlePredicate = canHandlePredicate;
+          final Predicate<ICompoundContainer<?>> canHandleLeftPredicate,
+          final Predicate<ICompoundContainer<?>> canHandleRightPredicate,
+          final BiFunction<ICompoundContainer<L>, ICompoundContainer<R>, Optional<Boolean>> handler) {
+            this.canHandleLeftPredicate = canHandleLeftPredicate;
+            this.canHandleRightPredicate = canHandleRightPredicate;
             this.handler = handler;
         }
 
-        public Predicate<ICompoundContainer<?>> getCanHandlePredicate()
+        public Predicate<ICompoundContainer<?>> getCanHandleLeftPredicate()
         {
-            return canHandlePredicate;
+            return canHandleLeftPredicate;
         }
 
-        public BiFunction<ICompoundContainer<T>, ICompoundContainer<T>, Optional<Boolean>> getHandler()
+        public Predicate<ICompoundContainer<?>> getCanHandleRightPredicate()
+        {
+            return canHandleRightPredicate;
+        }
+
+        public BiFunction<ICompoundContainer<L>, ICompoundContainer<R>, Optional<Boolean>> getHandler()
         {
             return handler;
         }

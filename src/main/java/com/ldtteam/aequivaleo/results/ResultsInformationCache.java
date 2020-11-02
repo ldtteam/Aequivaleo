@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.results;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +52,6 @@ public class ResultsInformationCache implements IResultsInformationCache
         return WORLD_INSTANCES.computeIfAbsent(world, (dimType) -> new ResultsInformationCache());
     }
 
-
     @SubscribeEvent
     public static void onPlayerLoggedIn(final PlayerEvent.PlayerLoggedInEvent playerLoggedInEvent)
     {
@@ -64,6 +65,29 @@ public class ResultsInformationCache implements IResultsInformationCache
     public Map<ICompoundContainer<?>, Set<CompoundInstance>> getAll()
     {
         return cacheData;
+    }
+
+    @NotNull
+    @Override
+    public Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container){
+        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
+                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
+
+        if (!getAll().containsKey(unitContainer)) {
+            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
+            for (final Object alternative : alternatives)
+            {
+                final Set<CompoundInstance> result = this.getFor(alternative);
+                if (!result.isEmpty())
+                {
+                    return result;
+                }
+            }
+
+            return Collections.emptySet();
+        }
+
+        return getAll().get(unitContainer);
     }
 
     public void set(@NotNull final Map<ICompoundContainer<?>, Set<CompoundInstance>> data)

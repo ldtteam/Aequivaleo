@@ -5,10 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.api.instanced.IInstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.util.RegistryKey;
@@ -118,6 +120,20 @@ public interface IAequivaleoAPI
      * @return The recipe type processing registry.
      */
     IRecipeTypeProcessingRegistry getRecipeTypeProcessingRegistry();
+
+    /**
+     * Gives access to the instanced equivalency handler registry.
+     *
+     * @return The instanced equivalency handler registry.
+     */
+    IInstancedEquivalencyHandlerRegistry getInstancedEquivalencyHandlerRegistry();
+
+    /**
+     * Gives access to the results adapter handler registry.
+     *
+     * @return The results adapter handler registry.
+     */
+    IResultsAdapterHandlerRegistry getResultsAdapterHandlerRegistry();
 
     /**
      * Returns the aequivaleo mod container.

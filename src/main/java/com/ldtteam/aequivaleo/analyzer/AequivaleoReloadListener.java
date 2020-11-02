@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +62,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
     public static void onServerStarted(final FMLServerStartedEvent serverStartedEvent)
     {
         LOGGER.info("Building initial equivalency graph.");
-        reloadResources(parseData(serverStartedEvent.getServer().getDataPackRegistries().getResourceManager()));
+        reloadResources(parseData(serverStartedEvent.getServer().getDataPackRegistries().getResourceManager()), false);
     }
 
     @NotNull
@@ -77,7 +76,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
     protected void apply(@NotNull final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> objectIn, @NotNull final IResourceManager resourceManagerIn, @NotNull final IProfiler profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
-        reloadResources(objectIn);
+        reloadResources(objectIn, true);
     }
 
     private static Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> parseData(final IResourceManager resourceManager) {
@@ -163,7 +162,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         return collectedData;
     }
 
-    private static void reloadResources(final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> data)
+    private static void reloadResources(final Pair<Map<ResourceLocation, List<CompoundInstanceData>>, Map<ResourceLocation, List<CompoundInstanceData>>> data, final boolean forceReload)
     {
         final Map<ResourceLocation, List<CompoundInstanceData>> valueData = data.getLeft();
         final Map<ResourceLocation, List<CompoundInstanceData>> lockedData = data.getRight();
@@ -194,8 +193,8 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
             valueData.get(world.getDimensionKey().getLocation()),
             lockedData.get(GENERAL_DATA_NAME),
             lockedData.get(world.getDimensionKey().getLocation()
-            )
-          ),
+            ),
+            forceReload),
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
           .thenRunAsync(ResultsInformationCache::updateAllPlayers)
@@ -213,19 +212,21 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
         private final List<CompoundInstanceData> valueWorldData;
         private final List<CompoundInstanceData> lockedGeneralData;
         private final List<CompoundInstanceData> lockedWorldData;
+        private final boolean forceReload;
 
         private AequivaleoWorldAnalysisRunner(
           final ServerWorld serverWorld,
           final List<CompoundInstanceData> valueGeneralData,
           final List<CompoundInstanceData> valueWorldData,
           final List<CompoundInstanceData> lockedGeneralData,
-          final List<CompoundInstanceData> lockedWorldData)
+          final List<CompoundInstanceData> lockedWorldData, final boolean forceReload)
         {
             this.valueGeneralData = valueGeneralData;
             this.valueWorldData = valueWorldData;
             this.lockedGeneralData = lockedGeneralData;
             this.serverWorld = serverWorld;
             this.lockedWorldData = lockedWorldData;
+            this.forceReload = forceReload;
         }
 
         @Override
@@ -289,7 +290,7 @@ public class AequivaleoReloadListener extends ReloadListener<Pair<Map<ResourceLo
                 lockedTargetMap.forEach(ICompoundInformationRegistry.getInstance(getServerWorld().getDimensionKey())
                   ::registerLocking);
 
-                JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld());
+                JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld(), forceReload, true);
                 ResultsInformationCache.getInstance(getServerWorld().getDimensionKey()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {
                 LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().getDimensionKey().getLocation()), t);

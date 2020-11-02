@@ -36,7 +36,7 @@ public class GraphEdgeJSONHandler implements JsonSerializer<IEdge>
         final JsonObject edgeData = new JsonObject();
         edgeData.addProperty("source", sourceId);
         edgeData.addProperty("target", targetId);
-        edgeData.addProperty("weight", src.getWeight());
+        edgeData.addProperty("weight", graph.getEdgeWeight(src));
         return edgeData;
     }
 }

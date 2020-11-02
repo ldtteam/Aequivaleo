@@ -3,32 +3,23 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.clique.graph;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IRecipeNode;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class CliqueDetectionEdge implements IEdge
+public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
 {
-    private static AtomicLong EDGE_ID_GEN = new AtomicLong();
-
-    private final long             id;
     private final Set<IRecipeNode> recipeNodes;
 
     public CliqueDetectionEdge(final IRecipeNode recipeNodes) {
-        this.id = EDGE_ID_GEN.getAndIncrement();
         this.recipeNodes = Sets.newHashSet(recipeNodes);
     }
 
     public CliqueDetectionEdge(final Set<IRecipeNode> recipeNodes) {
-        this.id = EDGE_ID_GEN.getAndIncrement();
         this.recipeNodes = Sets.newHashSet(recipeNodes);
-    }
-
-    @Override
-    public long getEdgeIdentifier()
-    {
-        return id;
     }
 
     @Override
@@ -43,23 +34,19 @@ public class CliqueDetectionEdge implements IEdge
     }
 
     @Override
-    public boolean equals(final Object o)
+    public int hashCode()
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (!(o instanceof CliqueDetectionEdge))
-        {
-            return false;
-        }
-        final CliqueDetectionEdge that = (CliqueDetectionEdge) o;
-        return id == that.id;
+        return Objects.hash(getSource(), getTarget());
     }
 
     @Override
-    public int hashCode()
+    public boolean equals(final Object obj)
     {
-        return Objects.hash(id);
+        if (!(obj instanceof CliqueDetectionEdge))
+            return false;
+        final CliqueDetectionEdge other = (CliqueDetectionEdge) obj;
+
+        return Objects.equals(getSource(), other.getSource()) &&
+                 Objects.equals(getTarget(), other.getTarget());
     }
 }

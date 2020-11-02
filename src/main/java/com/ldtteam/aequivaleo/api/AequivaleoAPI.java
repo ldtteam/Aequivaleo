@@ -5,18 +5,22 @@ import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.api.instanced.IInstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.data.serializers.*;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
+import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
+import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
@@ -95,5 +99,17 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IRecipeTypeProcessingRegistry getRecipeTypeProcessingRegistry()
     {
         return RecipeTypeProcessingRegistry.getInstance();
+    }
+
+    @Override
+    public IInstancedEquivalencyHandlerRegistry getInstancedEquivalencyHandlerRegistry()
+    {
+        return InstancedEquivalencyHandlerRegistry.getInstance();
+    }
+
+    @Override
+    public IResultsAdapterHandlerRegistry getResultsAdapterHandlerRegistry()
+    {
+        return ResultsAdapterHandlerRegistry.getInstance();
     }
 }

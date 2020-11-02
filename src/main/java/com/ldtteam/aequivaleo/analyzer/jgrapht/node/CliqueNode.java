@@ -402,7 +402,7 @@ public class CliqueNode
                     {
                         ioGraph.addVertex(graph.getEdgeTarget(iEdge));
                     }
-                    ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge(iEdge.getEdgeIdentifier()));
+                    ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge());
                     ioGraph.setEdgeWeight(graph.getEdgeSource(iEdge), node, iEdge.getWeight());
                 }
             }
@@ -420,7 +420,7 @@ public class CliqueNode
                     {
                         ioGraph.addVertex(graph.getEdgeTarget(edge));
                     }
-                    ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge(edge.getEdgeIdentifier()));
+                    ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge());
                     ioGraph.setEdgeWeight(node, graph.getEdgeTarget(edge), edge.getWeight());
                 }
             }
