@@ -30,9 +30,11 @@ public class WorldCacheUtils
     public static void writeCachedResults(final ServerWorld world, final int id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
         final File aequivaleoDirectory = new File(world.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
-        final File cacheFile = new File(cacheDirectory, String.format("%d.bin-cache", id));
+        final File worldCacheDirectory = new File(cacheDirectory,
+          String.format("%s_%s", world.getDimensionKey().getLocation().getNamespace(), world.getDimensionKey().getLocation().getPath()));
+        final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
 
-        cacheDirectory.mkdirs();
+        worldCacheDirectory.mkdirs();
 
         try
         {
@@ -69,11 +71,13 @@ public class WorldCacheUtils
     public static void cleanupCacheDirectory(final ServerWorld serverWorld) {
         final File aequivaleoDirectory = new File(serverWorld.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
+        final File worldCacheDirectory = new File(cacheDirectory,
+          String.format("%s_%s", serverWorld.getDimensionKey().getLocation().getNamespace(), serverWorld.getDimensionKey().getLocation().getPath()));
 
-        if (!cacheDirectory.exists())
+        if (!worldCacheDirectory.exists())
             return;
 
-        final List<File> cacheFiles = Arrays.asList(Objects.requireNonNull(cacheDirectory.listFiles()));
+        final List<File> cacheFiles = Arrays.asList(Objects.requireNonNull(worldCacheDirectory.listFiles()));
 
         if (cacheFiles.size() > Aequivaleo.getInstance().getConfiguration().getServer().maxCacheFilesToKeep.get()) {
             cacheFiles
@@ -89,9 +93,11 @@ public class WorldCacheUtils
     public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final ServerWorld world, final int id) {
         final File aequivaleoDirectory = new File(world.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
-        final File cacheFile = new File(cacheDirectory, String.format("%d.bin-cache", id));
+        final File worldCacheDirectory = new File(cacheDirectory,
+          String.format("%s_%s", world.getDimensionKey().getLocation().getNamespace(), world.getDimensionKey().getLocation().getPath()));
+        final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
 
-        cacheDirectory.mkdirs();
+        worldCacheDirectory.mkdirs();
 
         if (!cacheFile.exists())
             return Optional.empty();
