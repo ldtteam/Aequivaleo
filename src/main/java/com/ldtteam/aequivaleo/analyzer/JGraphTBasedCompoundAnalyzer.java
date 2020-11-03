@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analyzer.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.cache.CacheKey;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.clique.JGraphTCliqueReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
@@ -22,6 +23,7 @@ import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.jmx.Server;
@@ -251,7 +253,8 @@ public class JGraphTBasedCompoundAnalyzer
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
         final SourceNode source = buildRecipeGraph.getSourceNode();
 
-        final int graphHash = noneReducedGraph.hashCode();
+        final CacheKey key = new CacheKey(ModList.get(), noneReducedGraph);
+        final int graphHash = key.hashCode();
         if (!forceReload && getWorld() instanceof ServerWorld) {
             //We are allowed to lookup cached values
             final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults((ServerWorld) getWorld(), graphHash);

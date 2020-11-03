@@ -10,9 +10,3 @@ license="GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
     description='''
         Mediator mod which allows for high performance analysis of recipes, their inputs and outputs.
     '''
-    [[dependencies.mantle]]
-        modId="forge"
-        mandatory=true
-        versionRange="[${forge_version},)"
-        ordering="NONE"
-        side="BOTH"

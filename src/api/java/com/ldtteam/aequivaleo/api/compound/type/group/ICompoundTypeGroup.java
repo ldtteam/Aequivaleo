@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,4 +74,14 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
     default int compareTo(@NotNull ICompoundTypeGroup group) {
         return Objects.requireNonNull(getRegistryName()).compareTo(group.getRegistryName());
     }
+
+    /**
+     * Invoked by an instance of {@link IResultsInformationCache} to store an additional cache value.
+     * Warning this method is invoked in parallel in almost all cases.
+     *
+     * @param instances The instances to convert into a cache entry.
+     *
+     * @return An optional that indicates the cache value to store. Return an empty optional to not store any cache value.
+     */
+    default Optional<?> convertToCacheEntry(final Set<CompoundInstance> instances) { return Optional.empty(); }
 }
