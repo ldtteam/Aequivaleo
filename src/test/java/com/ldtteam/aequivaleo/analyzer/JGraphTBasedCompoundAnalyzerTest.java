@@ -28,6 +28,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.junit.After;
@@ -52,7 +53,7 @@ import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor({"net.minecraft.world.World"})
+@SuppressStaticInitializationFor({"net.minecraft.world.World", "net.minecraftforge.fml.ModList"})
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
 @PrepareForTest({Aequivaleo.class})
 public class JGraphTBasedCompoundAnalyzerTest
@@ -86,7 +87,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         input = CompoundInformationRegistry.getInstance(key);
 
-        mockStatic(Aequivaleo.class);
+        mockStatic(Aequivaleo.class, ModList.class);
         Aequivaleo mod = mock(Aequivaleo.class);
         when(Aequivaleo.getInstance()).thenReturn(mod);
 
@@ -172,6 +173,10 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(typeReg.getKeys()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
         when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
         ModRegistries.COMPOUND_TYPE = typeReg;
+
+        final ModList modList = mock(ModList.class);
+        when(modList.getMods()).thenReturn(Collections.emptyList());
+        when(ModList.get()).thenReturn(modList);
     }
 
     @After
