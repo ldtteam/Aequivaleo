@@ -26,7 +26,7 @@ public final class CompoundInstanceData
         }),
         REPLACING((iCompoundContainerSetMap, dataDrivenCompoundInstanceData) -> {
             dataDrivenCompoundInstanceData.getContainers().forEach(container -> {
-                iCompoundContainerSetMap.putIfAbsent(container,
+                iCompoundContainerSetMap.put(container,
                   dataDrivenCompoundInstanceData
                     .getCompoundInstances()
                     .stream()

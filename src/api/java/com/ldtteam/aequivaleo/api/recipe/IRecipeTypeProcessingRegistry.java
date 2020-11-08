@@ -37,4 +37,11 @@ public interface IRecipeTypeProcessingRegistry
      * @return All registered vanilla recipe.
      */
     Set<IRecipeType<?>> getRecipeTypesToBeProcessedAs(final ResourceLocation type);
+
+    /**
+     * Returns all known types, which have registrations for special handling, from the registry.
+     *
+     * @return All registered minecraft recipe types.
+     */
+    Set<IRecipeType<?>> getAllKnownTypes();
 }

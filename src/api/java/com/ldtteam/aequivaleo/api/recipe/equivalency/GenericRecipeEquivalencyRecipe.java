@@ -1,7 +1,6 @@
-package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
+package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.Validate;
@@ -11,14 +10,14 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class AbstractEquivalencyRecipe implements IEquivalencyRecipe
+public class GenericRecipeEquivalencyRecipe implements IGenericRecipeEquivalencyRecipe
 {
     protected final ResourceLocation                 recipeName;
     protected final SortedSet<IRecipeIngredient>     inputs;
     protected final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     protected final SortedSet<ICompoundContainer<?>> outputs;
 
-    public AbstractEquivalencyRecipe(
+    public GenericRecipeEquivalencyRecipe(
       final ResourceLocation recipeName, final Set<IRecipeIngredient> inputs, final Set<ICompoundContainer<?>> requiredKnownOutputs, final Set<ICompoundContainer<?>> outputs)
     {
         this.recipeName = recipeName;
@@ -57,11 +56,11 @@ public class AbstractEquivalencyRecipe implements IEquivalencyRecipe
         {
             return true;
         }
-        if (!(o instanceof AbstractEquivalencyRecipe))
+        if (!(o instanceof GenericRecipeEquivalencyRecipe))
         {
             return false;
         }
-        final AbstractEquivalencyRecipe that = (AbstractEquivalencyRecipe) o;
+        final GenericRecipeEquivalencyRecipe that = (GenericRecipeEquivalencyRecipe) o;
         return getRecipeName().equals(that.getRecipeName()) &&
                  getInputs().equals(that.getInputs()) &&
                  getRequiredKnownOutputs().equals(that.getRequiredKnownOutputs()) &&

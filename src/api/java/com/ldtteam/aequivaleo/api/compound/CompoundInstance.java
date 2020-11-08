@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.api.compound;
 
 import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundInstance implements Comparable<CompoundInstance>
@@ -28,6 +29,17 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
     public ICompoundType getType()
     {
         return type;
+    }
+
+    /**
+     * Returns the group of the type of this instances.
+     * Invokes {@link ICompoundType#getGroup()} internally.
+     *
+     * @return The group.
+     */
+    @NotNull
+    public ICompoundTypeGroup getGroup() {
+        return getType().getGroup();
     }
 
     /**

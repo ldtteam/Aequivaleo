@@ -1,15 +1,14 @@
 package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.IStoneCuttingEquivalencyRecipe;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Set;
-import java.util.SortedSet;
 
-public class StoneCuttingEquivalencyRecipe extends AbstractEquivalencyRecipe implements IStoneCuttingEquivalencyRecipe
+public class StoneCuttingEquivalencyRecipe extends GenericRecipeEquivalencyRecipe implements IStoneCuttingEquivalencyRecipe
 {
     public StoneCuttingEquivalencyRecipe(
       final ResourceLocation recipeName,

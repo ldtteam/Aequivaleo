@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
@@ -22,14 +23,17 @@ import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalency
 import net.minecraft.item.crafting.*;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,18 +84,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     @Override
     public void onReloadStartedFor(final ServerWorld world)
     {
-
-        final List<IRecipe<?>> craftingRecipes = Lists.newArrayList();
-
-        IRecipeTypeProcessingRegistry
-          .getInstance()
-          .getRecipeTypesToBeProcessedAs(Constants.SIMPLE_RECIPE_TYPE)
-          .forEach(type -> craftingRecipes.addAll(getRecipes(type, world)));
-
-        craftingRecipes
-          .parallelStream()
-          .forEach(recipe -> processCraftingRecipe(world, recipe));
-
         final List<IRecipe<?>> smeltingRecipe = Lists.newArrayList();
 
         IRecipeTypeProcessingRegistry
@@ -124,6 +116,28 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         smithingRecipe
           .parallelStream()
           .forEach(recipe -> processSmithingRecipe(world, recipe));
+
+        final List<IRecipe<?>> craftingRecipes = Lists.newArrayList();
+
+        IRecipeTypeProcessingRegistry
+          .getInstance()
+          .getRecipeTypesToBeProcessedAs(Constants.SIMPLE_RECIPE_TYPE)
+          .forEach(type -> craftingRecipes.addAll(getRecipes(type, world)));
+
+        craftingRecipes
+          .parallelStream()
+          .forEach(recipe -> processCraftingRecipe(world, recipe));
+
+        final List<IRecipe<?>> genericRecipes = Lists.newArrayList();
+
+        final Set<IRecipeType<?>> knownTypes = IRecipeTypeProcessingRegistry.getInstance().getAllKnownTypes();
+        Registry.RECIPE_TYPE.stream().filter(toHandle -> !knownTypes.contains(toHandle)).forEach(
+          type -> genericRecipes.addAll(getRecipes(type, world))
+        );
+
+        genericRecipes
+          .parallelStream()
+          .forEach(recipe -> processGenericRecipe(world, recipe));
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -146,6 +160,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     private static void processStoneCuttingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    }
+
+    private static void processGenericRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    {
+        processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processSmithingRecipe(@NotNull final World world, IRecipe<?> iRecipe)

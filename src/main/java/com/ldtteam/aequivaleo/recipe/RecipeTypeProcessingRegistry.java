@@ -7,8 +7,10 @@ import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class RecipeTypeProcessingRegistry implements IRecipeTypeProcessingRegistry
 {
@@ -37,5 +39,11 @@ public final class RecipeTypeProcessingRegistry implements IRecipeTypeProcessing
     public Set<IRecipeType<?>> getRecipeTypesToBeProcessedAs(final ResourceLocation type)
     {
         return types.getOrDefault(type, Sets.newHashSet());
+    }
+
+    @Override
+    public Set<IRecipeType<?>> getAllKnownTypes()
+    {
+        return types.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
     }
 }

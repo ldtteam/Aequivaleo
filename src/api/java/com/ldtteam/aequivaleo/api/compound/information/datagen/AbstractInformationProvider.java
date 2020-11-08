@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound.information.datagen;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -8,15 +9,14 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DirectoryCache;
 import net.minecraft.data.IDataProvider;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,21 +29,23 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
+    @VisibleForTesting
+    final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
         @Override
         public String getPath()
         {
             return "general";
         }
     };
-    private final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
+    @VisibleForTesting
+    final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
 
     protected AbstractInformationProvider() {
     }
 
     @Override
-    public final void act(final DirectoryCache cache) throws IOException
+    public void act(@NotNull final DirectoryCache cache) throws IOException
     {
         this.calculateDataToSave();
 
@@ -52,10 +54,10 @@ public abstract class AbstractInformationProvider implements IDataProvider
         this.writeData(
           cache,
           gson,
-          generalData
+          getGeneralData()
         );
 
-        for (WorldData worldData : this.worldDataMap.values())
+        for (WorldData worldData : this.getWorldDataMap().values())
         {
             this.writeData(
               cache,
@@ -67,7 +69,20 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     protected abstract Set<Path> getPathsToWrite(String worldPath);
 
-    private void writeData(
+    @VisibleForTesting
+    WorldData getGeneralData()
+    {
+        return generalData;
+    }
+
+    @VisibleForTesting
+    Map<ResourceLocation, WorldData> getWorldDataMap()
+    {
+        return worldDataMap;
+    }
+
+    @VisibleForTesting
+    void writeData(
       final DirectoryCache cache,
       final Gson gson,
       final WorldData worldData
@@ -351,7 +366,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
                                                     1d
                                                   )).collect(Collectors.toSet());
 
-        this.generalData
+        this.getGeneralData()
           .getDataToWrite()
           .put(
             containers,
@@ -411,7 +426,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
                                                                                                  1d
                                                                                                )).collect(Collectors.toSet());
 
-        this.worldDataMap
+        this.getWorldDataMap()
           .computeIfAbsent(worldId, WorldData::new)
           .getDataToWrite()
           .put(
@@ -705,7 +720,8 @@ public abstract class AbstractInformationProvider implements IDataProvider
         );
     }
 
-    private static class WorldData {
+    @VisibleForTesting
+    static class WorldData {
         private final ResourceLocation worldId;
         private final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> dataToWrite = Maps.newHashMap();
 

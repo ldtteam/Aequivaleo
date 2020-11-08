@@ -42,6 +42,23 @@ public interface IRecipeNode extends INode
                     }
                 }
             }
+            else if (node instanceof IRecipeResidueNode) {
+                final IRecipeResidueNode inputNode = (IRecipeResidueNode) node;
+                final Set<CompoundInstance> instances = inputNode.getResidueInstances(this);
+                boolean hasNoMatchingGroup = true;
+                for (CompoundInstance instance : instances)
+                {
+                    ICompoundTypeGroup g = instance.getGroup();
+                    if (g.equals(group))
+                    {
+                        hasNoMatchingGroup = false;
+                        break;
+                    }
+                }
+                if (hasNoMatchingGroup) {
+                    return true;
+                }
+            }
         }
         return false;
     }

@@ -53,9 +53,9 @@ import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor({"net.minecraft.world.World", "net.minecraftforge.fml.ModList"})
+@SuppressStaticInitializationFor({"net.minecraft.world.World"})
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
-@PrepareForTest({Aequivaleo.class})
+@PrepareForTest({Aequivaleo.class, ModList.class})
 public class JGraphTBasedCompoundAnalyzerTest
 {
 
