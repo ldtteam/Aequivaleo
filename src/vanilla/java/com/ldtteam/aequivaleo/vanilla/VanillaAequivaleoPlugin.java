@@ -10,24 +10,26 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
-import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.CookingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SimpleEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SmithingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalencyRecipe;
-import net.minecraft.item.crafting.*;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.SmithingRecipe;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @AequivaleoPlugin
@@ -130,10 +133,19 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
         final List<IRecipe<?>> genericRecipes = Lists.newArrayList();
 
+        final List<Pattern> blackListPatterns = configuration.getServer().recipeTypeNamePatternsToExclude
+          .get()
+          .stream()
+          .map(Pattern::compile)
+          .collect(Collectors.toList());
+
         final Set<IRecipeType<?>> knownTypes = IRecipeTypeProcessingRegistry.getInstance().getAllKnownTypes();
-        Registry.RECIPE_TYPE.stream().filter(toHandle -> !knownTypes.contains(toHandle)).forEach(
-          type -> genericRecipes.addAll(getRecipes(type, world))
-        );
+        Registry.RECIPE_TYPE.getEntries().stream()
+          .filter(entry -> !knownTypes.contains(entry.getValue()))
+          .filter(entry -> blackListPatterns.stream().noneMatch(blp -> blp.matcher(entry.getKey().getLocation().toString()).find()))
+          .forEach(
+             entry -> genericRecipes.addAll(getRecipes(entry.getValue(), world))
+          );
 
         genericRecipes
           .parallelStream()

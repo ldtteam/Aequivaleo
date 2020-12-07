@@ -2,13 +2,12 @@ package com.ldtteam.aequivaleo.vanilla.config;
 
 import com.google.common.collect.ImmutableList;
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.Tags;
 
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Mod server configuration.
@@ -18,6 +17,7 @@ import java.util.function.Predicate;
 public class ServerConfiguration extends AbstractAequivaleoConfiguration
 {
     public ForgeConfigSpec.ConfigValue<List<? extends String>> tagsToRegister;
+    public ForgeConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
     {
@@ -204,6 +204,21 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
           }
         );
         finishCategory(builder);
+        createCategory(builder, "conversion");
+        recipeTypeNamePatternsToExclude = defineList(
+          builder,
+          "recipes.tags.tagsToRegister",
+          new ImmutableList.Builder<String>()
+            .build(),
+          o -> {
+              try {
+                  Pattern.compile(o.toString());
+                  return true;
+              } catch (PatternSyntaxException pse) {
+                  return false;
+              }
+          }
+        );
         finishCategory(builder);
     }
 }

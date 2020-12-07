@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.utils;
 
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.config.Configuration;
+import net.minecraftforge.fml.config.ModConfig;
 import org.apache.logging.log4j.Logger;
 
 public class AnalysisLogHandler
@@ -15,7 +16,7 @@ public class AnalysisLogHandler
         throw new IllegalStateException("Tried to initialize AnalysisLogHandler. This is a utility class.");
     }
 
-    public static void onConfigurationReloaded() {
+    public static void onConfigurationReloaded(ModConfig.Reloading reloadingEvent) {
         CONFIG.clear();
     }
 

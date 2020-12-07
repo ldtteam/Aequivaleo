@@ -8,6 +8,7 @@ import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.network.NetworkChannel;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculatorLogHandler;
+import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -38,6 +39,8 @@ public class Aequivaleo
 
         PluginManger.getInstance().detect();
         PluginManger.getInstance().run(IAequivaleoPlugin::onConstruction);
+
+        Mod.EventBusSubscriber.Bus.MOD.bus().get().addListener(AnalysisLogHandler::onConfigurationReloaded);
     }
 
     public static Aequivaleo getInstance()
