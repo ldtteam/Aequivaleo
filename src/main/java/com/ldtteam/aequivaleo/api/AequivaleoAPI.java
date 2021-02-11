@@ -10,6 +10,7 @@ import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
@@ -21,8 +22,9 @@ import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
-import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSerializer;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSerializer;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.util.RegistryKey;
@@ -96,7 +98,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
                  .registerTypeAdapter(CompoundInstanceRefSetSerializer.HANDLED_TYPE, new CompoundInstanceRefSetSerializer())
                  .registerTypeAdapter(CompoundContainerSetSerializer.HANDLED_TYPE, new CompoundContainerSetSerializer())
                  .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
-                 .registerTypeAdapter(SimpleIngredientSerializer.HANDLED_TYPE, new SimpleIngredientSerializer())
+                 .registerTypeAdapter(IngredientSerializerRegistry.HANDLED_TYPE, IngredientSerializerRegistry.HANDLED_TYPE)
                  .registerTypeAdapter(IngredientSetSerializer.HANDLED_TYPE, new IngredientSetSerializer())
                  .registerTypeAdapter(GenericRecipeDataSerializer.HANDLED_TYPE, new GenericRecipeDataSerializer())
                  .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
@@ -118,5 +120,11 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IResultsAdapterHandlerRegistry getResultsAdapterHandlerRegistry()
     {
         return ResultsAdapterHandlerRegistry.getInstance();
+    }
+
+    @Override
+    public IIngredientSerializerRegistry getIngredientSerializerRegistry()
+    {
+        return IngredientSerializerRegistry.getInstance();
     }
 }

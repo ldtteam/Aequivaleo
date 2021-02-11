@@ -1,5 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import net.minecraft.util.ResourceLocation;
+
 public final class Constants
 {
 
@@ -11,4 +13,7 @@ public final class Constants
     public static final String MOD_ID = "aequivaleo";
     public static final String MOD_NAME = "Aequivaleo";
     public static final String MOD_VERSION = "%VERSION%";
+
+    public static final ResourceLocation SIMPLE_INGREDIENT = new ResourceLocation(Constants.MOD_ID, "simple");
+    public static final ResourceLocation TAG_INGREDIENT = new ResourceLocation(Constants.MOD_ID, "tag");
 }

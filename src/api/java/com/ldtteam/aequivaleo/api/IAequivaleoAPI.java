@@ -10,6 +10,7 @@ import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
@@ -134,6 +135,13 @@ public interface IAequivaleoAPI
      * @return The results adapter handler registry.
      */
     IResultsAdapterHandlerRegistry getResultsAdapterHandlerRegistry();
+
+    /**
+     * The registry which managers serializers for ingredients.
+     *
+     * @return The ingredient serializer registry.
+     */
+    IIngredientSerializerRegistry getIngredientSerializerRegistry();
 
     /**
      * Returns the aequivaleo mod container.
