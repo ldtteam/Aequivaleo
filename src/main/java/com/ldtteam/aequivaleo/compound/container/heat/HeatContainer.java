@@ -72,6 +72,12 @@ public class HeatContainer implements ICompoundContainer<Heat>
     }
 
     @Override
+    public boolean isValid()
+    {
+        return true;
+    }
+
+    @Override
     public Heat getContents()
     {
         return heat;

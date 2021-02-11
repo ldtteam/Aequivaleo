@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
+import com.ldtteam.aequivaleo.compound.container.compoundtype.CompoundTypeContainer;
 import com.ldtteam.aequivaleo.compound.container.fluid.FluidContainer;
 import com.ldtteam.aequivaleo.compound.container.fluid.FluidStackContainer;
 import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
@@ -53,13 +54,15 @@ public final class CompoundContainerFactoryRegistrar
         ModContainerFactoryTypes.FLUID = new FluidContainer.Factory();
         ModContainerFactoryTypes.FLUIDSTACK = new FluidStackContainer.Factory();
         ModContainerFactoryTypes.HEAT = new HeatContainer.Factory();
+        ModContainerFactoryTypes.COMPOUND_TYPE = new CompoundTypeContainer.Factory();
 
         registry.registerAll(
           ModContainerFactoryTypes.ITEM,
           ModContainerFactoryTypes.ITEMSTACK,
           ModContainerFactoryTypes.FLUID,
           ModContainerFactoryTypes.FLUIDSTACK,
-          ModContainerFactoryTypes.HEAT
+          ModContainerFactoryTypes.HEAT,
+          ModContainerFactoryTypes.COMPOUND_TYPE
         );
     }
 }

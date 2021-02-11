@@ -8,6 +8,14 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
 {
 
     /**
+     * Indicates if a container is valid.
+     * A recipe with an invalid container is not considered for evaluation.
+     *
+     * @return {@code True} when valid, {@code False} when not.
+     */
+    boolean isValid();
+
+    /**
      * The contents of this container.
      * Set to the 1 unit of the content type {@code T}
      *

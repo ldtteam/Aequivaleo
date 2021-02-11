@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -11,12 +13,17 @@ import java.util.stream.Collectors;
  */
 public class SimpleIngredient implements IRecipeIngredient
 {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private final SortedSet<ICompoundContainer<?>> candidates;
     private final double                           count;
 
     SimpleIngredient(final Set<ICompoundContainer<?>> candidates, final double count) {
-        this.candidates = new TreeSet<>(candidates);
+        this.candidates = candidates.stream().filter(ICompoundContainer::isValid).collect(Collectors.toCollection(TreeSet::new));
         this.count = count;
+
+        candidates.stream().filter(container -> !container.isValid())
+          .forEach(inValidContainer -> LOGGER.debug(String.format("Tried to add invalid container to ingredient: %s", inValidContainer)));
     }
 
     @Override

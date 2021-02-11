@@ -6,6 +6,8 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -16,6 +18,7 @@ import java.util.TreeSet;
 
 public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
 {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<RegistryKey<World>, EquivalencyRecipeRegistry> INSTANCES = Maps.newConcurrentMap();
 
     public static EquivalencyRecipeRegistry getInstance(@NotNull final RegistryKey<World> worldKey)
@@ -39,6 +42,30 @@ public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
     @Override
     public IEquivalencyRecipeRegistry register(@NotNull final IEquivalencyRecipe recipe)
     {
+        if (recipe.getOutputs().stream().anyMatch(container -> !container.isValid()))
+        {
+            LOGGER.debug(String.format("Skipping recipe because output is invalid: %s", recipe));
+            return this;
+        }
+
+        if (recipe.getRequiredKnownOutputs().stream().anyMatch(container -> !container.isValid()))
+        {
+            LOGGER.debug(String.format("Skipping recipe because required known outputs (residues) is invalid: %s", recipe));
+            return this;
+        }
+
+        if (recipe.getInputs().stream().anyMatch(input -> input.getCandidates().isEmpty()))
+        {
+            LOGGER.debug(String.format("Skipping recipe because input is empty: %s", recipe));
+            return this;
+        }
+
+        if (recipe.getInputs().isEmpty())
+        {
+            LOGGER.debug(String.format("Skipping recipe, because it has no inputs: %s", recipe));
+            return this;
+        }
+
         recipes.add(recipe);
         return this;
     }

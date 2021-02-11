@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -81,6 +82,12 @@ public class ItemContainer implements ICompoundContainer<Item>
         this.item = item;
         this.count = count;
         this.hashCode = Objects.requireNonNull(item.getRegistryName()).hashCode();
+    }
+
+    @Override
+    public boolean isValid()
+    {
+        return item != Items.AIR;
     }
 
     /**

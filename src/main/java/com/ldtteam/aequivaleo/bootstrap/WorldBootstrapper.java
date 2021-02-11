@@ -1,7 +1,11 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
+import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
@@ -40,8 +44,9 @@ public final class WorldBootstrapper
         resetDataForWorld(world);
 
         doBootstrapTagInformation(world);
-        doBootstrapDefaultCraftingRecipes(world);
         doBootstrapInstancedEquivalencies(world);
+
+        doHandleCompoundTypeWrappers(world);
 
         doHandlePluginLoad(world);
     }
@@ -86,48 +91,49 @@ public final class WorldBootstrapper
         }
     }
 
-    private static void doBootstrapDefaultCraftingRecipes(@NotNull final World world)
-    {
-    }
-
     private static void doBootstrapInstancedEquivalencies(
       @NotNull final ServerWorld world
     ) {
-        StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> {
-            InstancedEquivalencyHandlerRegistry.getInstance().process(
-              item,
-              o -> {
-                  final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
-                  final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
+        StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+          item,
+          o -> {
+              final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
+              final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
-                  try {
-                      EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
-                        .register(new InstancedEquivalency(
-                          sourceContainer, targetContainer
-                        ))
-                        .register(new InstancedEquivalency(
-                          targetContainer, sourceContainer
-                        ));
-                  } catch (Exception ex) {
-                      LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                        item.getRegistryName(),
-                        o), ex);
-                  }
-              },
-              consumer -> {
-                  final NonNullList<ItemStack> group = NonNullList.create();
-                  if (item.getGroup() == null)
-                      return;
-
-                  item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
-
-                  if (group.size() == 1)
-                  {
-                      consumer.accept(group.get(0));
-                  }
+              try {
+                  EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+                    .register(new InstancedEquivalency(
+                      sourceContainer, targetContainer
+                    ))
+                    .register(new InstancedEquivalency(
+                      targetContainer, sourceContainer
+                    ));
+              } catch (Exception ex) {
+                  LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
+                    item.getRegistryName(),
+                    o), ex);
               }
-            );
-        });
+          },
+          consumer -> {
+              final NonNullList<ItemStack> group = NonNullList.create();
+              if (item.getGroup() == null)
+                  return;
+
+              item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
+
+              if (group.size() == 1)
+              {
+                  consumer.accept(group.get(0));
+              }
+          }
+        ));
+    }
+
+    private static void doHandleCompoundTypeWrappers(
+      @NotNull final ServerWorld world) {
+        LOGGER.info(String.format("Setting up compound type instantiations: %s", world.getDimensionKey().getLocation()));
+        ModRegistries.COMPOUND_TYPE.forEach(type -> ICompoundInformationRegistry.getInstance(world.getDimensionKey())
+          .registerLocking(type, Sets.newHashSet(new CompoundInstance(type, 1))));
     }
 
     private static void doHandlePluginLoad(

@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -81,6 +82,12 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         this.fluid = fluid;
         this.count = count;
         this.hashCode = Objects.requireNonNull(fluid.getRegistryName()).hashCode();
+    }
+
+    @Override
+    public boolean isValid()
+    {
+        return !fluid.isEquivalentTo(Fluids.EMPTY);
     }
 
     @Override

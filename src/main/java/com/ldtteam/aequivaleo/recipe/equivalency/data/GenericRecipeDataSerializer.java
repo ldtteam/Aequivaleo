@@ -6,7 +6,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeData;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundContainerSetSerializer;
-import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSetSerializer;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -29,7 +29,7 @@ public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipe
         if (!object.has("output"))
             throw new JsonParseException("Recipe needs to have outputs");
 
-        final Set<IRecipeIngredient> inputs = context.deserialize(object.get("input"), SimpleIngredientSetSerializer.HANDLED_TYPE);
+        final Set<IRecipeIngredient> inputs = context.deserialize(object.get("input"), IngredientSetSerializer.HANDLED_TYPE);
         final Set<ICompoundContainer<?>> requiredKnownOutputs = object.has("residue") ? context.deserialize(object.get("residue"), CompoundContainerSetSerializer.HANDLED_TYPE) : Collections
                                                                                                                                                                                     .emptySet();
         final Set<ICompoundContainer<?>> outputs = context.deserialize(object.get("output"), CompoundContainerSetSerializer.HANDLED_TYPE);
@@ -42,7 +42,7 @@ public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipe
     {
         final JsonObject object = new JsonObject();
 
-        object.add("input", context.serialize(src.getInputs(), SimpleIngredientSetSerializer.HANDLED_TYPE));
+        object.add("input", context.serialize(src.getInputs(), IngredientSetSerializer.HANDLED_TYPE));
         if (!src.getRequiredKnownOutputs().isEmpty())
             object.add("residue", context.serialize(src.getRequiredKnownOutputs(), CompoundContainerSetSerializer.HANDLED_TYPE));
         object.add("output", context.serialize(src.getOutputs(), CompoundContainerSetSerializer.HANDLED_TYPE));

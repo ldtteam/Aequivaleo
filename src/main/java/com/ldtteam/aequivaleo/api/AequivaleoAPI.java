@@ -22,7 +22,7 @@ import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSerializer;
-import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSetSerializer;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.util.RegistryKey;
@@ -89,6 +89,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public GsonBuilder setupGson(final GsonBuilder builder)
     {
         return builder
+                 .setLenient()
                  .registerTypeAdapter(CompoundInstanceDataModeSerializer.HANDLED_TYPE, new CompoundInstanceDataModeSerializer())
                  .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSerializer.HANDLED_TYPE, new CompoundInstanceRefSerializer())
@@ -96,7 +97,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
                  .registerTypeAdapter(CompoundContainerSetSerializer.HANDLED_TYPE, new CompoundContainerSetSerializer())
                  .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
                  .registerTypeAdapter(SimpleIngredientSerializer.HANDLED_TYPE, new SimpleIngredientSerializer())
-                 .registerTypeAdapter(SimpleIngredientSetSerializer.HANDLED_TYPE, new SimpleIngredientSetSerializer())
+                 .registerTypeAdapter(IngredientSetSerializer.HANDLED_TYPE, new IngredientSetSerializer())
                  .registerTypeAdapter(GenericRecipeDataSerializer.HANDLED_TYPE, new GenericRecipeDataSerializer())
                  .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
     }

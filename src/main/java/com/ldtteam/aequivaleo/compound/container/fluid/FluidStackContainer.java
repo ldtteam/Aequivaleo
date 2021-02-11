@@ -106,6 +106,12 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
     }
 
     @Override
+    public boolean isValid()
+    {
+        return !stack.isEmpty();
+    }
+
+    @Override
     public FluidStack getContents()
     {
         return stack;

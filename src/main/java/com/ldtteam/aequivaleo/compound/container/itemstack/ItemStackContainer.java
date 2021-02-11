@@ -107,6 +107,12 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         this.hashCode = stack.write(new CompoundNBT()).hashCode();
     }
 
+    @Override
+    public boolean isValid()
+    {
+        return !stack.isEmpty();
+    }
+
     /**
      * The contents of this container.
      * Set to the 1 unit of the content type {@link ItemStack}

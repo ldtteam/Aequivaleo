@@ -5,6 +5,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundContainerSetSerializer;
@@ -15,7 +16,7 @@ import java.util.SortedSet;
 
 public class SimpleIngredientSerializer implements JsonSerializer<IRecipeIngredient>, JsonDeserializer<IRecipeIngredient>
 {
-    public static final Type HANDLED_TYPE = new TypeToken<IRecipeIngredient>(){}.getType();
+    public static final Type HANDLED_TYPE = new TypeToken<SimpleIngredient>(){}.getType();
 
     @Override
     public IRecipeIngredient deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
