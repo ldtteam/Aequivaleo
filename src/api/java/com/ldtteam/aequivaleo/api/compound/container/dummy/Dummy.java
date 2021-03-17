@@ -19,6 +19,12 @@ public class Dummy implements ICompoundContainer<Dummy>
         this.originalData = Validate.notNull(originalData);
     }
 
+    @Override
+    public boolean isValid()
+    {
+        return false;
+    }
+
     /**
      * The contents of this container.
      * Set to the 1 unit of the content type {@link Dummy}

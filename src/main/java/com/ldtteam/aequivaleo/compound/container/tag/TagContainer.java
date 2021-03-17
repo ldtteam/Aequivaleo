@@ -1,23 +1,30 @@
-package com.ldtteam.aequivaleo.compound.container.compoundtype;
+package com.ldtteam.aequivaleo.compound.container.tag;
 
+import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.compound.container.compoundtype.CompoundTypeContainer;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.tags.ITag;
+import net.minecraft.tags.TagCollectionManager;
+import net.minecraft.tags.TagRegistry;
+import net.minecraft.tags.TagRegistryManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.dnd.DropTarget;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
+public class TagContainer implements ICompoundContainer<ITag.INamedTag>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ICompoundType>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ITag.INamedTag>
     {
 
         public Factory()
@@ -27,76 +34,86 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
 
         @NotNull
         @Override
-        public Class<ICompoundType> getContainedType()
+        public Class<ITag.INamedTag> getContainedType()
         {
-            return ICompoundType.class;
+            return ITag.INamedTag.class;
         }
 
         @NotNull
         @Override
-        public ICompoundContainer<ICompoundType> create(@NotNull final ICompoundType instance, @NotNull final double count)
+        public ICompoundContainer<ITag.INamedTag> create(@NotNull final ITag.INamedTag instance, @NotNull final double count)
         {
-            return new CompoundTypeContainer(instance, count);
+            return new TagContainer(instance, count);
         }
 
         @Override
-        public ICompoundContainer<ICompoundType> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+        public ICompoundContainer<ITag.INamedTag> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
         {
             if (!json.isJsonObject())
-                throw new JsonParseException("JSON for Container Type container needs to be an object.");
+                throw new JsonParseException("JSON for tag container needs to be an object.");
 
-            final ResourceLocation typeName = new ResourceLocation(json.getAsJsonObject().get("compound_type").getAsString());
+            final ResourceLocation tagType = new ResourceLocation(json.getAsJsonObject().get("tagType").getAsString());
+            final ResourceLocation tagName = new ResourceLocation(json.getAsJsonObject().get("tagName").getAsString());
             final double amount = json.getAsJsonObject().get("count").getAsDouble();
 
-            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(typeName), amount);
+            final TagRegistry<?> registry = TagRegistryManager.get(tagType);
+
+            if (registry == null)
+                throw new JsonParseException(String.format("JSON for tag container contains unknown type: %s", tagType));
+
+            ITag<?> tag = registry.getCollection().get(tagName);
+            if (tag == null)
+                tag = registry.createOptional(tagName, Sets.newHashSet());
+
+            return new TagContainer(tag, amount);
         }
 
         @Override
-        public JsonElement serialize(final ICompoundContainer<ICompoundType> src, final Type typeOfSrc, final JsonSerializationContext context)
+        public JsonElement serialize(final ICompoundContainer<ITag.INamedTag> src, final Type typeOfSrc, final JsonSerializationContext context)
         {
             if (!src.isValid())
                 throw new IllegalArgumentException("Can not serialize a container which is invalid.");
 
             final JsonObject result = new JsonObject();
-            result.addProperty("type", Objects.requireNonNull(src.getContents().getRegistryName()).toString());
+            result.addProperty("type", Objects.requireNonNull(src.getContents().getName()).toString());
             result.addProperty("count", src.getContentsCount());
 
             return result;
         }
 
         @Override
-        public void write(final ICompoundContainer<ICompoundType> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<ITag.INamedTag> object, final PacketBuffer buffer)
         {
             buffer.writeString(Objects.requireNonNull(object.getContents().getRegistryName()).toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<ICompoundType> read(final PacketBuffer buffer)
+        public ICompoundContainer<ITag.INamedTag> read(final PacketBuffer buffer)
         {
             return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readString())), buffer.readDouble());
         }
     }
 
-    private final ICompoundType type;
-    private final Double        count;
+    private final ITag.INamedTag   tag;
+    private final Double count;
 
-    public CompoundTypeContainer(final ICompoundType type, final Double count)
+    public TagContainer(final ITag.INamedTag tag, final Double count)
     {
-        this.type = type;
+        this.tag = tag;
         this.count = count;
     }
 
     @Override
     public boolean isValid()
     {
-        return type != null;
+        return tag != null;
     }
 
     @Override
-    public ICompoundType getContents()
+    public ITag.INamedTag getContents()
     {
-        return type;
+        return tag;
     }
 
     @Override
