@@ -26,6 +26,12 @@ public class StringCompoundContainer implements ICompoundContainer<String>
     }
 
     @Override
+    public boolean isValid()
+    {
+        return true;
+    }
+
+    @Override
     public String getContents()
     {
         return content;

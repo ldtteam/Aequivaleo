@@ -24,6 +24,12 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
     }
 
     @Override
+    public boolean isValid()
+    {
+        return true;
+    }
+
+    @Override
     public String getContents()
     {
         return content;

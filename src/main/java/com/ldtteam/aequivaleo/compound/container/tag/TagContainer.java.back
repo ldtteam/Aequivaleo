@@ -21,33 +21,33 @@ import java.awt.dnd.DropTarget;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-public class TagContainer implements ICompoundContainer<ITag.INamedTag>
+public class TagContainer implements ICompoundContainer<ITag>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ITag.INamedTag>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ITag>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "compound_type");
+            setRegistryName(Constants.MOD_ID, "tag");
         }
 
         @NotNull
         @Override
-        public Class<ITag.INamedTag> getContainedType()
+        public Class<ITag> getContainedType()
         {
-            return ITag.INamedTag.class;
+            return ITag.class;
         }
 
         @NotNull
         @Override
-        public ICompoundContainer<ITag.INamedTag> create(@NotNull final ITag.INamedTag instance, @NotNull final double count)
+        public ICompoundContainer<ITag> create(@NotNull final ITag instance, @NotNull final double count)
         {
             return new TagContainer(instance, count);
         }
 
         @Override
-        public ICompoundContainer<ITag.INamedTag> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+        public ICompoundContainer<ITag> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
         {
             if (!json.isJsonObject())
                 throw new JsonParseException("JSON for tag container needs to be an object.");
@@ -61,6 +61,8 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
             if (registry == null)
                 throw new JsonParseException(String.format("JSON for tag container contains unknown type: %s", tagType));
 
+            TagCollectionManager.getManager().getCustomTypeCollection()
+
             ITag<?> tag = registry.getCollection().get(tagName);
             if (tag == null)
                 tag = registry.createOptional(tagName, Sets.newHashSet());
@@ -69,10 +71,13 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
         }
 
         @Override
-        public JsonElement serialize(final ICompoundContainer<ITag.INamedTag> src, final Type typeOfSrc, final JsonSerializationContext context)
+        public JsonElement serialize(final ICompoundContainer<ITag> src, final Type typeOfSrc, final JsonSerializationContext context)
         {
             if (!src.isValid())
                 throw new IllegalArgumentException("Can not serialize a container which is invalid.");
+
+
+            src.
 
             final JsonObject result = new JsonObject();
             result.addProperty("type", Objects.requireNonNull(src.getContents().getName()).toString());
@@ -82,23 +87,23 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
         }
 
         @Override
-        public void write(final ICompoundContainer<ITag.INamedTag> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<ITag> object, final PacketBuffer buffer)
         {
             buffer.writeString(Objects.requireNonNull(object.getContents().getRegistryName()).toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<ITag.INamedTag> read(final PacketBuffer buffer)
+        public ICompoundContainer<ITag> read(final PacketBuffer buffer)
         {
             return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readString())), buffer.readDouble());
         }
     }
 
-    private final ITag.INamedTag   tag;
+    private final ITag   tag;
     private final Double count;
 
-    public TagContainer(final ITag.INamedTag tag, final Double count)
+    public TagContainer(final ITag tag, final Double count)
     {
         this.tag = tag;
         this.count = count;
@@ -111,7 +116,7 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
     }
 
     @Override
-    public ITag.INamedTag getContents()
+    public ITag getContents()
     {
         return tag;
     }

@@ -34,6 +34,12 @@ public class ICompoundContainerTest
     private static final class DefaultTestContainer implements ICompoundContainer<DefaultTestContainer> {
 
         @Override
+        public boolean isValid()
+        {
+            return true;
+        }
+
+        @Override
         public DefaultTestContainer getContents()
         {
             return this;
