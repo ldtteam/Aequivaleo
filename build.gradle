@@ -66,7 +66,7 @@ sourceSets {
 }
 
 version = (System.getenv().containsKey("Version") ? System.getenv("Version") : project.modVersion)
-project.logger.lifecycle("Building for version: " + version);
+project.logger.lifecycle("Building for version: " + version)
 
 group = modGroup
 archivesBaseName = modBaseName
@@ -248,7 +248,7 @@ javadoc {
 
 task packageJavadoc(type: Jar) {
     from javadoc
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
 }
 
 task apiJavadocs(type: Javadoc) {
@@ -283,16 +283,16 @@ task vanillaApiJavadocs(type: Javadoc) {
 
 task packageApiJavadoc(type: Jar) {
     from apiJavadocs
-    classifier = 'javadoc-api'
+    archiveClassifier.set('javadoc-api')
 }
 
 task packageVanillaApiJavadoc(type: Jar) {
     from vanillaApiJavadocs
-    classifier = 'javadoc-vanilla-api'
+    archiveClassifier.set('javadoc-vanilla-api')
 }
 
 task sourceJar(type: Jar) {
-    classifier = 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allJava
     from sourceSets.api.allJava
     from sourceSets.vanillaApi.allJava
@@ -300,12 +300,12 @@ task sourceJar(type: Jar) {
 }
 
 task apiSourceJar(type: Jar) {
-    classifier = 'api-sources'
+    archiveClassifier.set('api-sources')
     from sourceSets.api.allJava
 }
 
 task vanillaApiSourceJar(type: Jar){
-    classifier = 'vanilla-api-sources'
+    archiveClassifier.set('vanilla-api-sources')
     from sourceSets.vanillaApi.allJava
 }
 
@@ -327,16 +327,16 @@ shadowJar {
     from sourceSets.vanilla.output
     from sourceSets.api.output
 
-    // Only shadow apache commons-math3
+    // Only shadow apache jgrapht dependencies
     dependencies {
         include dependency("org.jgrapht:jgrapht-core:${project.jgraphtVersion}")
         include dependency("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}")
         include dependency("org.jgrapht:jgrapht-io:${project.jgraphtVersion}")
     }
-    // Relocate apache commons-math3 to prevent conflicts with other mods that include it
+    // Relocate apache jgrapht to prevent conflicts with other mods that include it
     relocate 'org.jgrapht', 'com.ldtteam.shaded.jgrapht'
 
-    classifier = 'universal' // Replace the default JAR
+    archiveClassifier.set('universal') // Replace the default JAR
 }
 
 reobf {
@@ -354,7 +354,7 @@ curseforge {
     if (System.getenv().CURSEAPIKEY != null && System.getenv().CURSERELEASETYPE != null)
     {
         apiKey = System.getenv().CURSEAPIKEY
-        def additionalVersions = project.additionalMinecraftVersions.split(',');
+        def additionalVersions = project.additionalMinecraftVersions.split(',')
 
         project {
             id = '404450'
@@ -428,6 +428,16 @@ artifacts {
     packageVanillaApiJavadoc
 }
 
+tasks.build.dependsOn tasks.shadowJar
+tasks.build.dependsOn tasks.packageJavadoc
+tasks.build.dependsOn tasks.sourceJar
+tasks.build.dependsOn tasks.apiJar
+tasks.build.dependsOn tasks.packageApiJavadoc
+tasks.build.dependsOn tasks.apiSourceJar
+tasks.build.dependsOn tasks.vanillaApiJar
+tasks.build.dependsOn tasks.vanillaApiSourceJar
+tasks.build.dependsOn tasks.packageVanillaApiJavadoc
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -476,7 +486,7 @@ publishing {
             //Replace all deobf dependencies with normal jar references.
             pom.withXml { xmlProvider ->
                 NodeList dependencies = asNode().dependencies
-                NodeList allDeps = dependencies.'*';
+                NodeList allDeps = dependencies.'*'
 
                 // Remove forge deps
                 allDeps.findAll() { Node el ->

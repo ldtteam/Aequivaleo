@@ -29,6 +29,7 @@ public interface IIngredientSerializerRegistry
      *
      * @param serializer The serializer.
      * @param <S> The type of the serializer.
+     * @param <I> The type of the recipe ingredient that the serializer can handle.
      * @return The registry.
      */
     <S extends IIngredientSerializer<I>, I extends IRecipeIngredient> IIngredientSerializerRegistry register(S serializer);
