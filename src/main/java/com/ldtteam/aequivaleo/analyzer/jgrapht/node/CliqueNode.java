@@ -31,6 +31,8 @@ public class CliqueNode
     private final Set<IContainerNode>   innerCliqueNodes = Sets.newHashSet();
     private       int                   hash;
 
+    private final Table<INode, INode, IEdge> disabledIoGraphEdges = HashBasedTable.create();
+
     private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates = ArrayListMultimap.create();
 
     public CliqueNode(
@@ -352,13 +354,36 @@ public class CliqueNode
             }
             for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor))
             {
-                ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor, edge);
+                ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor);
                 ioGraph.setEdgeWeight(ioGraph.getEdgeSource(edge), newNeighbor, ioGraph.getEdgeWeight(edge));
             }
             ioGraph.removeVertex(originalNeighbor);
 
             validateIOGraph();
         }
+    }
+
+    @Override
+    public void onOutgoingEdgeDisable(final INode target, final IEdge edge)
+    {
+        ioGraph.vertexSet().forEach(sourceNode -> {
+            if (ioGraph.containsEdge(sourceNode, target))
+            {
+                disabledIoGraphEdges.put(sourceNode, target, ioGraph.getEdge(sourceNode, target));
+                ioGraph.removeEdge(sourceNode, target);
+            }
+        });
+    }
+
+    @Override
+    public void onOutgoingEdgeEnabled(final INode target, final IEdge edge)
+    {
+        disabledIoGraphEdges.rowKeySet().forEach(sourceNode -> {
+            if (disabledIoGraphEdges.contains(sourceNode, target)) {
+                ioGraph.addEdge(sourceNode, target, disabledIoGraphEdges.get(sourceNode, target));
+                disabledIoGraphEdges.remove(sourceNode, target);
+            }
+        });
     }
 
     private void setupGraphs(final IGraph graph, final Set<INode> innerVertices)

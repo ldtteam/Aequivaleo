@@ -5,21 +5,19 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
     }
 }
 
 plugins {
-    id "com.github.johnrengelman.shadow" version "1.2.4"
+    id "com.github.johnrengelman.shadow" version "5.2.0"
     id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
 repositories {
-    repositories {
-        maven {
-            name = "CurseForge"
-            url = "https://minecraft.curseforge.com/api/maven/"
-        }
+    maven {
+        name = "CurseForge"
+        url = "https://cursemaven.com/"
     }
 }
 
@@ -89,6 +87,8 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             mods {
                 aequivaleo {
@@ -108,6 +108,8 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             mods {
                 aequivaleo {
@@ -127,6 +129,8 @@ minecraft {
 
             // Recommended logging level for the console
             property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 
             args '--mod', project.modBaseName, '--all', '--output', file('src/generated/resources/'), '--input', file('src/main/resources')
 
@@ -171,6 +175,12 @@ dependencies {
     compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+
+    compile fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
+    compile fg.deobf("curse.maven:goo-404147:3113043")
+    compile fg.deobf("curse.maven:patchouli-306770:3204037")
+    compile fg.deobf("curse.maven:farmers-delight-398521:3188508")
+
 }
 
 task apiJar(type: Jar) {

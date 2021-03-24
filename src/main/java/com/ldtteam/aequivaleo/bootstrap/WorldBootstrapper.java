@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
+@SuppressWarnings("rawtypes")
 public final class WorldBootstrapper
 {
 
@@ -66,6 +67,9 @@ public final class WorldBootstrapper
     }
 
     private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
+        final ICompoundContainer<ITag.INamedTag> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
+
+
         final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>();
         for (T stack : tag.getAllElements())
         {
@@ -75,19 +79,21 @@ public final class WorldBootstrapper
 
         for (ICompoundContainer<?> inputStack : elementsOfTag)
         {
-            for (ICompoundContainer<?> outputStack : elementsOfTag)
-            {
-                if (!GameObjectEquivalencyHandlerRegistry.getInstance().areGameObjectsEquivalent(inputStack, outputStack))
-                {
-                    EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
-                      .register(
-                        new TagEquivalencyRecipe<>(
-                          tag,
-                          inputStack,
-                          outputStack
-                        ));
-                }
-            }
+            EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+              .register(
+                new TagEquivalencyRecipe<>(
+                  tag,
+                  tagContainer,
+                  inputStack
+                ));
+
+            EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+              .register(
+                new TagEquivalencyRecipe<>(
+                  tag,
+                  inputStack,
+                  tagContainer
+                ));
         }
     }
 

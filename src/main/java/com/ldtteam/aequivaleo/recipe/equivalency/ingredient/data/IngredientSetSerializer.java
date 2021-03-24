@@ -27,7 +27,7 @@ public class IngredientSetSerializer implements JsonSerializer<Set<IRecipeIngred
 
         if (json.isJsonObject()) {
             final JsonObject object = json.getAsJsonObject();
-            ingredients.add(context.deserialize(json, IngredientSerializerRegistry.HANDLED_TYPE));
+            ingredients.add(context.deserialize(object, IngredientSerializerRegistry.HANDLED_TYPE));
             return ingredients;
         }
 

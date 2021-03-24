@@ -1,18 +1,13 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.heat.Heat;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tags.ITag;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.RegistryObject;
-import net.minecraftforge.registries.DeferredRegister;
 
 public final class ModContainerFactoryTypes
 {
@@ -27,4 +22,5 @@ public final class ModContainerFactoryTypes
     public static ICompoundContainerFactory<FluidStack> FLUIDSTACK;
     public static ICompoundContainerFactory<Heat>          HEAT;
     public static ICompoundContainerFactory<ICompoundType> COMPOUND_TYPE;
+    public static ICompoundContainerFactory<ITag.INamedTag> TAG;
 }

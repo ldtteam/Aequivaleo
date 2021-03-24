@@ -214,7 +214,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           recipeFactory
         ).collect(Collectors.toList());
 
-        if (variants.isEmpty()) {
+        if (variants.isEmpty() && !iRecipe.getId().getNamespace().equals("minecraft")) {
             LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
         }
 

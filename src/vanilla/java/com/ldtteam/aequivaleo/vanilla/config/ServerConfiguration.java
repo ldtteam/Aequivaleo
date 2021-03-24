@@ -207,7 +207,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
         createCategory(builder, "conversion");
         recipeTypeNamePatternsToExclude = defineList(
           builder,
-          "recipes.tags.tagsToRegister",
+          "recipes.conversion.types.auto-conversion-blacklist",
           new ImmutableList.Builder<String>()
             .build(),
           o -> {

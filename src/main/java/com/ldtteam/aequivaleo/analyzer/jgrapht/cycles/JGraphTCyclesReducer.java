@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.core.IAnalysisEdge;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
+import org.apache.commons.logging.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -122,11 +123,6 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
                         }
                     }
                 }
-            }
-
-            for (E e1 : incomingEdges.keySet())
-            {
-                outgoingEdges.remove(e1);
             }
 
             AnalysisLogHandler.debug(LOGGER, String.format("  > Detected: %s as incoming edges to keep.", incomingEdges));

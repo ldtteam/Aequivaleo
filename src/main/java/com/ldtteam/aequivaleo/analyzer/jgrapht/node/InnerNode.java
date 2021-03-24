@@ -1,8 +1,6 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.node;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.cycles.JGraphTCyclesReducer;
@@ -18,7 +16,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class InnerNode
@@ -31,6 +31,7 @@ public class InnerNode
     private       int    hash;
 
     private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates = ArrayListMultimap.create();
+    private final Table<INode, INode, IEdge>                       disabledIoGraphEdges = HashBasedTable.create();
 
     public InnerNode(
       final IGraph sourceGraph,
@@ -262,6 +263,20 @@ public class InnerNode
                 innerGraph.removeEdge(incomingEdge);
             }
 
+            for (Map.Entry<IEdge, INode> e : workingGraphSourceMap.entrySet())
+            {
+                IEdge key = e.getKey();
+                INode value = e.getValue();
+                value.onOutgoingEdgeDisable(startNode, key);
+            }
+
+            for (Map.Entry<IEdge, INode> e : innerGraphSourceMap.entrySet())
+            {
+                IEdge key = e.getKey();
+                INode value = e.getValue();
+                value.onOutgoingEdgeDisable(startNode, key);
+            }
+
             //Run inner analysis
             final AnalysisBFSGraphIterator iterator = new AnalysisBFSGraphIterator(innerGraph, startNode, workingGraph);
             final StatCollector innerStatCollector = new StatCollector("Inner node analysis.", innerGraph.vertexSet().size())
@@ -292,6 +307,20 @@ public class InnerNode
                 innerGraph.addEdge(source, startNode, edge);
             }
 
+            for (Map.Entry<IEdge, INode> entry : workingGraphSourceMap.entrySet())
+            {
+                IEdge key = entry.getKey();
+                INode value = entry.getValue();
+                value.onOutgoingEdgeEnabled(startNode, key);
+            }
+
+            for (Map.Entry<IEdge, INode> entry : innerGraphSourceMap.entrySet())
+            {
+                IEdge edge = entry.getKey();
+                INode source = entry.getValue();
+                source.onOutgoingEdgeEnabled(startNode, edge);
+            }
+
             if (startingNodes.stream().allMatch(node -> node.getCandidates().size() == nodeCandidateCounts.get(node)))
             {
                 //The loop ran over every node in the network
@@ -316,13 +345,36 @@ public class InnerNode
             }
             for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor))
             {
-                ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor, edge);
+                ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor);
                 ioGraph.setEdgeWeight(ioGraph.getEdgeSource(edge), newNeighbor, ioGraph.getEdgeWeight(edge));
             }
             ioGraph.removeVertex(originalNeighbor);
 
             validateIOGraph();
         }
+    }
+
+    @Override
+    public void onOutgoingEdgeDisable(final INode target, final IEdge edge)
+    {
+        ioGraph.vertexSet().forEach(sourceNode -> {
+            if (ioGraph.containsEdge(sourceNode, target))
+            {
+                disabledIoGraphEdges.put(sourceNode, target, ioGraph.getEdge(sourceNode, target));
+                ioGraph.removeEdge(sourceNode, target);
+            }
+        });
+    }
+
+    @Override
+    public void onOutgoingEdgeEnabled(final INode target, final IEdge edge)
+    {
+        disabledIoGraphEdges.rowKeySet().forEach(sourceNode -> {
+            if (disabledIoGraphEdges.contains(sourceNode, target)) {
+                ioGraph.addEdge(sourceNode, target, disabledIoGraphEdges.get(sourceNode, target));
+                disabledIoGraphEdges.remove(sourceNode, target);
+            }
+        });
     }
 
     private void setupGraphs(final IGraph graph, final List<INode> innerVertices)

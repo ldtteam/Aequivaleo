@@ -11,6 +11,7 @@ import com.ldtteam.aequivaleo.compound.container.heat.HeatContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.compound.container.tag.TagContainer;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -55,6 +56,7 @@ public final class CompoundContainerFactoryRegistrar
         ModContainerFactoryTypes.FLUIDSTACK = new FluidStackContainer.Factory();
         ModContainerFactoryTypes.HEAT = new HeatContainer.Factory();
         ModContainerFactoryTypes.COMPOUND_TYPE = new CompoundTypeContainer.Factory();
+        ModContainerFactoryTypes.TAG = new TagContainer.Factory();
 
         registry.registerAll(
           ModContainerFactoryTypes.ITEM,
@@ -62,7 +64,8 @@ public final class CompoundContainerFactoryRegistrar
           ModContainerFactoryTypes.FLUID,
           ModContainerFactoryTypes.FLUIDSTACK,
           ModContainerFactoryTypes.HEAT,
-          ModContainerFactoryTypes.COMPOUND_TYPE
+          ModContainerFactoryTypes.COMPOUND_TYPE,
+          ModContainerFactoryTypes.TAG
         );
     }
 }

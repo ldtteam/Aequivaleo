@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.analyzer.jgrapht.core;
 
 import com.ldtteam.aequivaleo.analyzer.StatCollector;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import org.jetbrains.annotations.NotNull;
@@ -71,4 +73,8 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     }
 
     default void onNeighborReplaced(final S originalNeighbor, final S newNeighbor) {}
+
+    default void onOutgoingEdgeDisable(INode target, IEdge edge) {};
+
+    default void onOutgoingEdgeEnabled(INode target, IEdge edge) {};
 }
