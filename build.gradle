@@ -480,7 +480,7 @@ publishing {
 
                 // Remove forge deps
                 allDeps.findAll() { Node el ->
-                    el.artifactId.text() == 'forge' && el.groupId.text() == 'net.minecraftforge'
+                    (el.artifactId.text() == 'forge' && el.groupId.text() == 'net.minecraftforge' || el.groupId.text() == 'curse.maven')
                 }.forEach() { Node el ->
                     el.parent().remove(el)
                 }
