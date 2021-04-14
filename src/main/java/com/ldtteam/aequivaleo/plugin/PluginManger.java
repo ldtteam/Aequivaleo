@@ -56,7 +56,7 @@ public final class PluginManger implements IAequivaleoPluginManager
             for (ModFileScanData.AnnotationData data : scanData.getAnnotations()) {
                 if (AEQUIVALEO_PLUGIN_TYPE.equals(data.getAnnotationType())) {
                     final String[] requiredMods = (String[]) data.getAnnotationData().get("requiredMods");
-                    if (requiredMods.length > 0) {
+                    if (requiredMods != null && requiredMods.length > 0) {
                         if (Arrays.stream(requiredMods).anyMatch(modId -> !ModList.get().isLoaded(modId))) {
                             continue;
                         }
