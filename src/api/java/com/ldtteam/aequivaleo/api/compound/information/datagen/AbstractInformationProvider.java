@@ -211,7 +211,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
     @VisibleForTesting
     protected static class SpecBuilder {
         private final Set<Object> targets = Sets.newHashSet();
-        private CompoundInstanceData.Mode mode = CompoundInstanceData.Mode.REPLACING;
+        private CompoundInstanceData.Mode mode = CompoundInstanceData.Mode.ADDITIVE;
         private final Set<CompoundInstanceRef> instanceRefs = Sets.newHashSet();
         private final Set<ICondition> conditions = Sets.newHashSet();
 
