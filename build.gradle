@@ -19,6 +19,11 @@ repositories {
         name = "CurseForge"
         url = "https://cursemaven.com/"
     }
+
+    maven {
+        name 'LDTTeam - Modding'
+        url 'https://ldtteam.jfrog.io/ldtteam/modding/'
+    }
 }
 
 apply plugin: 'net.minecraftforge.gradle'
@@ -51,6 +56,25 @@ sourceSets {
         runtimeClasspath += sourceSets.vanillaApi.output
         compileClasspath += configurations.getByName("minecraft")
     }
+    mekanismApi {
+        java {
+            setSrcDirs([ 'src/mekanism-api/java' ])
+        }
+        resources {
+            setSrcDirs([ 'src/mekanism-api/resources' ])
+        }
+
+        compileClasspath += sourceSets.api.output
+        runtimeClasspath += sourceSets.api.output
+        compileClasspath += configurations.getByName("minecraft")
+    }
+    mekanism {
+        compileClasspath += sourceSets.api.output
+        runtimeClasspath += sourceSets.api.output
+        compileClasspath += sourceSets.mekanismApi.output
+        runtimeClasspath += sourceSets.mekanismApi.output
+        compileClasspath += configurations.getByName("minecraft")
+    }
     main {
         compileClasspath += sourceSets.api.output
         runtimeClasspath += sourceSets.api.output
@@ -58,6 +82,10 @@ sourceSets {
         runtimeClasspath += sourceSets.vanilla.output
         compileClasspath += sourceSets.vanillaApi.output
         runtimeClasspath += sourceSets.vanillaApi.output
+        compileClasspath += sourceSets.mekanism.output
+        runtimeClasspath += sourceSets.mekanism.output
+        compileClasspath += sourceSets.mekanismApi.output
+        runtimeClasspath += sourceSets.mekanismApi.output
     }
     test {
         compileClasspath += sourceSets.api.output
@@ -96,6 +124,8 @@ minecraft {
                     source sourceSets.api
                     source sourceSets.vanilla
                     source sourceSets.vanillaApi
+                    source sourceSets.mekanism
+                    source sourceSets.mekanismApi
                 }
             }
         }
@@ -117,6 +147,8 @@ minecraft {
                     source sourceSets.api
                     source sourceSets.vanilla
                     source sourceSets.vanillaApi
+                    source sourceSets.mekanism
+                    source sourceSets.mekanismApi
                 }
             }
         }
@@ -140,6 +172,8 @@ minecraft {
                     source sourceSets.api
                     source sourceSets.vanilla
                     source sourceSets.vanillaApi
+                    source sourceSets.mekanism
+                    source sourceSets.mekanismApi
                 }
             }
         }
@@ -170,11 +204,22 @@ dependencies {
     apiCompile 'com.intellij:annotations:+@jar'
     vanillaCompile 'com.intellij:annotations:+@jar'
     vanillaApiCompile 'com.intellij:annotations:+@jar'
+    mekanismCompile 'com.intellij:annotations:+@jar'
+    mekanismApiCompile 'com.intellij:annotations:+@jar'
     compile 'com.intellij:annotations:+@jar'
     testCompile 'com.intellij:annotations:+@jar'
     compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+
+    mekanismApiCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}")
+    mekanismCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}")
+
+    // If you want to test/use Mekanism & its modules during `runClient` invocation, use the following
+    //mekanismApiCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}")// core
+    //mekanismApiCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}:additions")// Mekanism: Additions
+    //mekanismApiCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}:generators")// Mekanism: Generators
+    //mekanismApiCompileOnly fg.deobf("mekanism:Mekanism:${project.mekanismVersion}:tools")// Mekanism: Tools
 
     compile fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
     compile fg.deobf("curse.maven:goo-404147:3113043")
@@ -196,6 +241,12 @@ task vanillaApiJar(type: Jar) {
     baseName project.name
 }
 
+task mekanismApiJar(type: Jar) {
+    from sourceSets.mekanismApi.output
+    classifier 'mekanism-api'
+    baseName project.name
+}
+
 processResources {
 }
 
@@ -203,6 +254,8 @@ jar {
     from sourceSets.api.output
     from sourceSets.vanillaApi.output
     from sourceSets.vanilla.output
+    from sourceSets.mekanismApi.output
+    from sourceSets.mekanism.output
     from sourceSets.main.output
 
     manifest {
@@ -224,6 +277,8 @@ javadoc {
     source += sourceSets.api.allSource
     source += sourceSets.vanillaApi.allSource
     source += sourceSets.vanilla.allSource
+    source += sourceSets.mekanismApi.allSource
+    source += sourceSets.mekanism.allSource
 
     configure( options ) {
         tags(
@@ -269,6 +324,21 @@ task vanillaApiJavadocs(type: Javadoc) {
     }
 }
 
+task mekanismApiJavadocs(type: Javadoc) {
+    source = sourceSets.mekanismApi.allJava
+    classpath = sourceSets.mekanismApi.compileClasspath
+
+    destinationDir = project.buildDir.toPath().resolve("docs/mekanism/api").toFile()
+
+    configure( options ) {
+        tags(
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+        )
+    }
+}
+
 task packageApiJavadoc(type: Jar) {
     from apiJavadocs
     archiveClassifier.set('javadoc-api')
@@ -278,6 +348,12 @@ task packageVanillaApiJavadoc(type: Jar) {
     from vanillaApiJavadocs
     archiveClassifier.set('javadoc-vanilla-api')
 }
+
+task packageMekanismApiJavadoc(type: Jar) {
+    from mekanismApiJavadocs
+    archiveClassifier.set('javadoc-mekanism-api')
+}
+
 
 task sourceJar(type: Jar) {
     archiveClassifier.set('sources')
@@ -297,6 +373,11 @@ task vanillaApiSourceJar(type: Jar){
     from sourceSets.vanillaApi.allJava
 }
 
+task mekanismApiSourceJar(type: Jar){
+    archiveClassifier.set('mekanism-api-sources')
+    from sourceSets.mekanismApi.allJava
+}
+
 task setupDecompWorkspace {
     afterEvaluate {
         println "Setup"
@@ -313,6 +394,8 @@ shadowJar {
     from sourceSets.main.output
     from sourceSets.vanillaApi.output
     from sourceSets.vanilla.output
+    from sourceSets.mekanismApi.output
+    from sourceSets.mekanism.output
     from sourceSets.api.output
 
     // Only shadow apache jgrapht dependencies
@@ -335,6 +418,9 @@ reobf {
     }
     vanillaApiJar {
         classpath = sourceSets.vanillaApi.compileClasspath
+    }
+    mekanismApiJar {
+        classpath = sourceSets.mekanismApi.compileClasspath
     }
 }
 
@@ -363,6 +449,8 @@ curseforge {
             addArtifact packageJavadoc
             addArtifact packageVanillaApiJavadoc
             addArtifact vanillaApiSourceJar
+            addArtifact packageMekanismApiJavadoc
+            addArtifact mekanismApiSourceJar
 
             mainArtifact(shadowJar)
         }
@@ -414,6 +502,9 @@ artifacts {
     vanillaApiJar
     vanillaApiSourceJar
     packageVanillaApiJavadoc
+    mekanismApiJar
+    mekanismApiSourceJar
+    packageMekanismApiJavadoc
 }
 
 tasks.build.dependsOn tasks.shadowJar
@@ -425,6 +516,9 @@ tasks.build.dependsOn tasks.apiSourceJar
 tasks.build.dependsOn tasks.vanillaApiJar
 tasks.build.dependsOn tasks.vanillaApiSourceJar
 tasks.build.dependsOn tasks.packageVanillaApiJavadoc
+tasks.build.dependsOn tasks.mekanismApiJar
+tasks.build.dependsOn tasks.mekanismApiSourceJar
+tasks.build.dependsOn tasks.packageMekanismApiJavadoc
 
 publishing {
     publications {
@@ -441,6 +535,9 @@ publishing {
             artifact vanillaApiJar
             artifact packageVanillaApiJavadoc
             artifact vanillaApiSourceJar
+            artifact mekanismApiJar
+            artifact packageMekanismApiJavadoc
+            artifact mekanismApiSourceJar
 
             pom {
                 url = 'https://github.com/ldtteam/Aequivaleo'

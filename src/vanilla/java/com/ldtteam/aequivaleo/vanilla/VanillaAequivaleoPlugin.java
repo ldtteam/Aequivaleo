@@ -66,7 +66,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     @Override
     public void onCommonSetup()
     {
-        LOGGER.info("Running aequivaleo common setup.");
+        LOGGER.info("Running aequivaleo vanilla plugin common setup.");
         LOGGER.debug("Registering tags.");
 
         configuration.getServer().tagsToRegister
