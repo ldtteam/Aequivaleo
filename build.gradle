@@ -197,18 +197,6 @@ task vanillaApiJar(type: Jar) {
 }
 
 processResources {
-    inputs.property "version", version
-    inputs.property "MCversion", project.exactMinecraftVersion
-
-    from(sourceSets.main.resources.srcDirs) {
-        include 'META-INF/mods.toml'
-
-        expand 'version': version, 'MCversion': project.exactMinecraftVersion, 'forge_version': project.forgeMinVersion
-    }
-
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'META-INF/mods.toml'
-    }
 }
 
 jar {
