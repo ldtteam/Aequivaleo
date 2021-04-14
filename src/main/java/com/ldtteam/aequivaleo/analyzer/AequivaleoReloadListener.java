@@ -11,7 +11,7 @@ import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
-import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
@@ -214,7 +214,10 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
             ) {
                 GenericRecipeData data = gson.fromJson(reader, GenericRecipeDataSerializer.HANDLED_TYPE);
                 if (data != null) {
-                    collectedData.add(new GenericRecipeEquivalencyRecipe(name, data.getInputs(), data.getRequiredKnownOutputs(), data.getOutputs()));
+                    if (data.getConditions().size() != 1 || data.getConditions().iterator().next().test())
+                        collectedData.add(new GenericRecipeEquivalencyRecipe(name, data.getInputs(), data.getRequiredKnownOutputs(), data.getOutputs()));
+                    else
+                        LOGGER.info("Skipping the load of file {} from {} its conditions indicate it is disabled.", resourceLocationWithoutExtension, resourceLocation);
                 } else {
                     LOGGER.error("Couldn't load data file {} from {} as it's null or empty", resourceLocationWithoutExtension, resourceLocation);
                 }

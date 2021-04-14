@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 
 import java.lang.reflect.Type;

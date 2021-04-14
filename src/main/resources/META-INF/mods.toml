@@ -4,7 +4,7 @@ license="GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
 
 [[mods]] #mandatory
     modId="aequivaleo"
-    version="0.1.17-ALPHA"#"${version}"
+    version="${file.jarVersion}"
     displayName="Aequivaleo"
     authors="OrionOnline, LDTTeam"
     description='''

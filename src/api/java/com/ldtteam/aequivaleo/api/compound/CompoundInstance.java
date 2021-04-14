@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound;
 
-import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceRef;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import org.jetbrains.annotations.NotNull;

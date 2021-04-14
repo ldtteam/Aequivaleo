@@ -16,6 +16,15 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
 {
 
     /**
+     * Indicates if this ingredient is valid.
+     *
+     * @return {@code True} when valid.
+     */
+    default boolean isValid() {
+        return !getCandidates().isEmpty() && getCandidates().stream().allMatch(ICompoundContainer::isValid);
+    }
+
+    /**
      * The candidates who match this ingredient.
      *
      * @return The candidates.

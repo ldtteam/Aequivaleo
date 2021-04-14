@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.api.compound.information.datagen;
+package com.ldtteam.aequivaleo.api.compound.information.datagen.data;
 
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;

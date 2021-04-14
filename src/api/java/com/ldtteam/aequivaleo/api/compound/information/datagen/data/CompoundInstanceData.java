@@ -1,8 +1,9 @@
-package com.ldtteam.aequivaleo.api.compound.information.datagen;
+package com.ldtteam.aequivaleo.api.compound.information.datagen.data;
 
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +14,9 @@ public final class CompoundInstanceData
 {
     public enum Mode
     {
+        DISABLED((iCompoundContainerSetMap, compoundInstanceData) -> {
+            //Noop since this is disabled.
+        }),
         ADDITIVE((iCompoundContainerSetMap, dataDrivenCompoundInstanceData) -> {
             dataDrivenCompoundInstanceData.getContainers().forEach(container -> {
                 iCompoundContainerSetMap.computeIfAbsent(container
@@ -48,18 +52,27 @@ public final class CompoundInstanceData
         }
     }
 
+    public static final CompoundInstanceData DISABLED = new CompoundInstanceData(
+      Mode.DISABLED,
+      Sets.newHashSet(),
+      Sets.newHashSet(),
+      Sets.newHashSet());
+
     private final Mode                       mode;
     private final Set<ICompoundContainer<?>> containers;
     private final Set<CompoundInstanceRef>   compoundInstances;
+    private final Set<ICondition>            conditions;
 
     public CompoundInstanceData(
       final Mode mode,
       final Set<ICompoundContainer<?>> containers,
-      final Set<CompoundInstanceRef> compoundInstances)
+      final Set<CompoundInstanceRef> compoundInstances,
+      final Set<ICondition> conditions)
     {
         this.mode = mode;
         this.containers = containers;
         this.compoundInstances = compoundInstances;
+        this.conditions = conditions;
     }
 
     public Mode getMode()
@@ -75,6 +88,11 @@ public final class CompoundInstanceData
     public Set<CompoundInstanceRef> getCompoundInstances()
     {
         return compoundInstances;
+    }
+
+    public Set<ICondition> getConditions()
+    {
+        return conditions;
     }
 
     public void handle(

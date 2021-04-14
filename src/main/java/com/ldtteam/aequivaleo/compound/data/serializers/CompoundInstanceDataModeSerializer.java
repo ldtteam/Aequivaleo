@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.compound.data.serializers;
 
 import com.google.gson.*;
-import com.ldtteam.aequivaleo.api.compound.information.datagen.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
 
 import java.lang.reflect.Type;
 

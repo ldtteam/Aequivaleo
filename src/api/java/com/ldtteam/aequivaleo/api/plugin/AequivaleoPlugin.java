@@ -16,4 +16,12 @@ public @interface AequivaleoPlugin
     @Target(ElementType.FIELD)
     @Retention(RetentionPolicy.RUNTIME)
     @interface Instance {}
+
+    /**
+     * Mod ids of the mods required to load this plugin.
+     * Leave on the default empty to not care for mod specific filtering.
+     *
+     * @return The ids of the mods required to load.
+     */
+    String[] requiredMods() default {};
 }

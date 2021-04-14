@@ -17,6 +17,7 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 import java.util.Optional;
 
+@SuppressWarnings("rawtypes")
 public class TagContainer implements ICompoundContainer<ITag.INamedTag>
 {
 

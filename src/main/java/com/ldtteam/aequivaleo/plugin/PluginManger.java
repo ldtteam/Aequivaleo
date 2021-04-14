@@ -14,6 +14,7 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -54,6 +55,13 @@ public final class PluginManger implements IAequivaleoPluginManager
         for (ModFileScanData scanData : modList.getAllScanData()) {
             for (ModFileScanData.AnnotationData data : scanData.getAnnotations()) {
                 if (AEQUIVALEO_PLUGIN_TYPE.equals(data.getAnnotationType())) {
+                    final String[] requiredMods = (String[]) data.getAnnotationData().get("requiredMods");
+                    if (requiredMods.length > 0) {
+                        if (Arrays.stream(requiredMods).anyMatch(modId -> !ModList.get().isLoaded(modId))) {
+                            continue;
+                        }
+                    }
+
                     IAequivaleoPlugin plugin = createPluginFrom(data.getMemberName());
                     if (plugin != null) {
                         plugins.add(plugin);

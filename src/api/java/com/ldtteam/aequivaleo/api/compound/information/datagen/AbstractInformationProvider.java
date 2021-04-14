@@ -8,11 +8,14 @@ import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.data.DirectoryCache;
 import net.minecraft.data.IDataProvider;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -90,7 +95,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
     {
         for (Path dataSavePath : getPathsToWrite(worldData.getPath()))
         {
-            for (Map.Entry<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> entry : worldData.getDataToWrite().entrySet())
+            for (Map.Entry<Set<ICompoundContainer<?>>, DataSpec> entry : worldData.getDataToWrite().entrySet())
             {
                 Set<ICompoundContainer<?>> containers = entry.getKey();
                 if (containers.isEmpty())
@@ -105,13 +110,14 @@ public abstract class AbstractInformationProvider implements IDataProvider
                     continue;
                 }
 
-                Pair<Boolean, Set<CompoundInstanceRef>> instancesAndReplacing = entry.getValue();
+                DataSpec spec = entry.getValue();
                 final CompoundInstanceData data =
                   new CompoundInstanceData(
-                    instancesAndReplacing.getLeft() ? CompoundInstanceData.Mode.REPLACING : CompoundInstanceData.Mode.ADDITIVE,
+                    spec.mode,
                     containers,
-                    instancesAndReplacing.getRight()
-                  );
+                    spec.instanceRefs,
+                    spec.conditions
+                    );
 
                 final String fileName = data.getContainers()
                                           .stream()
@@ -134,596 +140,38 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     public abstract void calculateDataToSave();
 
-    public final void saveDataRefs(
-      final Object gameObject,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          gameObject,
-          Sets.newHashSet(instances)
-        );
+    public SpecBuilder specFor(final ITag<?> tag) {
+        return new SpecBuilder(tag);
     }
 
-    public final void saveDataRefs(
-      final Object gameObject,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          gameObject,
-          replacing,
-          Sets.newHashSet(instances)
-        );
+    public SpecBuilder specFor(final Object... targets)
+    {
+        return new SpecBuilder(targets);
     }
 
-    public final void saveDataRefs(
-      final Object gameObject,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          gameObject,
-          false,
-          Sets.newHashSet(instances)
-        );
+    public SpecBuilder specFor(final Iterable<Object> targets) {
+        return new SpecBuilder(targets);
     }
 
-    public final void saveDataRefs(
-      final Object gameObject,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
+    public final void save(
+      final SpecBuilder specBuilder
     ) {
-        this.saveDataRefs(Sets.newHashSet(gameObject), replacing, instances);
+        specBuilder.process(this.getGeneralData().getDataToWrite());
     }
 
-    public final void saveDataRefs(
+    public final void save(
       final ResourceLocation worldId,
-      final Object gameObject,
-      final CompoundInstanceRef... instances
+      final SpecBuilder specBuilder
     ) {
-        this.saveDataRefs(
-          worldId,
-          gameObject,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObject,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObject,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(worldId, Sets.newHashSet(gameObject), replacing, instances);
-    }
-
-    public final void saveData(
-      final Object gameObject,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          gameObject,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Object gameObject,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          gameObject,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Object gameObject,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          gameObject,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Object gameObject,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          gameObject,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObject,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObject,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObject,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Object gameObject,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObject,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
-    }
-
-    public final void saveDataRefs(
-      final Set<Object> gameObjects,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          gameObjects,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          gameObjects,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final Set<Object> gameObjects,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          gameObjects,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        final Set<ICompoundContainer<?>> containers = gameObjects.stream().map(gameObject -> ICompoundContainerFactoryManager
-                                                  .getInstance()
-                                                  .wrapInContainer(
-                                                    gameObject,
-                                                    1d
-                                                  )).collect(Collectors.toSet());
-
-        this.getGeneralData()
-          .getDataToWrite()
-          .put(
-            containers,
-            Pair.of(replacing, instances)
-          );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObjects,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObjects,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObjects,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        final Set<ICompoundContainer<?>> containers = gameObjects.stream().map(gameObject -> ICompoundContainerFactoryManager
-                                                                                               .getInstance()
-                                                                                               .wrapInContainer(
-                                                                                                 gameObject,
-                                                                                                 1d
-                                                                                               )).collect(Collectors.toSet());
-
-        this.getWorldDataMap()
+        specBuilder.process(this.getWorldDataMap()
           .computeIfAbsent(worldId, WorldData::new)
-          .getDataToWrite()
-          .put(
-            containers,
-            Pair.of(replacing, instances)
-          );
-    }
-
-    public final void saveData(
-      final Set<Object> gameObjects,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          gameObjects,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          gameObjects,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Set<Object> gameObjects,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          gameObjects,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          gameObjects,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObjects,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObjects,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          worldId,
-          gameObjects,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final Set<Object> gameObjects,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          gameObjects,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
-    }
-
-    public final void saveDataRefs(
-      final ITag<?> tag,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          tag,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ITag<?> tag,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          tag,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ITag<?> tag,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          tag,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ITag<?> tag,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(Sets.newHashSet(tag.getAllElements()), replacing, instances);
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          tag,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final boolean replacing,
-      final CompoundInstanceRef... instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          tag,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          tag,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveDataRefs(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final boolean replacing,
-      final Set<CompoundInstanceRef> instances
-    ) {
-        this.saveDataRefs(worldId, Sets.newHashSet(tag.getAllElements()), replacing, instances);
-    }
-
-    public final void saveData(
-      final ITag<?> tag,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          tag,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ITag<?> tag,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          tag,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ITag<?> tag,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          tag,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ITag<?> tag,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          tag,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          tag,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final boolean replacing,
-      final CompoundInstance... instances
-    ) {
-        this.saveData(
-          worldId,
-          tag,
-          replacing,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveData(
-          worldId,
-          tag,
-          false,
-          Sets.newHashSet(instances)
-        );
-    }
-
-    public final void saveData(
-      final ResourceLocation worldId,
-      final ITag<?> tag,
-      final boolean replacing,
-      final Set<CompoundInstance> instances
-    ) {
-        this.saveDataRefs(
-          worldId,
-          tag,
-          replacing,
-          instances.stream().map(CompoundInstance::asRef).collect(Collectors.toSet())
-        );
+          .getDataToWrite());
     }
 
     @VisibleForTesting
     static class WorldData {
         private final ResourceLocation worldId;
-        private final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> dataToWrite = Maps.newHashMap();
+        private final Map<Set<ICompoundContainer<?>>, DataSpec> dataToWrite = Maps.newHashMap();
 
         private WorldData(final ResourceLocation worldId) {
             this.worldId = worldId;
@@ -734,13 +182,126 @@ public abstract class AbstractInformationProvider implements IDataProvider
             return worldId;
         }
 
-        public Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> getDataToWrite()
+        public Map<Set<ICompoundContainer<?>>, DataSpec> getDataToWrite()
         {
             return dataToWrite;
         }
 
         public String getPath() {
             return worldId.getNamespace() + "/" + worldId.getPath();
+        }
+    }
+
+    @VisibleForTesting
+    static class DataSpec {
+        private final CompoundInstanceData.Mode mode;
+        private final Set<CompoundInstanceRef> instanceRefs;
+        private final Set<ICondition> conditions;
+
+        DataSpec(
+          final CompoundInstanceData.Mode mode,
+          final Set<CompoundInstanceRef> instanceRefs,
+          final Set<ICondition> conditions) {
+            this.mode = mode;
+            this.instanceRefs = instanceRefs;
+            this.conditions = conditions;
+        }
+    }
+
+    @VisibleForTesting
+    protected static class SpecBuilder {
+        private final Set<Object> targets = Sets.newHashSet();
+        private CompoundInstanceData.Mode mode = CompoundInstanceData.Mode.REPLACING;
+        private final Set<CompoundInstanceRef> instanceRefs = Sets.newHashSet();
+        private final Set<ICondition> conditions = Sets.newHashSet();
+
+        private SpecBuilder(final ITag<?> tag) {
+            this.targets.addAll(tag.getAllElements());
+        }
+
+        private SpecBuilder(final Object... targets)
+        {
+            this.targets.addAll(Arrays.asList(targets));
+        }
+
+        private SpecBuilder(final Iterable<Object> targets) {
+            for (final Object target : targets)
+            {
+                this.targets.add(target);
+            }
+        }
+
+        public SpecBuilder withMode(final CompoundInstanceData.Mode mode) {
+            this.mode = mode;
+            return this;
+        }
+
+        public SpecBuilder replaces() {
+            return this.withMode(CompoundInstanceData.Mode.REPLACING);
+        }
+
+        public SpecBuilder additive() {
+            return this.withMode(CompoundInstanceData.Mode.ADDITIVE);
+        }
+
+        public SpecBuilder replaces(final boolean replaces) {
+            return this.withMode(replaces ? CompoundInstanceData.Mode.REPLACING : CompoundInstanceData.Mode.ADDITIVE);
+        }
+
+        public SpecBuilder withCompounds(final CompoundInstance... instances) {
+            return this.withCompounds(Arrays.asList(instances));
+        }
+
+        public SpecBuilder withCompounds(final Iterable<CompoundInstance> instances) {
+            for (final CompoundInstance instance : instances)
+            {
+                this.instanceRefs.add(instance.asRef());
+            }
+
+            return this;
+        }
+
+        public SpecBuilder withCompoundRefs(final CompoundInstanceRef... refs) {
+            return this.withCompoundRefs(Arrays.asList(refs));
+        }
+
+        public SpecBuilder withCompoundRefs(final Iterable<CompoundInstanceRef> refs) {
+            for (final CompoundInstanceRef ref : refs)
+            {
+                this.instanceRefs.add(ref);
+            }
+
+            return this;
+        }
+
+        public SpecBuilder withConditions(final ICondition... conditions) {
+            return this.withConditions(Arrays.asList(conditions));
+        }
+
+        public SpecBuilder withConditions(final Iterable<ICondition> conditions) {
+            for (final ICondition condition : conditions)
+            {
+                this.conditions.add(condition);
+            }
+
+            return this;
+        }
+
+        private void process(Map<Set<ICompoundContainer<?>>, DataSpec> specs) {
+            final Set<ICompoundContainer<?>> containers = this.targets.stream().map(gameObject -> ICompoundContainerFactoryManager
+                                                                                                   .getInstance()
+                                                                                                   .wrapInContainer(
+                                                                                                     gameObject,
+                                                                                                     1d
+                                                                                                   )).collect(Collectors.toSet());
+
+            final DataSpec dataSpec = new DataSpec(
+              this.mode,
+              this.instanceRefs,
+              this.conditions
+            );
+
+            specs.put(containers, dataSpec);
         }
     }
 }

@@ -8,6 +8,8 @@ import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
+import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
@@ -17,7 +19,6 @@ import net.minecraft.data.DirectoryCache;
 import net.minecraft.data.IDataProvider;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.commons.lang3.tuple.Pair;
 import org.assertj.core.util.Sets;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,12 +36,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.*;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
+@SuppressWarnings({"unchecked"})
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
 @PrepareForTest({IAequivaleoAPI.class, IDataProvider.class, ICompoundContainerFactoryManager.class})
@@ -203,14 +205,15 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 
@@ -239,14 +242,15 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new StringCompoundContainer("test", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 
@@ -275,14 +279,15 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 
@@ -311,23 +316,25 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 
@@ -356,23 +363,25 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
         mockedDataToWrite.put(
           Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 
@@ -402,14 +411,15 @@ public class AbstractInformationProviderTest
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
-        final Map<Set<ICompoundContainer<?>>, Pair<Boolean, Set<CompoundInstanceRef>>> mockedDataToWrite = Maps.newHashMap();
+        final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
           Collections.emptySet(),
-          Pair.of(
-            false,
+          new AbstractInformationProvider.DataSpec(
+            CompoundInstanceData.Mode.REPLACING,
             Sets.newLinkedHashSet(
               new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            )
+            ),
+            Sets.newHashSet()
           )
         );
 

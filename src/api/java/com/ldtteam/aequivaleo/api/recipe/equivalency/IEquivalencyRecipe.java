@@ -50,6 +50,19 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         return 1d;
     }
 
+    /**
+     * Indicates if this recipe is valid.
+     *
+     * @return {@code True} when valid.
+     */
+    default boolean isValid() {
+        return !getInputs().isEmpty() &&
+                 !getOutputs().isEmpty() &&
+                 getInputs().stream().allMatch(IRecipeIngredient::isValid) &&
+                 getRequiredKnownOutputs().stream().allMatch(ICompoundContainer::isValid) &&
+                 getOutputs().stream().allMatch(ICompoundContainer::isValid);
+    }
+
     @Override
     default int compareTo(@NotNull IEquivalencyRecipe recipe) {
         final int inputComparison = SortedSetComparator.<IRecipeIngredient>getInstance().compare(getInputs(), recipe.getInputs());

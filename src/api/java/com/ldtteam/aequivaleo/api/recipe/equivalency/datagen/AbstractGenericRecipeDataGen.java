@@ -2,17 +2,20 @@ package com.ldtteam.aequivaleo.api.recipe.equivalency.datagen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IGenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeData;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeDataBuilder;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DirectoryCache;
 import net.minecraft.data.IDataProvider;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,6 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class AbstractGenericRecipeDataGen implements IDataProvider
 {
 
@@ -117,7 +121,41 @@ public abstract class AbstractGenericRecipeDataGen implements IDataProvider
       final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs) {
-        this.worldDataMap.computeIfAbsent(worldId, WorldData::new).recipes.put(name, new GenericRecipeData(inputs, requiredKnownOutputs, outputs));
+        this.saveData(
+          worldId,
+          name,
+          inputs,
+          requiredKnownOutputs,
+          outputs,
+          Sets.newHashSet()
+        );
+    }
+
+    protected void saveData(
+      final ResourceLocation worldId,
+      final ResourceLocation name,
+      final Set<IRecipeIngredient> inputs,
+      final Set<ICompoundContainer<?>> requiredKnownOutputs,
+      final Set<ICompoundContainer<?>> outputs,
+      final Set<ICondition> conditions) {
+        this.saveData(
+          worldId,
+          name,
+          new GenericRecipeDataBuilder()
+            .setInputs(inputs)
+            .setRequiredKnownOutputs(requiredKnownOutputs)
+            .setOutputs(outputs)
+            .setConditions(conditions)
+        );
+    }
+
+    protected void saveData(
+      final ResourceLocation worldId,
+      final ResourceLocation name,
+      final GenericRecipeDataBuilder builder) {
+        this.worldDataMap.computeIfAbsent(worldId, WorldData::new).recipes.put(name,
+          builder
+            .createGenericRecipeData());
     }
 
     protected void saveData(
@@ -148,7 +186,38 @@ public abstract class AbstractGenericRecipeDataGen implements IDataProvider
       final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs) {
-        generalData.recipes.put(name, new GenericRecipeData(inputs, requiredKnownOutputs, outputs));
+        this.saveData(
+          name,
+          inputs,
+          requiredKnownOutputs,
+          outputs,
+          Sets.newHashSet()
+        );
+    }
+
+    protected void saveData(
+      final ResourceLocation name,
+      final Set<IRecipeIngredient> inputs,
+      final Set<ICompoundContainer<?>> requiredKnownOutputs,
+      final Set<ICompoundContainer<?>> outputs,
+      final Set<ICondition> conditions) {
+        this.saveData(
+          name,
+          new GenericRecipeDataBuilder()
+            .setInputs(inputs)
+            .setRequiredKnownOutputs(requiredKnownOutputs)
+            .setOutputs(outputs)
+            .setConditions(conditions)
+        );
+    }
+
+    protected void saveData(
+      final ResourceLocation name,
+      final GenericRecipeDataBuilder builder
+    ) {
+        generalData.recipes.put(name,
+          builder
+            .createGenericRecipeData());
     }
 
     private static class WorldData {
