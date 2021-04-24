@@ -153,15 +153,15 @@ dependencies {
     minecraft "net.minecraftforge:forge:${project.exactMinecraftVersion}-${project.forgeVersion}"
 
     // unit testing
-    testCompile 'junit:junit:4.13'
-    testCompile "org.mockito:mockito-core:1.+"
-    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.5'
-    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.5'
-    testCompile group: 'org.powermock', name: 'powermock-module-junit4-rule-agent', version: '1.6.5'
+    testImplementation 'junit:junit:4.13'
+    testImplementation "org.mockito:mockito-core:1.+"
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.5'
+    testImplementation group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.5'
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4-rule-agent', version: '1.6.5'
 
-    testCompile 'org.assertj:assertj-core:3.9.0'
+    testImplementation 'org.assertj:assertj-core:3.9.0'
 
-    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
 
     testRuntimeOnly group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version:'2.9.9'
     testRuntimeOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.10.0'
@@ -170,16 +170,16 @@ dependencies {
     apiCompile 'com.intellij:annotations:+@jar'
     vanillaCompile 'com.intellij:annotations:+@jar'
     vanillaApiCompile 'com.intellij:annotations:+@jar'
-    compile 'com.intellij:annotations:+@jar'
-    testCompile 'com.intellij:annotations:+@jar'
+    compile "com.intellij:annotations:+@jar"
+    testImplementation 'com.intellij:annotations:+@jar'
     compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
     compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
 
-    compile fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
-    compile fg.deobf("curse.maven:goo-404147:3113043")
-    compile fg.deobf("curse.maven:patchouli-306770:3204037")
-    compile fg.deobf("curse.maven:farmers-delight-398521:3188508")
+    implementation fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
+    implementation fg.deobf("curse.maven:goo-404147:3113043")
+    implementation fg.deobf("curse.maven:patchouli-306770:3204037")
+    implementation fg.deobf("curse.maven:farmers-delight-398521:3188508")
 
 }
 
@@ -511,6 +511,10 @@ publishing {
     else {
         project.logger.log(LogLevel.WARN, "Uploading to JFrog disabeled.")
     }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
 
 
