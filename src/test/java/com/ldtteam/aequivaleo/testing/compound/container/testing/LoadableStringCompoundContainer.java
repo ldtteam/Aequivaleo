@@ -124,7 +124,7 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
 
         @Override
         public ICompoundContainer<String> read(PacketBuffer buffer) {
-            return new LoadableStringCompoundContainer(buffer.readString(), 1d);
+            return new LoadableStringCompoundContainer(buffer.readString(32767), 1d);
         }
 
         @Override

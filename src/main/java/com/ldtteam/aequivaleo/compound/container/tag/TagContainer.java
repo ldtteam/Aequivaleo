@@ -83,8 +83,8 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
         @Override
         public ICompoundContainer<ITag.INamedTag> read(final PacketBuffer buffer)
         {
-            final ResourceLocation tagType = new ResourceLocation(buffer.readString());
-            final ResourceLocation tagName = new ResourceLocation(buffer.readString());
+            final ResourceLocation tagType = new ResourceLocation(buffer.readString(32767));
+            final ResourceLocation tagName = new ResourceLocation(buffer.readString(32767));
             final double amount = buffer.readDouble();
 
             Optional<ITag.INamedTag<?>> tag = TagUtils.getTag(tagType, tagName);

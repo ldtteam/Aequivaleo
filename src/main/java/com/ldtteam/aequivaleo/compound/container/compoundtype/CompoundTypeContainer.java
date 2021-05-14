@@ -74,7 +74,7 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
         @Override
         public ICompoundContainer<ICompoundType> read(final PacketBuffer buffer)
         {
-            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readString())), buffer.readDouble());
+            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readString(32767))), buffer.readDouble());
         }
     }
 
