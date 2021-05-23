@@ -40,8 +40,12 @@ public class ResultsInformationCache implements IResultsInformationCache
 
     private static final Map<RegistryKey<World>, ResultsInformationCache> WORLD_INSTANCES = Maps.newConcurrentMap();
 
-    private        Map<ICompoundContainer<?>, Set<CompoundInstance>>      rawData         = Maps.newConcurrentMap();
-    private        Table<ICompoundContainer<?>, ICompoundTypeGroup, Optional<?>> processedData = Tables.newCustomTable(
+    private       Map<ICompoundContainer<?>, Set<CompoundInstance>>                       rawData          = Maps.newConcurrentMap();
+    private final Table<ICompoundContainer<?>, ICompoundTypeGroup, Object>           processedData    = Tables.newCustomTable(
+      new ConcurrentHashMap<>(),
+      ConcurrentHashMap::new
+    );
+    private final Table<ICompoundTypeGroup, ICompoundContainer<?>, Set<CompoundInstance>> groupedInstances = Tables.newCustomTable(
       new ConcurrentHashMap<>(),
       ConcurrentHashMap::new
     );
@@ -110,28 +114,94 @@ public class ResultsInformationCache implements IResultsInformationCache
             return Optional.empty();
         }
 
-        final Optional<?> storedEntry = processedData.get(unitContainer, group);
+        final Object storedEntry = processedData.get(unitContainer, group);
+        if (storedEntry == null)
+            return Optional.empty();
+
         try {
-            return (Optional<R>) storedEntry;
+            final R targetObject = (R) storedEntry;
+            return Optional.of(targetObject);
         }
         catch (ClassCastException classCastException) {
             return Optional.empty();
         }
     }
 
+    @Override
+    public Map<ICompoundContainer<?>, Set<CompoundInstance>> getAllDataOf(final ICompoundTypeGroup group) {
+        return Collections.unmodifiableMap(this.groupedInstances.row(group));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <R>  Map<ICompoundContainer<?>, R> getAllCachedDataOf(final ICompoundTypeGroup group) {
+        final Map<ICompoundContainer<?>, Object> targetMap = this.processedData.column(group);
+
+        final Map<ICompoundContainer<?>, R> resultsMap = targetMap
+          .entrySet()
+          .stream()
+          .filter(e -> {
+              try {
+                  final R resultObject = (R) e.getValue();
+                  return resultObject != null;
+              }
+              catch (ClassCastException ignore) {
+                  return false;
+              }
+              catch (Exception ex) {
+                  LOGGER.error("Failed to check if a given cache object: " + e.getValue() + " is compatible.", ex);
+                  return false;
+              }
+          })
+          .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            e -> (R) e.getValue()
+          ));
+
+        return Collections.unmodifiableMap(resultsMap);
+    }
+
     public void set(@NotNull final Map<ICompoundContainer<?>, Set<CompoundInstance>> data)
     {
         this.rawData = new ConcurrentHashMap<>(data);
         this.processedData.clear();
+        this.groupedInstances.clear();
         this.rawData.entrySet().parallelStream().forEach(e -> {
             final Map<ICompoundTypeGroup, Collection<CompoundInstance>> instancesGroupedByGroup =
               GroupingUtils.groupByUsingSetToMap(e.getValue(), i -> i.getType().getGroup());
 
-            instancesGroupedByGroup.forEach((group, instances) -> processedData.put(
-              e.getKey(),
-              group,
-              group.convertToCacheEntry(new HashSet<>(instances))
-            ));
+            instancesGroupedByGroup.forEach((group, instances) -> {
+                final Set<CompoundInstance> instanceSet = Collections.unmodifiableSet(
+                  new HashSet<>(instances)
+                );
+
+                Object groupCacheObject = null;
+                try {
+                    final Optional<?> optionalWithConvertedData = group.convertToCacheEntry(
+                        e.getKey(),
+                      instanceSet
+                    );
+                    if (optionalWithConvertedData.isPresent())
+                        groupCacheObject = optionalWithConvertedData.get();
+                }
+                catch (Exception ex) {
+                    LOGGER.error("Failed to convert container instance data of: " + e.getKey() + " to cache data for group: " + group, ex);
+                }
+
+                if (groupCacheObject != null) {
+                    processedData.put(
+                      e.getKey(),
+                      group,
+                      groupCacheObject
+                    );
+                }
+
+                groupedInstances.put(
+                  group,
+                  e.getKey(),
+                  instanceSet
+                );
+            });
         });
     }
 

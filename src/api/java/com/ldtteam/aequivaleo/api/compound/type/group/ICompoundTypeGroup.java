@@ -84,4 +84,15 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      * @return An optional that indicates the cache value to store. Return an empty optional to not store any cache value.
      */
     default Optional<?> convertToCacheEntry(final Set<CompoundInstance> instances) { return Optional.empty(); }
+
+    /**
+     * Invoked by an instance of {@link IResultsInformationCache} to store an additional cache value.
+     * Warning this method is invoked in parallel in almost all cases.
+     *
+     * @param container The container for which the instances are converted.
+     * @param instances The instances to convert into a cache entry.
+     *
+     * @return An optional that indicates the cache value to store. Return an empty optional to not store any cache value.
+     */
+    default Optional<?> convertToCacheEntry(final ICompoundContainer<?> container, final Set<CompoundInstance> instances) { return convertToCacheEntry(instances); }
 }

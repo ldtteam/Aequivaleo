@@ -8,12 +8,17 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * A instance of a cache that contains the results of a calculation.
+ *
+ * Generally a single instance per world exists, however they might or might not be recycled when resource and datapacks reload.
+ */
 public interface IResultsInformationCache
 {
-
     /**
      * Gives access to the current instance of the cache.
      *
@@ -74,4 +79,22 @@ public interface IResultsInformationCache
         final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(object, 1d);
         return getCacheFor(group, unitContainer);
     }
+
+    /**
+     * Returns all data for a given group.
+     * If a container is not contained in this map, then no value was calculated for it.
+     *
+     * @param group The group to get the data of.
+     * @return An unmodifiable map that returns all the calculated results. Don't modify its contents.
+     */
+    Map<ICompoundContainer<?>, Set<CompoundInstance>> getAllDataOf(ICompoundTypeGroup group);
+
+    /**
+     * Returns all cached data for a given group.
+     * If a container is not contained in this map, then no value was calculated for it.
+     *
+     * @param group The group to get the data of.
+     * @return An unmodifiable map that returns all the cached results. Don't modify its contents.
+     */
+    <R>  Map<ICompoundContainer<?>, R> getAllCachedDataOf(ICompoundTypeGroup group);
 }
