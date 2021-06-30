@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Type;
+import java.util.Comparator;
 import java.util.Set;
 
 public final class CompoundInstanceDataSerializer implements JsonSerializer<CompoundInstanceData>, JsonDeserializer<CompoundInstanceData>
@@ -65,10 +66,10 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
 
         if (!src.getConditions().isEmpty()) {
             final JsonArray conditions = new JsonArray();
-            for (final ICondition condition : src.getConditions())
-            {
-                conditions.add(CraftingHelper.serialize(condition));
-            }
+            src.getConditions().stream()
+              .sorted(Comparator.comparing(ICondition::getID))
+              .map(CraftingHelper::serialize)
+              .forEach(conditions::add);
 
             result.add("conditions", conditions);
         }

@@ -5,9 +5,11 @@ import com.google.common.collect.Sets;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
 
 public final class CompoundInstanceRefSetSerializer implements JsonSerializer<Set<CompoundInstanceRef>>, JsonDeserializer<Set<CompoundInstanceRef>>
@@ -46,9 +48,16 @@ public final class CompoundInstanceRefSetSerializer implements JsonSerializer<Se
             return context.serialize(src.iterator().next());
 
         final JsonArray result = new JsonArray();
-        src.forEach(instance -> {
-            result.add(context.serialize(instance));
-        });
+        src.stream()
+          .map(e -> context.serialize(e, CompoundInstanceRefSerializer.HANDLED_TYPE))
+          .sorted(Comparator.comparing(jsonElement -> {
+              if (jsonElement.isJsonObject() && jsonElement.getAsJsonObject().has("type"))
+                  return jsonElement.getAsJsonObject().get("type").getAsString();
+
+              return jsonElement.toString();
+          }))
+          .forEach(result::add);
+
         return result;
     }
 }

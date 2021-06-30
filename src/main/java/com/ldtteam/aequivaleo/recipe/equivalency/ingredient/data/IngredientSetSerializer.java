@@ -9,6 +9,7 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 import org.lwjgl.system.CallbackI;
 
 import java.lang.reflect.Type;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -54,7 +55,10 @@ public class IngredientSetSerializer implements JsonSerializer<Set<IRecipeIngred
         }
 
         final JsonArray elements = new JsonArray();
-        src.stream().map(e -> context.serialize(e, IngredientSerializerRegistry.HANDLED_TYPE)).forEach(elements::add);
+        src.stream()
+          .map(e -> context.serialize(e, IngredientSerializerRegistry.HANDLED_TYPE))
+          .sorted(Comparator.comparing(JsonElement::toString))
+          .forEach(elements::add);
         return elements;
     }
 }

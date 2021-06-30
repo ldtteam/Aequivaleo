@@ -15,7 +15,9 @@ import net.minecraftforge.common.crafting.conditions.TrueCondition;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.function.Function;
 
 public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipeData>, JsonDeserializer<GenericRecipeData>
 {
@@ -71,10 +73,10 @@ public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipe
 
         if (!src.getConditions().isEmpty()) {
             final JsonArray conditions = new JsonArray();
-            for (final ICondition condition : src.getConditions())
-            {
-                conditions.add(CraftingHelper.serialize(condition));
-            }
+            src.getConditions().stream()
+              .sorted(Comparator.comparing(ICondition::getID))
+              .map(CraftingHelper::serialize)
+              .forEach(conditions::add);
 
             object.add("conditions", conditions);
         }

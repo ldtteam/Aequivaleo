@@ -8,7 +8,9 @@ import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFacto
 
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -49,6 +51,12 @@ public class CompoundContainerSetSerializer implements JsonSerializer<Set<ICompo
         final JsonArray data = new JsonArray();
         src.stream()
           .map(e -> context.serialize(e, CompoundContainerFactoryManager.HANDLED_TYPE))
+          .sorted(Comparator.comparing(jsonElement -> {
+              if (jsonElement.isJsonObject() && jsonElement.getAsJsonObject().has("type"))
+                  return jsonElement.getAsJsonObject().get("type").getAsString();
+
+              return jsonElement.toString();
+          }))
           .forEach(data::add);
 
         return data;
