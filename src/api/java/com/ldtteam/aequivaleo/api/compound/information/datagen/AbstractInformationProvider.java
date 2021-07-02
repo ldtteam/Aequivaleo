@@ -16,7 +16,6 @@ import net.minecraft.data.IDataProvider;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -210,10 +209,10 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     @VisibleForTesting
     protected static class SpecBuilder {
-        private final Set<Object> targets = Sets.newHashSet();
+        private final Set<Object> targets = Sets.newLinkedHashSet();
         private CompoundInstanceData.Mode mode = CompoundInstanceData.Mode.ADDITIVE;
-        private final Set<CompoundInstanceRef> instanceRefs = Sets.newHashSet();
-        private final Set<ICondition> conditions = Sets.newHashSet();
+        private final Set<CompoundInstanceRef> instanceRefs = Sets.newLinkedHashSet();
+        private final Set<ICondition> conditions = Sets.newLinkedHashSet();
 
         private SpecBuilder(final ITag<?> tag) {
             this.targets.addAll(tag.getAllElements());
@@ -293,7 +292,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
                                                                                                    .wrapInContainer(
                                                                                                      gameObject,
                                                                                                      1d
-                                                                                                   )).collect(Collectors.toSet());
+                                                                                                   )).collect(Collectors.toCollection(LinkedHashSet::new));
 
             final DataSpec dataSpec = new DataSpec(
               this.mode,

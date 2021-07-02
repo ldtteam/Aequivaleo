@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -20,12 +21,12 @@ public final class CompoundInstanceData
         ADDITIVE((iCompoundContainerSetMap, dataDrivenCompoundInstanceData) -> {
             dataDrivenCompoundInstanceData.getContainers().forEach(container -> {
                 iCompoundContainerSetMap.computeIfAbsent(container
-                  , (d) -> Sets.newHashSet()
+                  , (d) -> Sets.newLinkedHashSet()
                 ).addAll(dataDrivenCompoundInstanceData
                            .getCompoundInstances()
                            .stream()
                            .map(CompoundInstanceRef::get)
-                           .collect(Collectors.toSet()));
+                           .collect(Collectors.toCollection(LinkedHashSet::new)));
             });
         }),
         REPLACING((iCompoundContainerSetMap, dataDrivenCompoundInstanceData) -> {
@@ -35,7 +36,7 @@ public final class CompoundInstanceData
                     .getCompoundInstances()
                     .stream()
                     .map(CompoundInstanceRef::get)
-                    .collect(Collectors.toSet()));
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
             });
         });
 
@@ -54,9 +55,10 @@ public final class CompoundInstanceData
 
     public static final CompoundInstanceData DISABLED = new CompoundInstanceData(
       Mode.DISABLED,
-      Sets.newHashSet(),
-      Sets.newHashSet(),
-      Sets.newHashSet());
+      Sets.newLinkedHashSet(),
+      Sets.newLinkedHashSet(),
+      Sets.newLinkedHashSet()
+    );
 
     private final Mode                       mode;
     private final Set<ICompoundContainer<?>> containers;

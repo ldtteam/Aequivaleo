@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.api.compound.information.datagen;
 import com.google.common.collect.Sets;
 import net.minecraft.data.DataGenerator;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -24,12 +25,15 @@ public abstract class ForcedInformationProvider extends AbstractInformationProvi
     @Override
     protected Set<Path> getPathsToWrite(String worldPath)
     {
-        return Sets.newHashSet(
-          dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, LOCKED_PATH, worldPath)),
-          dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, VALUE_PATH, worldPath))
-        );
+        final Set<Path> result = Sets.newLinkedHashSet();
+
+        result.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, LOCKED_PATH, worldPath)));
+        result.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, VALUE_PATH, worldPath)));
+
+        return result;
     }
 
+    @NotNull
     @Override
     public String getName()
     {

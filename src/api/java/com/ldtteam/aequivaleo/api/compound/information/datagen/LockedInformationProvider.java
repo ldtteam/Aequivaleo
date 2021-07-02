@@ -1,27 +1,12 @@
 package com.ldtteam.aequivaleo.api.compound.information.datagen;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public abstract class LockedInformationProvider extends AbstractInformationProvider
 {
@@ -40,11 +25,12 @@ public abstract class LockedInformationProvider extends AbstractInformationProvi
     @Override
     protected Set<Path> getPathsToWrite(String worldPath)
     {
-        final Set<Path> pathSet = Sets.newHashSet();
+        final Set<Path> pathSet = Sets.newLinkedHashSet();
         pathSet.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, LOCKED_PATH, worldPath)));
         return pathSet;
     }
 
+    @NotNull
     @Override
     public String getName()
     {

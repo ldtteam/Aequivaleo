@@ -8,9 +8,11 @@ import net.minecraftforge.common.crafting.conditions.FalseCondition;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.commons.lang3.Validate;
 
+import java.util.Comparator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 public class GenericRecipeData
 {
@@ -25,7 +27,7 @@ public class GenericRecipeData
     private final SortedSet<IRecipeIngredient>     inputs;
     private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
-    private final Set<ICondition> conditions;
+    private final SortedSet<ICondition> conditions;
 
     GenericRecipeData(
       final Set<IRecipeIngredient> inputs,
@@ -37,7 +39,8 @@ public class GenericRecipeData
         this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
         this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
         this.outputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(outputs)));
-        this.conditions = conditions;
+        this.conditions = new TreeSet<>(Comparator.comparing(iCondition -> iCondition.getID().toString()));
+        this.conditions.addAll(Validate.noNullElements(Validate.notNull(conditions)));
     }
 
     public SortedSet<IRecipeIngredient> getInputs()
