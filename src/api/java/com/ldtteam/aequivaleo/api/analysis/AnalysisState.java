@@ -57,7 +57,7 @@ public enum AnalysisState
      * @return {@code True} when data is available, {@code False} when not.
      */
     public boolean hasData() {
-        return this == SYNCING || this == COMPLETED;
+        return this == SYNCING || this == COMPLETED || this == POST_PROCESSING;
     }
 
     /**
