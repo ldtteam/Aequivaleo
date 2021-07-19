@@ -23,7 +23,7 @@ import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSeri
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
-import com.ldtteam.aequivaleo.results.ResultsInformationCache;
+import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import net.minecraft.client.resources.ReloadListener;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.resources.IResource;
@@ -266,7 +266,7 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
             forceReload),
           aequivaleoReloadExecutor
         )).toArray(CompletableFuture[]::new))
-          .thenRunAsync(ResultsInformationCache::updateAllPlayers)
+          .thenRunAsync(EquivalencyResults::updateAllPlayers)
           .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
           ))
           .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors())
@@ -313,7 +313,7 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
 
         private void reloadEquivalencyData()
         {
-            LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation().toString());
+            LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation());
             try {
                 WorldBootstrapper.onWorldReload(getServerWorld());
 
@@ -371,11 +371,11 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
                 worldAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(getServerWorld().getDimensionKey())::register);
 
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld(), forceReload, true);
-                ResultsInformationCache.getInstance(getServerWorld().getDimensionKey()).set(analyzer.calculateAndGet());
+                EquivalencyResults.getInstance(getServerWorld().getDimensionKey()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {
                 LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().getDimensionKey().getLocation()), t);
             }
-            LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation().toString());
+            LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation());
         }
 
         private static Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data) {

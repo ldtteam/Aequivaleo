@@ -13,24 +13,20 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * A instance of a cache that contains the results of a calculation.
- *
- * Generally a single instance per world exists, however they might or might not be recycled when resource and datapacks reload.
+ * Contains the results of an equivalency analysis.
  */
-
-@Deprecated
-public interface IResultsInformationCache extends IEquivalencyResults
+public interface IEquivalencyResults
 {
+
     /**
-     * Gives access to the current instance of the cache.
+     * Gives access to the current instance of the calculation results.
      *
      * @param worldKey The key for the world for which the instance is retrieved.
      *
-     * @return The cache.
+     * @return The results.
      */
-    @Deprecated
-    static IResultsInformationCache getInstance(@NotNull final RegistryKey<World> worldKey) {
-        return IAequivaleoAPI.getInstance().getResultsInformationCache(worldKey);
+    static IEquivalencyResults getInstance(@NotNull final RegistryKey<World> worldKey) {
+        return IAequivaleoAPI.getInstance().getEquivalencyResults(worldKey);
     }
 
     /**
@@ -40,11 +36,8 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @param container The container in question.
      * @return A sets containing the results if present, else an empty set is returned.
      */
-    @Deprecated
     @NotNull
-    default Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container){
-        return dataFor(container);
-    }
+    Set<CompoundInstance> dataFor(@NotNull final ICompoundContainer<?> container);
 
     /**
      * Gives access to the calculation result of a single in game object.
@@ -53,11 +46,10 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @param <T> The type of object you wish to get the compound instances for.
      * @return A sets containing the results if present, else an empty set is returned.
      */
-    @Deprecated
     @NotNull
-    default <T> Set<CompoundInstance> getFor(@NotNull final T object) throws IllegalArgumentException {
+    default <T> Set<CompoundInstance> dataFor(@NotNull final T object) throws IllegalArgumentException {
         final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(object, 1d);
-        return getFor(unitContainer);
+        return dataFor(unitContainer);
     }
 
     /**
@@ -69,11 +61,8 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @param <R> The type of the processed cache result.
      * @return An optional containing the processed results if present, else an empty optional is returned.
      */
-    @Deprecated
     @NotNull
-    default <R> Optional<R> getCacheFor(@NotNull final ICompoundTypeGroup group, @NotNull final ICompoundContainer<?> container) {
-        return mappedDataFor(group, container);
-    }
+    <R> Optional<R> mappedDataFor(@NotNull final ICompoundTypeGroup group, @NotNull final ICompoundContainer<?> container);
 
     /**
      * Gives access to the calculation result of a single in game object, in the form of the processed cache result.
@@ -84,12 +73,20 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @param <R> The type of the processed cache result.
      * @return An optional containing the processed results if present, else an empty optional is returned.
      */
-    @Deprecated
     @NotNull
-    default <R, T> Optional<R> getCacheFor(@NotNull final ICompoundTypeGroup group, @NotNull final T object) throws IllegalArgumentException {
+    default <R, T> Optional<R> mappedDataFor(@NotNull final ICompoundTypeGroup group, @NotNull final T object) throws IllegalArgumentException {
         final ICompoundContainer<?> unitContainer = IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(object, 1d);
-        return getCacheFor(group, unitContainer);
+        return mappedDataFor(group, unitContainer);
     }
+
+    /**
+     * Returns all data for a given group.
+     * If a container is not contained in this map, then no value was calculated for it.
+     *
+     * @param group The group to get the data of.
+     * @return An unmodifiable map that returns all the calculated results. Don't modify its contents.
+     */
+    Map<ICompoundContainer<?>, Set<CompoundInstance>> getAllDataOf(ICompoundTypeGroup group);
 
     /**
      * Returns all cached data for a given group.
@@ -98,8 +95,5 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @param group The group to get the data of.
      * @return An unmodifiable map that returns all the cached results. Don't modify its contents.
      */
-    @Deprecated
-    default <R> Map<ICompoundContainer<?>, R> getAllCachedDataOf(ICompoundTypeGroup group) {
-        return getAllMappedDataOf(group);
-    }
+    <R>  Map<ICompoundContainer<?>, R> getAllMappedDataOf(ICompoundTypeGroup group);
 }

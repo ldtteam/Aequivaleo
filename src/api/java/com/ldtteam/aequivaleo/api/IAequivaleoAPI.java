@@ -11,6 +11,7 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
+import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
@@ -71,7 +72,16 @@ public interface IAequivaleoAPI
      * @param worldKey The world key to get the equivalency cache for.
      * @return The equivalency cache for a given dimension.
      */
+    @Deprecated
     IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey);
+
+    /**
+     * Gives access to the results that contains the equivalency information after calculation.
+     *
+     * @param worldKey The world key to get the equivalency results for.
+     * @return The equivalency results for a given dimension.
+     */
+    IEquivalencyResults getEquivalencyResults(RegistryKey<World> worldKey);
 
     /**
      * Gives access to the aequivaleo plugin manager.
@@ -152,6 +162,7 @@ public interface IAequivaleoAPI
     default ModContainer getAequivaleoContainer() {
         return ModList.get().getModContainerById(Constants.MOD_ID).orElseThrow(()->new RuntimeException("Where is Aequivaleo???!"));
     }
+
 
     class Holder {
         private static IAequivaleoAPI apiInstance;

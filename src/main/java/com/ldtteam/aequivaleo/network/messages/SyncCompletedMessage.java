@@ -2,10 +2,9 @@ package com.ldtteam.aequivaleo.network.messages;
 
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import com.ldtteam.aequivaleo.results.ResultsInformationCache;
+import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
@@ -70,7 +69,7 @@ public class SyncCompletedMessage implements IMessage
 
         final RegistryKey<World> worldKey = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, worldKeyName);
 
-        ResultsInformationCache.getInstance(
+        EquivalencyResults.getInstance(
           worldKey
         ).set(partialPackets.stream().collect(
           Collectors.toMap(

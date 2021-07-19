@@ -9,6 +9,7 @@ import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -27,18 +28,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings({"UnstableApiUsage", "deprecation"})
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
-public class ResultsInformationCache implements IResultsInformationCache
+public class EquivalencyResults implements IResultsInformationCache, IEquivalencyResults
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
 
-    private static final Map<RegistryKey<World>, ResultsInformationCache> WORLD_INSTANCES = Maps.newConcurrentMap();
+    private static final Map<RegistryKey<World>, EquivalencyResults> WORLD_INSTANCES = Maps.newConcurrentMap();
 
     private       Map<ICompoundContainer<?>, Set<CompoundInstance>>                       rawData          = Maps.newConcurrentMap();
     private final Table<ICompoundContainer<?>, ICompoundTypeGroup, Object>           processedData    = Tables.newCustomTable(
@@ -50,14 +50,14 @@ public class ResultsInformationCache implements IResultsInformationCache
       ConcurrentHashMap::new
     );
 
-    private ResultsInformationCache()
+    private EquivalencyResults()
     {
 
     }
 
-    public static ResultsInformationCache getInstance(@NotNull final RegistryKey<World> world)
+    public static EquivalencyResults getInstance(@NotNull final RegistryKey<World> world)
     {
-        return WORLD_INSTANCES.computeIfAbsent(world, (dimType) -> new ResultsInformationCache());
+        return WORLD_INSTANCES.computeIfAbsent(world, (dimType) -> new EquivalencyResults());
     }
 
     @SubscribeEvent
@@ -65,13 +65,13 @@ public class ResultsInformationCache implements IResultsInformationCache
     {
         if (playerLoggedInEvent.getPlayer() instanceof ServerPlayerEntity) {
             LOGGER.info("Sending results data to player: " + playerLoggedInEvent.getPlayer().getScoreboardName());
-            ResultsInformationCache.updatePlayer((ServerPlayerEntity) playerLoggedInEvent.getPlayer());
+            EquivalencyResults.updatePlayer((ServerPlayerEntity) playerLoggedInEvent.getPlayer());
         }
     }
 
     @NotNull
     @Override
-    public Set<CompoundInstance> getFor(@NotNull final ICompoundContainer<?> container){
+    public Set<CompoundInstance> dataFor(@NotNull final ICompoundContainer<?> container){
         final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
                                                                                                      IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
 
@@ -79,7 +79,7 @@ public class ResultsInformationCache implements IResultsInformationCache
             final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
             for (final Object alternative : alternatives)
             {
-                final Set<CompoundInstance> result = this.getFor(alternative);
+                final Set<CompoundInstance> result = this.dataFor(alternative);
                 if (!result.isEmpty())
                 {
                     return result;
@@ -95,7 +95,7 @@ public class ResultsInformationCache implements IResultsInformationCache
     @SuppressWarnings("unchecked")
     @NotNull
     @Override
-    public <R> Optional<R> getCacheFor(@NotNull final ICompoundTypeGroup group, @NotNull final ICompoundContainer<?> container)
+    public <R> Optional<R> mappedDataFor(@NotNull final ICompoundTypeGroup group, @NotNull final ICompoundContainer<?> container)
     {
         final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
                                                                                                      IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
@@ -104,7 +104,7 @@ public class ResultsInformationCache implements IResultsInformationCache
             final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
             for (final Object alternative : alternatives)
             {
-                final Optional<R> result = this.getCacheFor(group, alternative);
+                final Optional<R> result = this.mappedDataFor(group, alternative);
                 if (result.isPresent())
                 {
                     return result;
@@ -134,7 +134,7 @@ public class ResultsInformationCache implements IResultsInformationCache
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R>  Map<ICompoundContainer<?>, R> getAllCachedDataOf(final ICompoundTypeGroup group) {
+    public <R>  Map<ICompoundContainer<?>, R> getAllMappedDataOf(final ICompoundTypeGroup group) {
         final Map<ICompoundContainer<?>, Object> targetMap = this.processedData.column(group);
 
         final Map<ICompoundContainer<?>, R> resultsMap = targetMap
@@ -177,7 +177,7 @@ public class ResultsInformationCache implements IResultsInformationCache
 
                 Object groupCacheObject = null;
                 try {
-                    final Optional<?> optionalWithConvertedData = group.convertToCacheEntry(
+                    final Optional<?> optionalWithConvertedData = group.mapEntry(
                         e.getKey(),
                       instanceSet
                     );

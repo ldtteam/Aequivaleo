@@ -4,10 +4,10 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -72,7 +72,7 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
 
     @Override
     default int compareTo(@NotNull ICompoundTypeGroup group) {
-        return Objects.requireNonNull(getRegistryName()).compareTo(group.getRegistryName());
+        return Objects.requireNonNull(getRegistryName()).compareTo(Objects.requireNonNull(group.getRegistryName()));
     }
 
     /**
@@ -83,6 +83,7 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      *
      * @return An optional that indicates the cache value to store. Return an empty optional to not store any cache value.
      */
+    @Deprecated
     default Optional<?> convertToCacheEntry(final Set<CompoundInstance> instances) { return Optional.empty(); }
 
     /**
@@ -94,5 +95,27 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      *
      * @return An optional that indicates the cache value to store. Return an empty optional to not store any cache value.
      */
+    @Deprecated
     default Optional<?> convertToCacheEntry(final ICompoundContainer<?> container, final Set<CompoundInstance> instances) { return convertToCacheEntry(instances); }
+
+    /**
+     * Invoked by an instance of {@link IEquivalencyResults} to store an additional mapped value.
+     * Warning this method is invoked in parallel in almost all cases.
+     *
+     * @param instances The instances to convert into a mapped entry.
+     *
+     * @return An optional that indicates the mapped value to store. Return an empty optional to not store any mapped value.
+     */
+    default Optional<?> mapEntry(final Set<CompoundInstance> instances) { return convertToCacheEntry(instances); }
+
+    /**
+     * Invoked by an instance of {@link IEquivalencyResults} to store an additional mapped value.
+     * Warning this method is invoked in parallel in almost all cases.
+     *
+     * @param container The container for which the instances are converted.
+     * @param instances The instances to convert into a mapped entry.
+     *
+     * @return An optional that indicates the mapped value to store. Return an empty optional to not store any mapped value.
+     */
+    default Optional<?> mapEntry(final ICompoundContainer<?> container, final Set<CompoundInstance> instances) { return convertToCacheEntry(instances); }
 }

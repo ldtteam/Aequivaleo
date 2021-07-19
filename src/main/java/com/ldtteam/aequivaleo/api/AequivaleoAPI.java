@@ -11,6 +11,7 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
+import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
@@ -24,9 +25,8 @@ import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
-import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.SimpleIngredientSerializer;
+import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
-import com.ldtteam.aequivaleo.results.ResultsInformationCache;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class AequivaleoAPI implements IAequivaleoAPI
 {
-    private static AequivaleoAPI ourInstance = new AequivaleoAPI();
+    private static final AequivaleoAPI ourInstance = new AequivaleoAPI();
 
     public static AequivaleoAPI getInstance()
     {
@@ -69,10 +69,17 @@ public final class AequivaleoAPI implements IAequivaleoAPI
         return CompoundInformationRegistry.getInstance(worldKey);
     }
 
+    @Deprecated
     @Override
     public IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey)
     {
-        return ResultsInformationCache.getInstance(worldKey);
+        return EquivalencyResults.getInstance(worldKey);
+    }
+
+    @Override
+    public IEquivalencyResults getEquivalencyResults(final RegistryKey<World> worldKey)
+    {
+        return EquivalencyResults.getInstance(worldKey);
     }
 
     @Override
