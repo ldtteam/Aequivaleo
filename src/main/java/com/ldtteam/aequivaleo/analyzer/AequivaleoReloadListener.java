@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
@@ -97,71 +98,100 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
         final Map<ResourceLocation, List<IEquivalencyRecipe>> additionalRecipes = new HashMap<>();
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
-        valueData.put(
-          GENERAL_DATA_NAME,
-          readInstanceData(
-            resourceManager,
-            "aequivaleo/value/general"
-          )
-        );
-
-        worlds.forEach(world -> {
-            final String path = "aequivaleo/value/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
+        try {
+            worlds.forEach(world -> AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.LOADING_DATA));
 
             valueData.put(
-              world.getDimensionKey().getLocation(),
+              GENERAL_DATA_NAME,
               readInstanceData(
                 resourceManager,
-                path
+                "aequivaleo/value/general"
               )
             );
-        });
 
-        lockedData.put(
-          GENERAL_DATA_NAME,
-          readInstanceData(
-            resourceManager,
-          "aequivaleo/locked/general"
-          )
-        );
+            worlds.forEach(world -> {
+                try {
+                    final String path = "aequivaleo/value/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
 
-        worlds.forEach(world -> {
-            final String path = "aequivaleo/locked/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
+                    valueData.put(
+                      world.getDimensionKey().getLocation(),
+                      readInstanceData(
+                        resourceManager,
+                        path
+                      )
+                    );
+                }
+                catch (Exception ex) {
+                    LOGGER.error("Failed to load value data for: " + world.getDimensionKey(), ex);
+                    AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.ERRORED);
+                }
+            });
 
             lockedData.put(
-              world.getDimensionKey().getLocation(),
+              GENERAL_DATA_NAME,
               readInstanceData(
                 resourceManager,
-                path
+                "aequivaleo/locked/general"
               )
             );
-        });
 
-        additionalRecipes.put(
-          GENERAL_DATA_NAME,
-          readAdditionalRecipeData(
-            resourceManager,
-            "aequivaleo/recipes/general"
-          )
-        );
+            worlds.forEach(world -> {
+                try {
+                    final String path = "aequivaleo/locked/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
 
-        worlds.forEach(world -> {
-            final String path = "aequivaleo/recipes/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
+                    lockedData.put(
+                      world.getDimensionKey().getLocation(),
+                      readInstanceData(
+                        resourceManager,
+                        path
+                      )
+                    );
+                }
+                catch (Exception ex)
+                {
+                    LOGGER.error("Failed to load locking data for: " + world.getDimensionKey(), ex);
+                    AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.ERRORED);
+                }
+            });
 
             additionalRecipes.put(
-              world.getDimensionKey().getLocation(),
+              GENERAL_DATA_NAME,
               readAdditionalRecipeData(
                 resourceManager,
-                path
+                "aequivaleo/recipes/general"
               )
             );
-        });
 
-        final DataDrivenData dataDrivenData = new DataDrivenData();
-        dataDrivenData.valueData.putAll(valueData);
-        dataDrivenData.lockedData.putAll(lockedData);
-        dataDrivenData.dataDrivenRecipes.putAll(additionalRecipes);
-        return dataDrivenData;
+            worlds.forEach(world -> {
+                try {
+                    final String path = "aequivaleo/recipes/" + world.getDimensionKey().getLocation().getNamespace() + "/" + world.getDimensionKey().getLocation().getPath();
+
+                    additionalRecipes.put(
+                      world.getDimensionKey().getLocation(),
+                      readAdditionalRecipeData(
+                        resourceManager,
+                        path
+                      )
+                    );
+                }
+                catch (Exception ex)
+                {
+                    LOGGER.error("Failed to load additional recipe data for: " + world.getDimensionKey(), ex);
+                    AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.ERRORED);
+                }
+            });
+
+            final DataDrivenData dataDrivenData = new DataDrivenData();
+            dataDrivenData.valueData.putAll(valueData);
+            dataDrivenData.lockedData.putAll(lockedData);
+            dataDrivenData.dataDrivenRecipes.putAll(additionalRecipes);
+            return dataDrivenData;
+        }
+        catch (Exception ex) {
+            LOGGER.error("General failure occurred during loading of data.", ex);
+            worlds.forEach(world -> AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.ERRORED));
+            return new DataDrivenData();
+        }
     }
 
     @NotNull
@@ -185,9 +215,11 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
                     collectedData.add(data);
                 } else {
                     LOGGER.error("Couldn't load data file {} from {} as it's null or empty", resourceLocationWithoutExtension, resourceLocation);
+                    throw new IllegalStateException("Empty data file.");
                 }
-            } catch (IllegalArgumentException | IOException | JsonParseException jsonParseException) {
-                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, jsonParseException);
+            } catch (IllegalArgumentException | IOException | JsonParseException ex) {
+                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, ex);
+                throw new IllegalStateException("Parsing failure.", ex);
             }
         });
 
@@ -197,7 +229,7 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
     @NotNull
     private static List<IEquivalencyRecipe> readAdditionalRecipeData(@NotNull final IResourceManager resourceManager, @NotNull final String targetPath)  {
         final List<IEquivalencyRecipe> collectedData = Lists.newArrayList();
-        final int targetPathLength = targetPath.length() + 1; //Account for the seperator.
+        final int targetPathLength = targetPath.length() + 1; //Account for the separator.
 
         final Gson gson = IAequivaleoAPI.getInstance().getGson();
 
@@ -220,9 +252,11 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
                         LOGGER.info("Skipping the load of file {} from {} its conditions indicate it is disabled.", resourceLocationWithoutExtension, resourceLocation);
                 } else {
                     LOGGER.error("Couldn't load data file {} from {} as it's null or empty", resourceLocationWithoutExtension, resourceLocation);
+                    throw new IllegalStateException("Empty recipe file.");
                 }
-            } catch (IllegalArgumentException | IOException | JsonParseException jsonParseException) {
-                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, jsonParseException);
+            } catch (IllegalArgumentException | IOException | JsonParseException ex) {
+                LOGGER.error("Couldn't parse data file {} from {}", resourceLocationWithoutExtension, resourceLocation, ex);
+                throw new IllegalStateException("Parsing failure.", ex);
             }
         });
 
@@ -241,36 +275,46 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
         final List<ServerWorld> worlds = Lists.newArrayList(ServerLifecycleHooks.getCurrentServer().getWorlds());
 
         LOGGER.info("Analyzing information");
-        final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
-        final AtomicInteger genericThreadCounter = new AtomicInteger();
-        final int maxThreadCount = Math.max(1, Math.max(4, Runtime.getRuntime().availableProcessors() - 2));
-        final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
-            final Thread thread = new Thread(runnable);
-            thread.setContextClassLoader(classLoader);
-            thread.setName(String.format("Aequivaleo analysis runner: %s", genericThreadCounter.incrementAndGet()));
-            return thread;
-        });
+        try {
+            final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
+            final AtomicInteger genericThreadCounter = new AtomicInteger();
+            final int maxThreadCount = Math.max(1, Math.max(4, Runtime.getRuntime().availableProcessors() - 2));
+            final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
+                final Thread thread = new Thread(runnable);
+                thread.setContextClassLoader(classLoader);
+                thread.setName(String.format("Aequivaleo analysis runner: %s", genericThreadCounter.incrementAndGet()));
+                return thread;
+            });
 
-        RecipeCalculator.IngredientHandler.getInstance().reset();
+            RecipeCalculator.IngredientHandler.getInstance().reset();
 
-        CompletableFuture.allOf(worlds.stream()
-                                  .map(world -> CompletableFuture.runAsync(
-          new AequivaleoWorldAnalysisRunner(
-            world,
-            valueData.get(GENERAL_DATA_NAME),
-            valueData.get(world.getDimensionKey().getLocation()),
-            lockedData.get(GENERAL_DATA_NAME),
-            lockedData.get(world.getDimensionKey().getLocation()),
-            additionalRecipes.get(GENERAL_DATA_NAME),
-            additionalRecipes.get(world.getDimensionKey().getLocation()),
-            forceReload),
-          aequivaleoReloadExecutor
-        )).toArray(CompletableFuture[]::new))
-          .thenRunAsync(EquivalencyResults::updateAllPlayers)
-          .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
-          ))
-          .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors())
-          .thenRunAsync(aequivaleoReloadExecutor::shutdown);
+            CompletableFuture.allOf(worlds.stream()
+                                      .map(world -> CompletableFuture.runAsync(
+                                        new AequivaleoWorldAnalysisRunner(
+                                          world,
+                                          valueData.get(GENERAL_DATA_NAME),
+                                          valueData.get(world.getDimensionKey().getLocation()),
+                                          lockedData.get(GENERAL_DATA_NAME),
+                                          lockedData.get(world.getDimensionKey().getLocation()),
+                                          additionalRecipes.get(GENERAL_DATA_NAME),
+                                          additionalRecipes.get(world.getDimensionKey().getLocation()),
+                                          forceReload),
+                                        aequivaleoReloadExecutor
+                                      )).toArray(CompletableFuture[]::new))
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.getDimensionKey(), AnalysisState.SYNCING)))
+              .thenRunAsync(EquivalencyResults::updateAllPlayers)
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.getDimensionKey(), AnalysisState.POST_PROCESSING)))
+              .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
+              ))
+              .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors())
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.getDimensionKey(), AnalysisState.COMPLETED)))
+              .thenRunAsync(aequivaleoReloadExecutor::shutdown);
+        }
+        catch (Exception ex)
+        {
+            LOGGER.error("General failure during setup of the async analysis engine", ex);
+            worlds.forEach(world -> AnalysisStateManager.setState(world.getDimensionKey(), AnalysisState.ERRORED));
+        }
     }
 
     private static class AequivaleoWorldAnalysisRunner implements Runnable
@@ -315,6 +359,9 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
         {
             LOGGER.info("Starting aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation());
             try {
+                if (AnalysisStateManager.getState(getServerWorld().getDimensionKey()).isErrored())
+                    return;
+
                 WorldBootstrapper.onWorldReload(getServerWorld());
 
                 final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
@@ -370,10 +417,13 @@ public class AequivaleoReloadListener extends ReloadListener<AequivaleoReloadLis
                 genericAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(getServerWorld().getDimensionKey())::register);
                 worldAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(getServerWorld().getDimensionKey())::register);
 
+                AnalysisStateManager.setStateIfNotError(getServerWorld().getDimensionKey(), AnalysisState.PROCESSING);
+
                 JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getServerWorld(), forceReload, true);
                 EquivalencyResults.getInstance(getServerWorld().getDimensionKey()).set(analyzer.calculateAndGet());
             } catch (Throwable t) {
                 LOGGER.fatal(String.format("Failed to analyze: %s", getServerWorld().getDimensionKey().getLocation()), t);
+                AnalysisStateManager.setState(getServerWorld().getDimensionKey(), AnalysisState.ERRORED);
             }
             LOGGER.info("Finished aequivaleo data reload for world: " + getServerWorld().getDimensionKey().getLocation());
         }

@@ -1,7 +1,9 @@
 package com.ldtteam.aequivaleo.api;
 
 import com.google.gson.GsonBuilder;
+import com.ldtteam.aequivaleo.analyzer.AnalysisStateManager;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
@@ -133,5 +135,11 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IIngredientSerializerRegistry getIngredientSerializerRegistry()
     {
         return IngredientSerializerRegistry.getInstance();
+    }
+
+    @Override
+    public AnalysisState getState(final RegistryKey<World> key)
+    {
+        return AnalysisStateManager.getState(key);
     }
 }

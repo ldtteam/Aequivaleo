@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
@@ -163,6 +164,13 @@ public interface IAequivaleoAPI
         return ModList.get().getModContainerById(Constants.MOD_ID).orElseThrow(()->new RuntimeException("Where is Aequivaleo???!"));
     }
 
+    /**
+     * Gives access to the current state of the analysis engine for a given world.
+     *
+     * @param key The registry key of the world to look up.
+     * @return The current state.
+     */
+    AnalysisState getState(final RegistryKey<World> key);
 
     class Holder {
         private static IAequivaleoAPI apiInstance;
