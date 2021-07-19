@@ -2,11 +2,14 @@ package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
+import com.ldtteam.aequivaleo.api.util.FluidStackUtils;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,7 +43,19 @@ public final class CommonBootstrapper
           .registerNewHandler(
             (container) -> container.getContents() instanceof Item,
             (ICompoundContainer<Item> left, ICompoundContainer<Item> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
-                                                                                                                                                 .getRegistryName()).toString())));
+                                                                                                                                                                                                   .getRegistryName()).toString())));
+        //Handle fluidstack equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            (container) -> container.getContents() instanceof FluidStack,
+            (ICompoundContainer<FluidStack> left, ICompoundContainer<FluidStack> right) -> Optional.of(FluidStackUtils.compareFluidStacksIgnoreStackSize(left.getContents(), right.getContents())));
+
+        //Handle fluid equivalency:
+        GameObjectEquivalencyHandlerRegistry.getInstance()
+          .registerNewHandler(
+            (container) -> container.getContents() instanceof Fluid,
+            (ICompoundContainer<Fluid> left, ICompoundContainer<Fluid> right) -> Optional.of(Objects.requireNonNull(left.getContents().getRegistryName()).toString().equals(Objects.requireNonNull(right.getContents()
+                                                                                                                                                                                                   .getRegistryName()).toString())));
     }
 
     private static void doHandlePluginLoad() {

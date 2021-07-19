@@ -8,17 +8,18 @@ import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegis
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
-import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -131,6 +132,34 @@ public final class WorldBootstrapper
               {
                   consumer.accept(group.get(0));
               }
+          }
+        ));
+
+        StreamSupport.stream(ForgeRegistries.FLUIDS.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+          fluid,
+          o -> {
+              final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(fluid, 1);
+              final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
+
+              try {
+                  EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+                    .register(new InstancedEquivalency(
+                      sourceContainer, targetContainer
+                    ))
+                    .register(new InstancedEquivalency(
+                      targetContainer, sourceContainer
+                    ));
+              } catch (Exception ex) {
+                  LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
+                    fluid.getRegistryName(),
+                    o), ex);
+              }
+          },
+          consumer -> {
+              if (fluid.isEquivalentTo(Fluids.EMPTY))
+                  return;
+
+              consumer.accept(new FluidStack(fluid, 1));
           }
         ));
     }

@@ -1,7 +1,9 @@
 package com.ldtteam.aequivaleo.vanilla;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
@@ -10,16 +12,20 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.CookingEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SimpleEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SmithingEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.BucketItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.IRecipeType;
 import net.minecraft.item.crafting.Ingredient;
@@ -219,5 +225,51 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         }
 
         variants.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(recipe));
+    }
+
+    private static void processBucketFluidRecipeFor(
+      @NotNull final World world, final Item item) {
+        //new SimpleIngredientBuilder().from(wrappedStacks).withCount(1d).createIngredient()
+
+        if (!(item instanceof BucketItem))
+            return;
+
+        final BucketItem bucketItem = (BucketItem) item;
+
+        if (bucketItem.getFluid().isEquivalentTo(Fluids.EMPTY))
+            return;
+
+        final ICompoundContainer<?> emptyBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
+          Items.BUCKET, 1
+        );
+        final IRecipeIngredient emptyBucketIngredient = new SimpleIngredientBuilder().from(emptyBucketContainer).createIngredient();
+
+        final Fluid fluid = bucketItem.getFluid();
+        final ICompoundContainer<?> fluidContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
+          fluid, 1000
+        );
+        final IRecipeIngredient fluidIngredient = new SimpleIngredientBuilder().from(fluidContainer).createIngredient();
+
+        final ICompoundContainer<?> fullBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
+          bucketItem, 1
+        );
+        final IRecipeIngredient fullBucketIngredient = new SimpleIngredientBuilder().from(fullBucketContainer
+        ).createIngredient();
+
+        final BucketFluidRecipe fillingRecipe = new BucketFluidRecipe(
+          Sets.newHashSet(emptyBucketIngredient, fluidIngredient),
+          Sets.newHashSet(fullBucketContainer)
+        );
+        final BucketFluidRecipe emptyingRecipe = new BucketFluidRecipe(
+          Sets.newHashSet(fullBucketIngredient),
+          Sets.newHashSet(emptyBucketContainer, fluidContainer)
+        );
+
+        IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(
+          fillingRecipe
+        );
+        IEquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).register(
+          emptyingRecipe
+        );
     }
 }
