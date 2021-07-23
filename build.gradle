@@ -521,3 +521,11 @@ test {
         ]
     }
 }
+
+
+afterEvaluate {
+    tasks.processApiResources.duplicatesStrategy = DuplicatesStrategy.WARN
+    tasks.processVanillaResources.duplicatesStrategy = DuplicatesStrategy.WARN
+    tasks.processVanillaApiResources.duplicatesStrategy = DuplicatesStrategy.WARN
+    tasks.processTestResources.duplicatesStrategy = DuplicatesStrategy.WARN
+}
