@@ -4,13 +4,16 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import com.ldtteam.aequivaleo.utils.IOUtils;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PartialSyncResultsMessage implements IMessage
 {
@@ -18,7 +21,7 @@ public class PartialSyncResultsMessage implements IMessage
     private List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> compoundData = new ArrayList<>();
 
     public PartialSyncResultsMessage(
-      @NotNull final PacketBuffer buffer
+      @NotNull final FriendlyByteBuf buffer
     ) {
         this.fromBytes(buffer);
     }
@@ -32,13 +35,13 @@ public class PartialSyncResultsMessage implements IMessage
     }
 
     @Override
-    public void toBytes(final PacketBuffer buf)
+    public void toBytes(final FriendlyByteBuf buf)
     {
         buf.writeVarInt(this.communicationId);
         IOUtils.writeCompoundDataEntries(buf, compoundData);
     }
 
-    private void fromBytes(final PacketBuffer buffer) {
+    private void fromBytes(final FriendlyByteBuf buffer) {
         communicationId = buffer.readVarInt();
         IOUtils.readCompoundData(buffer, compoundData);
     }

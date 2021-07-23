@@ -4,8 +4,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +19,9 @@ import java.util.TreeSet;
 public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final Map<RegistryKey<World>, EquivalencyRecipeRegistry> INSTANCES = Maps.newConcurrentMap();
+    private static final Map<ResourceKey<Level>, EquivalencyRecipeRegistry> INSTANCES = Maps.newConcurrentMap();
 
-    public static EquivalencyRecipeRegistry getInstance(@NotNull final RegistryKey<World> worldKey)
+    public static EquivalencyRecipeRegistry getInstance(@NotNull final ResourceKey<Level> worldKey)
     {
         return INSTANCES.computeIfAbsent(worldKey, (dimType) -> new EquivalencyRecipeRegistry());
     }

@@ -5,7 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.heat.Heat;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,13 +50,13 @@ public class HeatContainer implements ICompoundContainer<Heat>
         }
 
         @Override
-        public void write(final ICompoundContainer<Heat> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<Heat> object, final FriendlyByteBuf buffer)
         {
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<Heat> read(final PacketBuffer buffer)
+        public ICompoundContainer<Heat> read(final FriendlyByteBuf buffer)
         {
             return new HeatContainer(new Heat(), buffer.readDouble());
         }

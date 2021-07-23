@@ -7,8 +7,8 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -16,9 +16,9 @@ import java.util.Set;
 
 public class CompoundInformationRegistry implements ICompoundInformationRegistry
 {
-    private static final Map<RegistryKey<World>, CompoundInformationRegistry> INSTANCES = Maps.newConcurrentMap();
+    private static final Map<ResourceKey<Level>, CompoundInformationRegistry> INSTANCES = Maps.newConcurrentMap();
 
-    public static CompoundInformationRegistry getInstance(@NotNull final RegistryKey<World> worldKey)
+    public static CompoundInformationRegistry getInstance(@NotNull final ResourceKey<Level> worldKey)
     {
         return INSTANCES.computeIfAbsent(worldKey, (dimType) -> new CompoundInformationRegistry());
     }

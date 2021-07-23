@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.api.recipe;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Set;
 
@@ -28,7 +28,7 @@ public interface IRecipeTypeProcessingRegistry
      * @param vanillaTypes The vanilla recipe types that should be processed in a given way.
      * @return The registry.
      */
-    IRecipeTypeProcessingRegistry registerAs(final ResourceLocation type, final IRecipeType<?>... vanillaTypes);
+    IRecipeTypeProcessingRegistry registerAs(final ResourceLocation type, final RecipeType<?>... vanillaTypes);
 
     /**
      * Returns all registered vanilla recipe types which should be processed by the given type.
@@ -36,12 +36,12 @@ public interface IRecipeTypeProcessingRegistry
      * @param type The type.
      * @return All registered vanilla recipe.
      */
-    Set<IRecipeType<?>> getRecipeTypesToBeProcessedAs(final ResourceLocation type);
+    Set<RecipeType<?>> getRecipeTypesToBeProcessedAs(final ResourceLocation type);
 
     /**
      * Returns all known types, which have registrations for special handling, from the registry.
      *
      * @return All registered minecraft recipe types.
      */
-    Set<IRecipeType<?>> getAllKnownTypes();
+    Set<RecipeType<?>> getAllKnownTypes();
 }

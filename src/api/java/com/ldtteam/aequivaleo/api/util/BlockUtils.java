@@ -1,8 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.ToolType;
 import org.jetbrains.annotations.NotNull;
 

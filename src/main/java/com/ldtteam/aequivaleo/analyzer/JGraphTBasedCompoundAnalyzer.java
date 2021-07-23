@@ -21,8 +21,8 @@ import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,13 +40,13 @@ public class JGraphTBasedCompoundAnalyzer
 
     private static final Object ANALYSIS_LOCK = new Object();
 
-    private final World world;
+    private final Level world;
     private final boolean forceReload;
     private final boolean writeCachedData;
 
     private Map<ICompoundContainer<?>, Set<CompoundInstance>> results = new TreeMap<>();
 
-    public JGraphTBasedCompoundAnalyzer(final World world, final boolean forceReload, final boolean writeCachedData) {
+    public JGraphTBasedCompoundAnalyzer(final Level world, final boolean forceReload, final boolean writeCachedData) {
         this.world = world;
         this.forceReload = forceReload;
         this.writeCachedData = writeCachedData;
@@ -60,7 +60,7 @@ public class JGraphTBasedCompoundAnalyzer
         final Map<ICompoundContainer<?>, INode> compoundNodes = new HashMap<>();
         final Map<IRecipeIngredient, INode> ingredientNodes = new HashMap<>();
 
-        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.dimension())
                                            .get())
         {
             if (recipe.getInputs().isEmpty())
@@ -118,7 +118,7 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.getDimensionKey()).getValueInformation().keySet())
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.dimension()).getValueInformation().keySet())
         {
             INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
@@ -141,12 +141,12 @@ public class JGraphTBasedCompoundAnalyzer
                 throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
             }
 
-            node.forceSetResult(CompoundInformationRegistry.getInstance(world.getDimensionKey()).getValueInformation().get(valueWrapper));
+            node.forceSetResult(CompoundInformationRegistry.getInstance(world.dimension()).getValueInformation().get(valueWrapper));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
         {
-            GraphIOHandler.getInstance().export(world.getDimensionKey().getLocation().toString().replace(":", "_").concat(".json"), recipeGraph);
+            GraphIOHandler.getInstance().export(world.dimension().location().toString().replace(":", "_").concat(".json"), recipeGraph);
         }
 
         final Set<ContainerNode> rootNodes = findRootNodes(recipeGraph);
@@ -255,20 +255,20 @@ public class JGraphTBasedCompoundAnalyzer
 
         final CacheKey key = new CacheKey(ModList.get(), noneReducedGraph);
         final int graphHash = key.hashCode();
-        if (!forceReload && getWorld() instanceof ServerWorld) {
+        if (!forceReload && getWorld() instanceof ServerLevel) {
             //We are allowed to lookup cached values
-            final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults((ServerWorld) getWorld(), graphHash);
+            final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults((ServerLevel) getWorld(), graphHash);
             if (cachedResults.isPresent()) {
-                LOGGER.warn(String.format("Using cached results for: %s", getWorld().getDimensionKey().getLocation()));
+                LOGGER.warn(String.format("Using cached results for: %s", getWorld().dimension().location()));
                 this.results = cachedResults.get();
-                LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), getWorld().getDimensionKey().getLocation()));
+                LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), getWorld().dimension().location()));
                 return;
             }
         }
 
         final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
 
-        final StatCollector statCollector = new StatCollector(getWorld().getDimensionKey().getLocation().toString(), recipeGraph.vertexSet().size());
+        final StatCollector statCollector = new StatCollector(getWorld().dimension().location().toString(), recipeGraph.vertexSet().size());
         final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
 
         while (analysisBFSGraphIterator.hasNext())
@@ -278,14 +278,14 @@ public class JGraphTBasedCompoundAnalyzer
 
         statCollector.onCalculationComplete();
 
-        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().keySet())
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().keySet())
         {
             INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
             {
                 LOGGER.debug(String.format("Adding missing locking node for container: %s", valueWrapper));
                 compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
-                resultingCompounds.computeIfAbsent(valueWrapper, wrapper -> Sets.newHashSet()).addAll(CompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().get(valueWrapper));
+                resultingCompounds.computeIfAbsent(valueWrapper, wrapper -> Sets.newHashSet()).addAll(CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().get(valueWrapper));
             }
             node = compoundNodes.get(valueWrapper);
 
@@ -294,7 +294,7 @@ public class JGraphTBasedCompoundAnalyzer
                 throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
             }
 
-            node.forceSetResult(CompoundInformationRegistry.getInstance(world.getDimensionKey()).getLockingInformation().get(valueWrapper));
+            node.forceSetResult(CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().get(valueWrapper));
         }
 
         extractCompoundInstancesFromGraph(recipeGraph.vertexSet(), resultingCompounds, notDefinedGraphNodes);
@@ -303,7 +303,7 @@ public class JGraphTBasedCompoundAnalyzer
         {
             synchronized (ANALYSIS_LOCK)
             {
-                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
+                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().dimension().location()));
                 for (INode node : notDefinedGraphNodes)
                 {
                     if (node instanceof IContainerNode)
@@ -312,9 +312,9 @@ public class JGraphTBasedCompoundAnalyzer
                     }
                     recipeGraph.removeVertex(node);
                 }
-                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().getDimensionKey().getLocation()));
+                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", getWorld().dimension().location()));
 
-                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().getDimensionKey().getLocation()));
+                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().dimension().location()));
                 for (Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>> entry : resultingCompounds.entrySet())
                 {
                     ICompoundContainer<?> wrapper = entry.getKey();
@@ -324,18 +324,18 @@ public class JGraphTBasedCompoundAnalyzer
                         AequivaleoLogger.bigWarningMessage("{}: {}", wrapper, compounds);
                     }
                 }
-                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().getDimensionKey().getLocation()));
+                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", getWorld().dimension().location()));
             }
         }
         else
         {
-            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", getWorld().getDimensionKey().getLocation()));
+            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", getWorld().dimension().location()));
         }
 
-        if (writeCachedData && getWorld() instanceof ServerWorld) {
-            LOGGER.warn(String.format("Writing results to cache for: %s", getWorld().getDimensionKey().getLocation()));
-            WorldCacheUtils.writeCachedResults((ServerWorld) getWorld(), graphHash, resultingCompounds);
-            LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), getWorld().getDimensionKey().getLocation()));
+        if (writeCachedData && getWorld() instanceof ServerLevel) {
+            LOGGER.warn(String.format("Writing results to cache for: %s", getWorld().dimension().location()));
+            WorldCacheUtils.writeCachedResults((ServerLevel) getWorld(), graphHash, resultingCompounds);
+            LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), getWorld().dimension().location()));
         }
         this.results = resultingCompounds;
     }
@@ -444,7 +444,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     private Set<CompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<CompoundInstance> lockedInstances = CompoundInformationRegistry.getInstance(world.getDimensionKey())
+        final Set<CompoundInstance> lockedInstances = CompoundInformationRegistry.getInstance(world.dimension())
                                                         .getLockingInformation()
                                                         .get(createUnitWrapper(wrapper));
 
@@ -458,7 +458,7 @@ public class JGraphTBasedCompoundAnalyzer
 
     private Set<CompoundInstance> getValueInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<CompoundInstance> valueInstances = CompoundInformationRegistry.getInstance(world.getDimensionKey())
+        final Set<CompoundInstance> valueInstances = CompoundInformationRegistry.getInstance(world.dimension())
                                                        .getValueInformation()
                                                        .get(createUnitWrapper(wrapper));
 
@@ -470,7 +470,7 @@ public class JGraphTBasedCompoundAnalyzer
         return new HashSet<>();
     }
 
-    public World getWorld()
+    public Level getWorld()
     {
         return world;
     }

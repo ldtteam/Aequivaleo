@@ -6,8 +6,8 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,16 +65,16 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
         }
 
         @Override
-        public void write(final ICompoundContainer<ICompoundType> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<ICompoundType> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeString(Objects.requireNonNull(object.getContents().getRegistryName()).toString());
+            buffer.writeUtf(Objects.requireNonNull(object.getContents().getRegistryName()).toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<ICompoundType> read(final PacketBuffer buffer)
+        public ICompoundContainer<ICompoundType> read(final FriendlyByteBuf buffer)
         {
-            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readString(32767))), buffer.readDouble());
+            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readUtf(32767))), buffer.readDouble());
         }
     }
 

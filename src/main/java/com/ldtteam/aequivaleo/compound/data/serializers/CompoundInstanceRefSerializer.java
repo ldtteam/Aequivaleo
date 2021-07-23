@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.compound.data.serializers;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
 

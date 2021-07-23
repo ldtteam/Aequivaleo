@@ -12,9 +12,9 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeDataBuild
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.HashCache;
+import net.minecraft.data.DataProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("SameParameterValue")
-public abstract class AbstractGenericRecipeDataGen implements IDataProvider
+public abstract class AbstractGenericRecipeDataGen implements DataProvider
 {
 
     private final DataGenerator dataGenerator;
@@ -43,7 +43,7 @@ public abstract class AbstractGenericRecipeDataGen implements IDataProvider
     protected AbstractGenericRecipeDataGen(final DataGenerator dataGenerator) {this.dataGenerator = dataGenerator;}
 
     @Override
-    public void act(@NotNull final DirectoryCache cache) throws IOException
+    public void run(@NotNull final HashCache cache) throws IOException
     {
         this.calculateDataToSave();
 
@@ -67,7 +67,7 @@ public abstract class AbstractGenericRecipeDataGen implements IDataProvider
 
     @VisibleForTesting
     void writeData(
-      final DirectoryCache cache,
+      final HashCache cache,
       final Gson gson,
       final WorldData worldData
     ) throws IOException
@@ -78,7 +78,7 @@ public abstract class AbstractGenericRecipeDataGen implements IDataProvider
 
             final Path itemPath = dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/recipes/%s", name.getNamespace(), worldData.getPath())).resolve(String.format("%s.json", name.getPath()));
 
-            IDataProvider.save(
+            DataProvider.save(
               gson,
               cache,
               gson.toJsonTree(entry.getValue()),

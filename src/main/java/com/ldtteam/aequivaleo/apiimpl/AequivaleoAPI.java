@@ -1,8 +1,9 @@
-package com.ldtteam.aequivaleo.api;
+package com.ldtteam.aequivaleo.apiimpl;
 
 import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.analyzer.AnalysisStateManager;
 import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
@@ -29,9 +30,9 @@ import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSeria
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public final class AequivaleoAPI implements IAequivaleoAPI
@@ -60,26 +61,26 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public IEquivalencyRecipeRegistry getEquivalencyRecipeRegistry(@NotNull final RegistryKey<World> worldKey)
+    public IEquivalencyRecipeRegistry getEquivalencyRecipeRegistry(@NotNull final ResourceKey<Level> worldKey)
     {
         return EquivalencyRecipeRegistry.getInstance(worldKey);
     }
 
     @Override
-    public ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey)
+    public ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final ResourceKey<Level> worldKey)
     {
         return CompoundInformationRegistry.getInstance(worldKey);
     }
 
     @Deprecated
     @Override
-    public IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey)
+    public IResultsInformationCache getResultsInformationCache(@NotNull final ResourceKey<Level> worldKey)
     {
         return EquivalencyResults.getInstance(worldKey);
     }
 
     @Override
-    public IEquivalencyResults getEquivalencyResults(final RegistryKey<World> worldKey)
+    public IEquivalencyResults getEquivalencyResults(final ResourceKey<Level> worldKey)
     {
         return EquivalencyResults.getInstance(worldKey);
     }
@@ -138,7 +139,7 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public AnalysisState getState(final RegistryKey<World> key)
+    public AnalysisState getState(final ResourceKey<Level> key)
     {
         return AnalysisStateManager.getState(key);
     }

@@ -1,16 +1,16 @@
 buildscript {
     repositories {
         maven { url = 'https://files.minecraftforge.net/maven' }
-        jcenter()
+        mavenLocal()
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
     }
 }
 
 plugins {
-    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id "com.github.johnrengelman.shadow" version "7.0.0"
     id "com.matthewprenger.cursegradle" version "1.4.0"
 }
 
@@ -26,7 +26,7 @@ apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'maven'
+apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
 sourceSets {
     api {
@@ -71,7 +71,7 @@ project.logger.lifecycle("Building for version: " + version)
 group = modGroup
 archivesBaseName = modBaseName
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+java.toolchain.languageVersion = JavaLanguageVersion.of("16")
 
 minecraft {
     mappings channel: "${project.mcpChannel}", version: "${project.mcpVersion}"
@@ -155,9 +155,9 @@ dependencies {
     // unit testing
     testImplementation 'junit:junit:4.13'
     testImplementation "org.mockito:mockito-core:1.+"
-    testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.5'
-    testImplementation group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.5'
-    testImplementation group: 'org.powermock', name: 'powermock-module-junit4-rule-agent', version: '1.6.5'
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.2'
+    testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.2'
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4-rule-agent', version: '2.0.2'
 
     testImplementation 'org.assertj:assertj-core:3.9.0'
 
@@ -167,20 +167,15 @@ dependencies {
     testRuntimeOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.10.0'
 
     //Utilities
-    apiCompile 'com.intellij:annotations:+@jar'
-    vanillaCompile 'com.intellij:annotations:+@jar'
-    vanillaApiCompile 'com.intellij:annotations:+@jar'
-    compile "com.intellij:annotations:+@jar"
-    testImplementation 'com.intellij:annotations:+@jar'
-    compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
-    compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
-    compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+    apiImplementation 'org.jetbrains:annotations:21.0.1'
+    vanillaImplementation 'org.jetbrains:annotations:21.0.1'
+    vanillaApiImplementation 'org.jetbrains:annotations:21.0.1'
+    implementation "org.jetbrains:annotations:21.0.1"
+    testImplementation 'org.jetbrains:annotations:21.0.1'
 
-    implementation fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
-    implementation fg.deobf("curse.maven:goo-404147:3113043")
-    implementation fg.deobf("curse.maven:patchouli-306770:3204037")
-    implementation fg.deobf("curse.maven:farmers-delight-398521:3188508")
-
+    implementation "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
+    implementation "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
+    implementation "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
 }
 
 task apiJar(type: Jar) {
@@ -327,16 +322,16 @@ shadowJar {
     archiveClassifier.set('universal') // Replace the default JAR
 }
 
+
 reobf {
     shadowJar {
     }
     apiJar {
-        classpath = sourceSets.api.compileClasspath
     }
     vanillaApiJar {
-        classpath = sourceSets.vanillaApi.compileClasspath
     }
 }
+
 
 curseforge {
     if (System.getenv().CURSEAPIKEY != null && System.getenv().CURSERELEASETYPE != null)
@@ -517,4 +512,12 @@ tasks.withType(GenerateModuleMetadata) {
     enabled = false
 }
 
-
+test {
+    doFirst {
+        jvmArgs = [
+                '--add-opens', 'java.base/java.util.stream=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+                '--add-opens', 'java.xml/jdk.xml.internal=ALL-UNNAMED'
+        ]
+    }
+}

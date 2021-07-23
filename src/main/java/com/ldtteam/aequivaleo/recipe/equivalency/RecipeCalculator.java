@@ -11,11 +11,11 @@ import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.config.Configuration;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.NonNullList;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,29 +41,29 @@ public class RecipeCalculator implements IRecipeCalculator
 
     @Override
     public Stream<IEquivalencyRecipe> getAllVariants(
-      final IRecipe<?> recipe,
-      final Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
+      final Recipe<?> recipe,
+      final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
       final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     )
     {
-        if (recipe.isDynamic())
+        if (recipe.isSpecial())
         {
             return Stream.empty();
         }
 
-        if (recipe.getRecipeOutput().isEmpty())
+        if (recipe.getResultItem().isEmpty())
         {
             return Stream.empty();
         }
 
-        final ICompoundContainer<?> result = CompoundContainerFactoryManager.getInstance().wrapInContainer(recipe.getRecipeOutput(), recipe.getRecipeOutput().getCount());
+        final ICompoundContainer<?> result = CompoundContainerFactoryManager.getInstance().wrapInContainer(recipe.getResultItem(), recipe.getResultItem().getCount());
         final SortedSet<ICompoundContainer<?>> resultSet = new TreeSet<>();
         resultSet.add(result);
 
         final List<SortedSet<IRecipeIngredient>> variants = getAllInputVariants(ingredientExtractor.apply(recipe)
                                                                                   .stream()
-                                                                                  .filter(i -> i.getMatchingStacks().length > 0)
+                                                                                  .filter(i -> i.getItems().length > 0)
                                                                                   .collect(Collectors.toList()),
           true, ingredientHandler);
 
@@ -162,7 +162,7 @@ public class RecipeCalculator implements IRecipeCalculator
 
     @Override
     public List<IRecipeIngredient> getAllVariantsFromSimpleIngredient(final Ingredient ingredient) {
-        final List<ItemStack> stacks = Arrays.asList(ingredient.getMatchingStacks());
+        final List<ItemStack> stacks = Arrays.asList(ingredient.getItems());
         final Collection<Collection<ItemStack>> groupedByContainer =
           GroupingUtils.groupByUsingSet(stacks, stack -> new ItemStackEqualityWrapper(stack.hasContainerItem() ? stack.getContainerItem() : ItemStack.EMPTY));
 
@@ -202,7 +202,7 @@ public class RecipeCalculator implements IRecipeCalculator
         {
             return Objects.hash(
               stack.getItem().getRegistryName(),
-              stack.getDamage(),
+              stack.getDamageValue(),
               stack.getOrCreateTag()
             );
         }
@@ -222,8 +222,8 @@ public class RecipeCalculator implements IRecipeCalculator
               other.stack.getItem().getRegistryName()
             ) &&
                      Objects.equals(
-                       stack.getDamage(),
-                       other.stack.getDamage()
+                       stack.getDamageValue(),
+                       other.stack.getDamageValue()
                      ) &&
                      Objects.equals(
                        stack.getOrCreateTag(),
@@ -303,9 +303,9 @@ public class RecipeCalculator implements IRecipeCalculator
                       LOGGER.error(String.format("Failed to process Ingredient. IsVanilla?: %s - IsSimple?: %s. Contained ItemStacks:",
                         ingredient.isVanilla() ? "Yes" : "No",
                         ingredient.isSimple() ? "Yes" : "No"));
-                      for (final ItemStack matchingStack : ingredient.getMatchingStacks())
+                      for (final ItemStack matchingStack : ingredient.getItems())
                       {
-                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.write(new CompoundNBT()).toString()));
+                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.save(new CompoundTag()).toString()));
                       }
                   });
             }
@@ -320,9 +320,9 @@ public class RecipeCalculator implements IRecipeCalculator
                       LOGGER.error(String.format("Failed to process Ingredient. IsVanilla?: %s - IsSimple?: %s. Contained ItemStacks:",
                         ingredient.isVanilla() ? "Yes" : "No",
                         ingredient.isSimple() ? "Yes" : "No"));
-                      for (final ItemStack matchingStack : ingredient.getMatchingStacks())
+                      for (final ItemStack matchingStack : ingredient.getItems())
                       {
-                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.write(new CompoundNBT()).toString()));
+                          LOGGER.error(String.format("  > Item: %s - NBT: %s", matchingStack.getItem().getRegistryName(), matchingStack.save(new CompoundTag()).toString()));
                       }
                       //noinspection PlaceholderCountMatchesArgumentCount
                       LOGGER.error("Causing exception:", errorMap.get(ingredient));

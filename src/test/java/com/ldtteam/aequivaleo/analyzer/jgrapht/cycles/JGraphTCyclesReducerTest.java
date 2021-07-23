@@ -5,7 +5,6 @@ import com.ldtteam.aequivaleo.analyzer.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.SimpleAnalysisGraph;
 import com.ldtteam.aequivaleo.config.CommonConfiguration;
 import com.ldtteam.aequivaleo.config.Configuration;
-import com.ldtteam.aequivaleo.config.ServerConfiguration;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.jgrapht.Graph;
 import org.junit.Before;
@@ -17,13 +16,12 @@ import org.powermock.core.classloader.annotations.SuppressStaticInitializationFo
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor("net.minecraft.world.World")
+@SuppressStaticInitializationFor({"net.minecraft.world.World"})
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
 @PrepareForTest({Aequivaleo.class})
 public class JGraphTCyclesReducerTest

@@ -2,8 +2,8 @@ package com.ldtteam.aequivaleo.bootstrap;
 
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import net.minecraft.item.crafting.IRecipeType;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
@@ -39,7 +39,7 @@ public final class FMLInitHandler
           .stream()
           .filter(imcMessage -> imcMessage.getMethod().equals("registerRecipeTypeCallback"))
           .forEach(imcMessage -> {
-              final Supplier<Consumer<BiConsumer<ResourceLocation, IRecipeType<?>[]>>> message = imcMessage.getMessageSupplier();
+              final Supplier<Consumer<BiConsumer<ResourceLocation, RecipeType<?>[]>>> message = imcMessage.getMessageSupplier();
               message.get().accept((location, iRecipeTypes) -> IRecipeTypeProcessingRegistry.getInstance()
                 .registerAs(location, iRecipeTypes));
           });

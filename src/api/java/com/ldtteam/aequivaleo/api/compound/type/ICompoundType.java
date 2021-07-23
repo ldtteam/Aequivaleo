@@ -1,7 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound.type;
 
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 

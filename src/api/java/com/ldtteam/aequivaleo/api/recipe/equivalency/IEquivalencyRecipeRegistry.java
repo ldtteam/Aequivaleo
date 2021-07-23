@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,7 +18,7 @@ public interface IEquivalencyRecipeRegistry
      *
      * @return The recipe registry.
      */
-    static IEquivalencyRecipeRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+    static IEquivalencyRecipeRegistry getInstance(@NotNull final ResourceKey<Level> worldKey) {
         return IAequivaleoAPI.getInstance().getEquivalencyRecipeRegistry(worldKey);
     }
 

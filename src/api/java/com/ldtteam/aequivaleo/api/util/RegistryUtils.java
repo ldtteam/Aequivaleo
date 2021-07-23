@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.*;
 
 public final class RegistryUtils

@@ -4,7 +4,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
-import net.minecraft.block.Block;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 

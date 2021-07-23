@@ -1,13 +1,7 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data;
 
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a registry which manages the different serializers for data driven loading of the

@@ -5,10 +5,10 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
-import net.minecraft.util.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.core.NonNullList;
 
 import java.util.List;
 import java.util.SortedSet;
@@ -27,11 +27,11 @@ public interface IRecipeCalculator
 
     /**
      * Method used to calculate all variants of a recipe, taking the container items into account.
-     * This method uses the vanilla {@link Ingredient#getMatchingStacks()} method to get the stacks which are valie
+     * This method uses the vanilla {@link Ingredient#getItems()} ()} method to get the stacks which are valie
      * for a given ingredient.
      *
      * If your particular recipe requires aequivaleo to use a different way to convert an ingredient
-     * to a list of valid itemstacks then you use {@link #getAllVariants(IRecipe, Function, TriFunction)}
+     * to a list of valid itemstacks then you use {@link #getAllVariants(Recipe, Function, TriFunction)}
      * and supply it your own handler.
      *
      * @param recipe The recipe to calculate the variants for.
@@ -39,7 +39,7 @@ public interface IRecipeCalculator
      * @return A stream of recipes which represent all collapsed variants.
      */
     default Stream<IEquivalencyRecipe> getAllVariants(
-      IRecipe<?> recipe,
+      Recipe<?> recipe,
       TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     ) {
         return this.getAllVariants(
@@ -51,7 +51,7 @@ public interface IRecipeCalculator
 
     /**
      * Method used to calculate all variants of a recipe, taking the container items into account.
-     * This method uses {@link IRecipe#getIngredients()} to extract the ingredients from a given recipe as input.
+     * This method uses {@link Recipe#getIngredients()} to extract the ingredients from a given recipe as input.
      * This method allows you to pass in your own handler which converts a given itemstack into a list
      * of {@link IRecipeIngredient}.
      *
@@ -61,13 +61,13 @@ public interface IRecipeCalculator
      * @return A stream of recipes which represent all collapsed variants.
      */
     default Stream<IEquivalencyRecipe> getAllVariants(
-      IRecipe<?> recipe,
+      Recipe<?> recipe,
       Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
       TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     ) {
         return this.getAllVariants(
           recipe,
-          IRecipe::getIngredients,
+          Recipe::getIngredients,
           this::getAllVariantsFromSimpleIngredient,
           recipeFactory
         );
@@ -87,15 +87,15 @@ public interface IRecipeCalculator
      * @return A stream of recipes which represent all collapsed variants.
      */
     Stream<IEquivalencyRecipe> getAllVariants(
-      IRecipe<?> recipe,
-      Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
+      Recipe<?> recipe,
+      Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
       TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     );
 
     /**
      * This methods is for your convenience:
-     * It converts the vanilla {@link Ingredient#getMatchingStacks()} to a list of {@link IRecipeIngredient}
+     * It converts the vanilla {@link Ingredient#getItems()} to a list of {@link IRecipeIngredient}
      * respecting the relevant {@link ItemStack#getContainerItem()} stacks.
      *
      * @param ingredient The ingredient to handle.

@@ -4,8 +4,8 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,14 +117,14 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
         }
 
         @Override
-        public void write(ICompoundContainer<String> object, PacketBuffer buffer) {
+        public void write(ICompoundContainer<String> object, FriendlyByteBuf buffer) {
             final LoadableStringCompoundContainer container = (LoadableStringCompoundContainer) object;
-            buffer.writeString(container.content);
+            buffer.writeUtf(container.content);
         }
 
         @Override
-        public ICompoundContainer<String> read(PacketBuffer buffer) {
-            return new LoadableStringCompoundContainer(buffer.readString(32767), 1d);
+        public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
+            return new LoadableStringCompoundContainer(buffer.readUtf(32767), 1d);
         }
 
         @Override

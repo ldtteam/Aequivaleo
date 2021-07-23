@@ -6,9 +6,9 @@ import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
@@ -47,7 +47,7 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         {
             try
             {
-                return new FluidStackContainer(FluidStack.loadFluidStackFromNBT(JsonToNBT.getTagFromJson(json.getAsJsonObject().get("stack").getAsString())),
+                return new FluidStackContainer(FluidStack.loadFluidStackFromNBT(TagParser.parseTag(json.getAsJsonObject().get("stack").getAsString())),
                   json.getAsJsonObject().get("count").getAsDouble());
             }
             catch (CommandSyntaxException e)
@@ -63,19 +63,19 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         {
             final JsonObject object = new JsonObject();
             object.addProperty("count", src.getContentsCount());
-            object.addProperty("stack", src.getContents().writeToNBT(new CompoundNBT()).toString());
+            object.addProperty("stack", src.getContents().writeToNBT(new CompoundTag()).toString());
             return object;
         }
 
         @Override
-        public void write(final ICompoundContainer<FluidStack> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<FluidStack> object, final FriendlyByteBuf buffer)
         {
             buffer.writeFluidStack(object.getContents());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<FluidStack> read(final PacketBuffer buffer)
+        public ICompoundContainer<FluidStack> read(final FriendlyByteBuf buffer)
         {
             return new FluidStackContainer(
               buffer.readFluidStack(),
@@ -102,7 +102,7 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
             return;
         }
 
-        this.hashCode = stack.writeToNBT(new CompoundNBT()).hashCode();
+        this.hashCode = stack.writeToNBT(new CompoundTag()).hashCode();
     }
 
     @Override

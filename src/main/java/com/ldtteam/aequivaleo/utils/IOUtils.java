@@ -5,7 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.PacketBufferUtils;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.AbstractMap;
 import java.util.List;
@@ -20,7 +20,7 @@ public class IOUtils
         throw new IllegalStateException("Can not instantiate an instance of: IOUtils. This is a utility class");
     }
 
-    public static void writeCompoundDataEntries(final PacketBuffer buf, final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> compoundData)
+    public static void writeCompoundDataEntries(final FriendlyByteBuf buf, final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> compoundData)
     {
         buf.writeVarInt(compoundData.size());
         for (final Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>> entry : compoundData)
@@ -34,7 +34,7 @@ public class IOUtils
         }
     }
 
-    public static void readCompoundData(final PacketBuffer buffer, final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> compoundData)
+    public static void readCompoundData(final FriendlyByteBuf buffer, final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> compoundData)
     {
         final int containerCount = buffer.readVarInt();
         for (int i = 0; i < containerCount; i++)

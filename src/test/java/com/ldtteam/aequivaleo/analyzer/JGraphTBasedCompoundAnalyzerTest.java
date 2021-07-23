@@ -23,10 +23,9 @@ import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
 import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecipe;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistry;
@@ -53,14 +52,14 @@ import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 @RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor({"net.minecraft.world.World"})
-@PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
+@SuppressStaticInitializationFor({"net.minecraft.world.level.Level"})
+@PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*", "org.apache.logging.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
 @PrepareForTest({Aequivaleo.class, ModList.class})
 public class JGraphTBasedCompoundAnalyzerTest
 {
 
-    RegistryKey<World> key;
-    World                                  world;
+    ResourceKey<Level> key;
+    Level              world;
     JGraphTBasedCompoundAnalyzer           analyzer;
 
 
@@ -75,14 +74,14 @@ public class JGraphTBasedCompoundAnalyzerTest
     @Rule
     public TestName currentTestName = new TestName();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "SuspiciousMethodCalls"})
     @Before
     public void setUp()
     {
-        key = mock(RegistryKey.class);
-        when(key.getLocation()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase()));
-        world = mock(World.class);
-        when(world.getDimensionKey()).thenReturn(key);
+        key = mock(ResourceKey.class);
+        when(key.location()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase()));
+        world = mock(Level.class);
+        when(world.dimension()).thenReturn(key);
         analyzer = new JGraphTBasedCompoundAnalyzer(world, true, false);
 
         input = CompoundInformationRegistry.getInstance(key);
@@ -169,7 +168,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
 
         ForgeRegistry<ICompoundType> typeReg = mock(ForgeRegistry.class);
-        when(typeReg.getID(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgumentAt(0, ICompoundType.class)));
+        when(typeReg.getID(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
         when(typeReg.getKeys()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
         when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
         ModRegistries.COMPOUND_TYPE = typeReg;

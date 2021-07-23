@@ -6,10 +6,10 @@ import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
@@ -58,14 +58,14 @@ public class ItemContainer implements ICompoundContainer<Item>
         }
 
         @Override
-        public void write(final ICompoundContainer<Item> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<Item> object, final FriendlyByteBuf buffer)
         {
             buffer.writeVarInt(RegistryUtils.getFull(Item.class).getID(object.getContents()));
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<Item> read(final PacketBuffer buffer)
+        public ICompoundContainer<Item> read(final FriendlyByteBuf buffer)
         {
             return new ItemContainer(
               RegistryUtils.getFull(Item.class).getValue(buffer.readVarInt()),

@@ -4,8 +4,8 @@ import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -29,7 +29,7 @@ public interface IResultsInformationCache extends IEquivalencyResults
      * @return The cache.
      */
     @Deprecated
-    static IResultsInformationCache getInstance(@NotNull final RegistryKey<World> worldKey) {
+    static IResultsInformationCache getInstance(@NotNull final ResourceKey<Level> worldKey) {
         return IAequivaleoAPI.getInstance().getResultsInformationCache(worldKey);
     }
 

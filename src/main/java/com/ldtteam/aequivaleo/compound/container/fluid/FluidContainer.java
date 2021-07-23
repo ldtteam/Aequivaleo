@@ -6,10 +6,10 @@ import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
@@ -58,14 +58,14 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         }
 
         @Override
-        public void write(final ICompoundContainer<Fluid> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<Fluid> object, final FriendlyByteBuf buffer)
         {
             buffer.writeVarInt(RegistryUtils.getFull(Fluid.class).getID(object.getContents()));
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<Fluid> read(final PacketBuffer buffer)
+        public ICompoundContainer<Fluid> read(final FriendlyByteBuf buffer)
         {
             return new FluidContainer(
               RegistryUtils.getFull(Fluid.class).getValue(buffer.readVarInt()),
@@ -87,7 +87,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     @Override
     public boolean isValid()
     {
-        return !fluid.isEquivalentTo(Fluids.EMPTY);
+        return !fluid.isSame(Fluids.EMPTY);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo;
 
-import com.ldtteam.aequivaleo.api.AequivaleoAPI;
+import com.ldtteam.aequivaleo.apiimpl.AequivaleoAPI;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.util.Constants;
@@ -11,7 +11,6 @@ import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculatorLogHandler;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

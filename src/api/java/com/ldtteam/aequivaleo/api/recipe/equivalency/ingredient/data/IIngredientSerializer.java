@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
 

@@ -15,9 +15,9 @@ import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.LoadableStringCompoundContainer;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.DataProvider;
+import net.minecraft.data.HashCache;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.assertj.core.util.Sets;
 import org.junit.Before;
@@ -45,7 +45,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @SuppressWarnings({"unchecked"})
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
-@PrepareForTest({IAequivaleoAPI.class, IDataProvider.class, ICompoundContainerFactoryManager.class})
+@PrepareForTest({IAequivaleoAPI.class, DataProvider.class, ICompoundContainerFactoryManager.class})
 public class AbstractInformationProviderTest
 {
 
@@ -74,7 +74,7 @@ public class AbstractInformationProviderTest
     @Test
     public void assureActCallsCalculate() throws IOException
     {
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -86,16 +86,16 @@ public class AbstractInformationProviderTest
         when(target.getGeneralData()).thenReturn(generalData);
 
         doNothing().when(target).calculateDataToSave();
-        doCallRealMethod().when(target).act(any());
+        doCallRealMethod().when(target).run(any());
 
-        target.act(cache);
+        target.run(cache);
         verify(target, times(1)).calculateDataToSave();
     }
 
     @Test
     public void assureWriteDataCallsGetPaths() throws IOException
     {
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -115,7 +115,7 @@ public class AbstractInformationProviderTest
     @Test
     public void assureWorldDataIsCalledForOneAdditionalWorlds() throws IOException
     {
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
 
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
@@ -135,16 +135,16 @@ public class AbstractInformationProviderTest
 
         doNothing().when(target).calculateDataToSave();
 
-        doCallRealMethod().when(target).act(any());
+        doCallRealMethod().when(target).run(any());
 
-        target.act(cache);
+        target.run(cache);
         verify(target, times(2)).writeData(any(), any(), any());
     }
 
     @Test
     public void assureWorldDataIsCalledForMultipleAdditionalWorlds() throws IOException
     {
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
 
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
@@ -169,15 +169,15 @@ public class AbstractInformationProviderTest
 
         doNothing().when(target).calculateDataToSave();
 
-        doCallRealMethod().when(target).act(any());
+        doCallRealMethod().when(target).run(any());
 
-        target.act(cache);
+        target.run(cache);
         verify(target, times(3)).writeData(any(), any(), any());
     }
 
     @Test
     public void assureWriteDataRetrievesDataFromWorldData() throws IOException {
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -198,10 +198,10 @@ public class AbstractInformationProviderTest
     @Test
     public void assureDataProviderSaveIsCalled() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -228,17 +228,17 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(1));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(1));
+        DataProvider.save(any(), any(), any(), any());
     }
 
     @Test
     public void assureDataProviderSaveIsNotCalled() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -265,17 +265,17 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(0));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(0));
+        DataProvider.save(any(), any(), any(), any());
     }
 
     @Test
     public void assureDataProviderSaveIsCalledForEachPath() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -302,17 +302,17 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(2));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(2));
+        DataProvider.save(any(), any(), any(), any());
     }
 
     @Test
     public void assureDataProviderSaveIsCalledForEachEntry() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -349,17 +349,17 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(2));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(2));
+        DataProvider.save(any(), any(), any(), any());
     }
 
     @Test
     public void assureDataProviderSaveIsCalledForEachPathAndEachEntry() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -396,18 +396,18 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(4));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(4));
+        DataProvider.save(any(), any(), any(), any());
     }
 
 
     @Test
     public void assureDataProviderSaveIsNotCalledWithEmptyContainerSet() throws Exception
     {
-        mockStatic(IDataProvider.class);
-        doNothing().when(IDataProvider.class, "save", any(), any(), any(), any());
+        mockStatic(DataProvider.class);
+        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
 
-        final DirectoryCache cache = mock(DirectoryCache.class);
+        final HashCache cache = mock(HashCache.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -434,7 +434,7 @@ public class AbstractInformationProviderTest
         doCallRealMethod().when(target).writeData(any(), any(), any());
 
         target.writeData(cache, new Gson(), generalData);
-        verifyStatic(times(0));
-        IDataProvider.save(any(), any(), any(), any());
+        verifyStatic(DataProvider.class, times(0));
+        DataProvider.save(any(), any(), any(), any());
     }
 }

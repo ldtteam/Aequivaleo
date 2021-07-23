@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.analyzer.jgrapht.cache;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Map;
@@ -21,7 +22,7 @@ public final class CacheKey
         Validate.notNull(graph);
 
         this.modVersions = modList.getMods().stream().collect(Collectors.toMap(
-          ModInfo::getModId,
+          IModInfo::getModId,
           i -> i.getVersion().toString()
         ));
         this.graph = graph;
@@ -34,11 +35,10 @@ public final class CacheKey
         {
             return true;
         }
-        if (!(o instanceof CacheKey))
+        if (!(o instanceof final CacheKey cacheKey))
         {
             return false;
         }
-        final CacheKey cacheKey = (CacheKey) o;
         return Objects.equals(modVersions, cacheKey.modVersions) &&
                  Objects.equals(graph, cacheKey.graph);
     }

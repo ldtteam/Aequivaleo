@@ -3,8 +3,8 @@ package com.ldtteam.aequivaleo.vanilla.api.tags;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.util.TagUtils;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.tags.Tag;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +28,7 @@ public interface ITagEquivalencyRegistry
      * @param tag The tag that indicates that a given set of game objects contained in the tag are equal to one another.
      * @return The registry with the tag added for analysis.
      */
-    ITagEquivalencyRegistry addTag(@NotNull final ITag.INamedTag<?> tag);
+    ITagEquivalencyRegistry addTag(@NotNull final Tag.Named<?> tag);
 
     /**
      * Adds a given tag to the registry, via its name.

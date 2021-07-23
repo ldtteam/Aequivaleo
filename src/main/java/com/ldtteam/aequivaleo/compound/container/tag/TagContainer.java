@@ -6,9 +6,9 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.TagUtils;
 import com.ldtteam.aequivaleo.compound.container.compoundtype.CompoundTypeContainer;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.tags.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeTagHandler;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 @SuppressWarnings("rawtypes")
-public class TagContainer implements ICompoundContainer<ITag.INamedTag>
+public class TagContainer implements ICompoundContainer<Tag.Named>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ITag.INamedTag>
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Tag.Named>
     {
 
         public Factory()
@@ -31,20 +31,20 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
 
         @NotNull
         @Override
-        public Class<ITag.INamedTag> getContainedType()
+        public Class<Tag.Named> getContainedType()
         {
-            return ITag.INamedTag.class;
+            return Tag.Named.class;
         }
 
         @NotNull
         @Override
-        public ICompoundContainer<ITag.INamedTag> create(@NotNull final ITag.INamedTag instance, @NotNull final double count)
+        public ICompoundContainer<Tag.Named> create(@NotNull final Tag.Named instance, @NotNull final double count)
         {
             return new TagContainer(instance, count);
         }
 
         @Override
-        public ICompoundContainer<ITag.INamedTag> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+        public ICompoundContainer<Tag.Named> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
         {
             if (!json.isJsonObject())
                 throw new JsonParseException("JSON for tag container needs to be an object.");
@@ -53,12 +53,12 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
             final ResourceLocation tagName = new ResourceLocation(json.getAsJsonObject().get("tagName").getAsString());
             final double amount = json.getAsJsonObject().get("count").getAsDouble();
 
-            Optional<ITag.INamedTag<?>> tag = TagUtils.getTag(tagType, tagName);
+            Optional<Tag.Named<?>> tag = TagUtils.getTag(tagType, tagName);
             return new TagContainer(tag.orElseGet(() -> ForgeTagHandler.createOptionalTag(tagType, tagName)), amount);
         }
 
         @Override
-        public JsonElement serialize(final ICompoundContainer<ITag.INamedTag> src, final Type typeOfSrc, final JsonSerializationContext context)
+        public JsonElement serialize(final ICompoundContainer<Tag.Named> src, final Type typeOfSrc, final JsonSerializationContext context)
         {
             if (!src.isValid())
                 throw new IllegalArgumentException("Can not serialize a container which is invalid.");
@@ -73,29 +73,29 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
         }
 
         @Override
-        public void write(final ICompoundContainer<ITag.INamedTag> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<Tag.Named> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeString(TagUtils.getTagCollectionName(object.getContents()).toString());
-            buffer.writeString(object.getContents().toString());
+            buffer.writeUtf(TagUtils.getTagCollectionName(object.getContents()).toString());
+            buffer.writeUtf(object.getContents().toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<ITag.INamedTag> read(final PacketBuffer buffer)
+        public ICompoundContainer<Tag.Named> read(final FriendlyByteBuf buffer)
         {
-            final ResourceLocation tagType = new ResourceLocation(buffer.readString(32767));
-            final ResourceLocation tagName = new ResourceLocation(buffer.readString(32767));
+            final ResourceLocation tagType = new ResourceLocation(buffer.readUtf(32767));
+            final ResourceLocation tagName = new ResourceLocation(buffer.readUtf(32767));
             final double amount = buffer.readDouble();
 
-            Optional<ITag.INamedTag<?>> tag = TagUtils.getTag(tagType, tagName);
+            Optional<Tag.Named<?>> tag = TagUtils.getTag(tagType, tagName);
             return new TagContainer(tag.orElseGet(() -> ForgeTagHandler.createOptionalTag(tagType, tagName)), amount);
         }
     }
 
-    private final ITag.INamedTag   tag;
+    private final Tag.Named   tag;
     private final Double count;
 
-    public TagContainer(final ITag.INamedTag tag, final Double count)
+    public TagContainer(final Tag.Named tag, final Double count)
     {
         this.tag = tag;
         this.count = count;
@@ -108,7 +108,7 @@ public class TagContainer implements ICompoundContainer<ITag.INamedTag>
     }
 
     @Override
-    public ITag.INamedTag getContents()
+    public Tag.Named getContents()
     {
         return tag;
     }

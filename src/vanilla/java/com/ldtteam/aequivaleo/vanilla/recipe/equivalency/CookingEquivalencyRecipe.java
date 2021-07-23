@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ICookingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Set;

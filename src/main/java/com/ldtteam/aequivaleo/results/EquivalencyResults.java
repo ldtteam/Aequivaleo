@@ -16,9 +16,9 @@ import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.network.messages.PartialSyncResultsMessage;
 import com.ldtteam.aequivaleo.network.messages.SyncCompletedMessage;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -38,7 +38,7 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     private static final Logger LOGGER = LogManager.getLogger();
 
 
-    private static final Map<RegistryKey<World>, EquivalencyResults> WORLD_INSTANCES = Maps.newConcurrentMap();
+    private static final Map<ResourceKey<Level>, EquivalencyResults> WORLD_INSTANCES = Maps.newConcurrentMap();
 
     private       Map<ICompoundContainer<?>, Set<CompoundInstance>>                       rawData          = Maps.newConcurrentMap();
     private final Table<ICompoundContainer<?>, ICompoundTypeGroup, Object>           processedData    = Tables.newCustomTable(
@@ -55,7 +55,7 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
 
     }
 
-    public static EquivalencyResults getInstance(@NotNull final RegistryKey<World> world)
+    public static EquivalencyResults getInstance(@NotNull final ResourceKey<Level> world)
     {
         return WORLD_INSTANCES.computeIfAbsent(world, (dimType) -> new EquivalencyResults());
     }
@@ -63,9 +63,9 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     @SubscribeEvent
     public static void onPlayerLoggedIn(final PlayerEvent.PlayerLoggedInEvent playerLoggedInEvent)
     {
-        if (playerLoggedInEvent.getPlayer() instanceof ServerPlayerEntity) {
+        if (playerLoggedInEvent.getPlayer() instanceof ServerPlayer) {
             LOGGER.info("Sending results data to player: " + playerLoggedInEvent.getPlayer().getScoreboardName());
-            EquivalencyResults.updatePlayer((ServerPlayerEntity) playerLoggedInEvent.getPlayer());
+            EquivalencyResults.updatePlayer((ServerPlayer) playerLoggedInEvent.getPlayer());
         }
     }
 
@@ -209,16 +209,16 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
         WORLD_INSTANCES.forEach((key, data) -> NetworkSplittingManager.getInstance().sendSplit(
           Lists.newArrayList(data.rawData.entrySet()),
           PartialSyncResultsMessage::new,
-          integer -> new SyncCompletedMessage(integer, key.getLocation()),
+          integer -> new SyncCompletedMessage(integer, key.location()),
           message -> Aequivaleo.getInstance().getNetworkChannel().sendToEveryone(message)
         ));
     }
 
-    public static void updatePlayer(@NotNull final ServerPlayerEntity player) {
+    public static void updatePlayer(@NotNull final ServerPlayer player) {
         WORLD_INSTANCES.forEach((key, data) -> NetworkSplittingManager.getInstance().sendSplit(
           Lists.newArrayList(data.rawData.entrySet()),
           PartialSyncResultsMessage::new,
-          integer -> new SyncCompletedMessage(integer, key.getLocation()),
+          integer -> new SyncCompletedMessage(integer, key.location()),
           message -> Aequivaleo.getInstance().getNetworkChannel().sendToPlayer(message, player)
         ));
     }

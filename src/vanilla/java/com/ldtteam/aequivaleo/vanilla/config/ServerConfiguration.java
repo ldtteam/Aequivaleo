@@ -2,7 +2,7 @@ package com.ldtteam.aequivaleo.vanilla.config;
 
 import com.google.common.collect.ImmutableList;
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import java.util.List;
@@ -197,10 +197,10 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
                   return false;
 
               if (parts.length == 1) {
-                  return ResourceLocation.isPathValid(parts[0]);
+                  return ResourceLocation.isValidPath(parts[0]);
               }
 
-              return ResourceLocation.isValidNamespace(parts[0]) && ResourceLocation.isPathValid(parts[1]);
+              return ResourceLocation.isValidNamespace(parts[0]) && ResourceLocation.isValidPath(parts[1]);
           }
         );
         finishCategory(builder);

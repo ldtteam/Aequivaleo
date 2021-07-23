@@ -12,7 +12,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredient
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundContainerSetSerializer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
 import java.util.SortedSet;

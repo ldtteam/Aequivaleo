@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistry;
@@ -24,19 +24,19 @@ public final class Comparators
             if (!ItemStackUtils.isEmpty(itemStack1) && !ItemStackUtils.isEmpty(itemStack2))
             {
                 // Sort on id
-                if (Item.getIdFromItem(itemStack1.getItem()) - Item.getIdFromItem(itemStack2.getItem()) == 0)
+                if (Item.getId(itemStack1.getItem()) - Item.getId(itemStack2.getItem()) == 0)
                 {
                     // Sort on item
                     if (itemStack1.getItem() == itemStack2.getItem())
                     {
                         // Then sort on meta
-                        if ((itemStack1.getDamage() == itemStack2.getDamage()))
+                        if ((itemStack1.getDamageValue() == itemStack2.getDamageValue()))
                         {
                             // Then sort on NBT
                             if (itemStack1.hasTag() && itemStack2.hasTag())
                             {
                                 // Then sort on stack size
-                                if (ItemStack.areItemStackTagsEqual(itemStack1, itemStack2))
+                                if (ItemStack.tagMatches(itemStack1, itemStack2))
                                 {
                                     return (itemStack1.getCount() - itemStack2.getCount());
                                 }
@@ -72,17 +72,17 @@ public final class Comparators
                         }
                         else
                         {
-                            return (itemStack1.getDamage() - itemStack2.getDamage());
+                            return (itemStack1.getDamageValue() - itemStack2.getDamageValue());
                         }
                     }
                     else
                     {
-                        return itemStack1.getItem().getTranslationKey(itemStack1).compareToIgnoreCase(itemStack2.getItem().getTranslationKey(itemStack2));
+                        return itemStack1.getItem().getDescriptionId(itemStack1).compareToIgnoreCase(itemStack2.getItem().getDescriptionId(itemStack2));
                     }
                 }
                 else
                 {
-                    return Item.getIdFromItem(itemStack1.getItem()) - Item.getIdFromItem(itemStack2.getItem());
+                    return Item.getId(itemStack1.getItem()) - Item.getId(itemStack2.getItem());
                 }
             }
             else

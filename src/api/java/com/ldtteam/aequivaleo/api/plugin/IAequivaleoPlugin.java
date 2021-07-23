@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.api.plugin;
 
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -41,13 +40,13 @@ public interface IAequivaleoPlugin
      * Allows for the registration of recipes.
      * @param world The world in question for which the data has been reloaded.
      */
-    default void onReloadStartedFor(final ServerWorld world) {};
+    default void onReloadStartedFor(final ServerLevel world) {};
 
     /**
      * Called when the data has been recalculated on the server side.
      * @param world The world in question for which the data has been reloaded.
      */
-    default void onReloadFinishedFor(final ServerWorld world) {};
+    default void onReloadFinishedFor(final ServerLevel world) {};
 
     /**
      * Called on the client side to indicate that the data for all worlds
@@ -56,5 +55,5 @@ public interface IAequivaleoPlugin
      * @param worldRegistryKey The registry
      */
     @OnlyIn(Dist.CLIENT)
-    default void onDataSynced(final RegistryKey<World> worldRegistryKey) {};
+    default void onDataSynced(final ResourceKey<Level> worldRegistryKey) {};
 }

@@ -6,8 +6,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,12 +105,12 @@ public class StringCompoundContainer implements ICompoundContainer<String>
         }
 
         @Override
-        public void write(ICompoundContainer<String> object, PacketBuffer buffer) {
+        public void write(ICompoundContainer<String> object, FriendlyByteBuf buffer) {
 
         }
 
         @Override
-        public ICompoundContainer<String> read(PacketBuffer buffer) {
+        public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
             return null;
         }
 

@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -29,7 +29,7 @@ public interface ICompoundInformationRegistry
      *
      * @return The locked information registry.
      */
-    static ICompoundInformationRegistry getInstance(@NotNull final RegistryKey<World> worldKey) {
+    static ICompoundInformationRegistry getInstance(@NotNull final ResourceKey<Level> worldKey) {
         return IAequivaleoAPI.getInstance().getLockedCompoundWrapperToTypeRegistry(worldKey);
     }
 

@@ -5,13 +5,13 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
+import net.minecraft.core.Registry;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public class SyncCompletedMessage implements IMessage
     private int communicationId = -1;
     private ResourceLocation worldKeyName;
 
-    public SyncCompletedMessage(@NotNull final PacketBuffer buffer)
+    public SyncCompletedMessage(@NotNull final FriendlyByteBuf buffer)
     {
         this.fromBytes(buffer);
     }
@@ -38,13 +38,13 @@ public class SyncCompletedMessage implements IMessage
     }
 
     @Override
-    public void toBytes(final PacketBuffer buf)
+    public void toBytes(final FriendlyByteBuf buf)
     {
         buf.writeVarInt(communicationId);
         buf.writeResourceLocation(worldKeyName);
     }
 
-    public void fromBytes(final PacketBuffer buf)
+    public void fromBytes(final FriendlyByteBuf buf)
     {
         communicationId = buf.readVarInt();
         worldKeyName = buf.readResourceLocation();
@@ -67,7 +67,7 @@ public class SyncCompletedMessage implements IMessage
             PartialSyncResultsMessage::getCompoundData
           );
 
-        final RegistryKey<World> worldKey = RegistryKey.getOrCreateKey(Registry.WORLD_KEY, worldKeyName);
+        final ResourceKey<Level> worldKey = ResourceKey.create(Registry.DIMENSION_REGISTRY, worldKeyName);
 
         EquivalencyResults.getInstance(
           worldKey

@@ -11,10 +11,10 @@ import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainer
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import net.minecraft.data.DirectoryCache;
-import net.minecraft.data.IDataProvider;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.HashCache;
+import net.minecraft.data.DataProvider;
+import net.minecraft.tags.Tag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class AbstractInformationProvider implements IDataProvider
+public abstract class AbstractInformationProvider implements DataProvider
 {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -49,7 +49,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
     }
 
     @Override
-    public void act(@NotNull final DirectoryCache cache) throws IOException
+    public void run(@NotNull final HashCache cache) throws IOException
     {
         this.calculateDataToSave();
 
@@ -87,7 +87,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     @VisibleForTesting
     void writeData(
-      final DirectoryCache cache,
+      final HashCache cache,
       final Gson gson,
       final WorldData worldData
     ) throws IOException
@@ -127,7 +127,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
                 final Path itemPath = dataSavePath.resolve(String.format("%s.json", fileName));
 
-                IDataProvider.save(
+                DataProvider.save(
                   gson,
                   cache,
                   gson.toJsonTree(data),
@@ -139,7 +139,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
 
     public abstract void calculateDataToSave();
 
-    public SpecBuilder specFor(final ITag<?> tag) {
+    public SpecBuilder specFor(final Tag<?> tag) {
         return new SpecBuilder(tag);
     }
 
@@ -214,8 +214,8 @@ public abstract class AbstractInformationProvider implements IDataProvider
         private final Set<CompoundInstanceRef> instanceRefs = Sets.newLinkedHashSet();
         private final Set<ICondition> conditions = Sets.newLinkedHashSet();
 
-        private SpecBuilder(final ITag<?> tag) {
-            this.targets.addAll(tag.getAllElements());
+        private SpecBuilder(final Tag<?> tag) {
+            this.targets.addAll(tag.getValues());
         }
 
         private SpecBuilder(final Object... targets)

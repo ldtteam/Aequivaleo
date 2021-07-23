@@ -16,8 +16,8 @@ import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public interface IAequivaleoAPI
      * @param worldKey The world key to get the equivalency recipe information for.
      * @return The recipe registry for a given world.
      */
-    IEquivalencyRecipeRegistry getEquivalencyRecipeRegistry(@NotNull final RegistryKey<World> worldKey);
+    IEquivalencyRecipeRegistry getEquivalencyRecipeRegistry(@NotNull final ResourceKey<Level> worldKey);
 
     /**
      * Gives access to the registry that contains the locking information for game objects and wrappers in a given world.
@@ -65,7 +65,7 @@ public interface IAequivaleoAPI
      * @param worldKey The world key that represents the world for which locking information registry is being retrieved.
      * @return The registry for locking type information for a given world.
      */
-    ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final RegistryKey<World> worldKey);
+    ICompoundInformationRegistry getLockedCompoundWrapperToTypeRegistry(@NotNull final ResourceKey<Level> worldKey);
 
     /**
      * Gives access to the cache that contains the equivalency information after calculation.
@@ -74,7 +74,7 @@ public interface IAequivaleoAPI
      * @return The equivalency cache for a given dimension.
      */
     @Deprecated
-    IResultsInformationCache getResultsInformationCache(@NotNull final RegistryKey<World> worldKey);
+    IResultsInformationCache getResultsInformationCache(@NotNull final ResourceKey<Level> worldKey);
 
     /**
      * Gives access to the results that contains the equivalency information after calculation.
@@ -82,7 +82,7 @@ public interface IAequivaleoAPI
      * @param worldKey The world key to get the equivalency results for.
      * @return The equivalency results for a given dimension.
      */
-    IEquivalencyResults getEquivalencyResults(RegistryKey<World> worldKey);
+    IEquivalencyResults getEquivalencyResults(ResourceKey<Level> worldKey);
 
     /**
      * Gives access to the aequivaleo plugin manager.
@@ -170,7 +170,7 @@ public interface IAequivaleoAPI
      * @param key The registry key of the world to look up.
      * @return The current state.
      */
-    AnalysisState getState(final RegistryKey<World> key);
+    AnalysisState getState(final ResourceKey<Level> key);
 
     class Holder {
         private static IAequivaleoAPI apiInstance;

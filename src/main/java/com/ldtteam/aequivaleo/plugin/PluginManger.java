@@ -54,15 +54,15 @@ public final class PluginManger implements IAequivaleoPluginManager
         List<IAequivaleoPlugin> plugins = new ArrayList<>();
         for (ModFileScanData scanData : modList.getAllScanData()) {
             for (ModFileScanData.AnnotationData data : scanData.getAnnotations()) {
-                if (AEQUIVALEO_PLUGIN_TYPE.equals(data.getAnnotationType())) {
-                    final String[] requiredMods = (String[]) data.getAnnotationData().get("requiredMods");
+                if (AEQUIVALEO_PLUGIN_TYPE.equals(data.annotationType())) {
+                    final String[] requiredMods = (String[]) data.annotationData().get("requiredMods");
                     if (requiredMods != null && requiredMods.length > 0) {
                         if (Arrays.stream(requiredMods).anyMatch(modId -> !ModList.get().isLoaded(modId))) {
                             continue;
                         }
                     }
 
-                    IAequivaleoPlugin plugin = createPluginFrom(data.getMemberName());
+                    IAequivaleoPlugin plugin = createPluginFrom(data.memberName());
                     if (plugin != null) {
                         plugins.add(plugin);
                         LOGGER.info("Found and loaded Aequivaleo plugin: {}", plugin.getId());

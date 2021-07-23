@@ -4,7 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ITagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
-import net.minecraft.tags.ITag;
+import net.minecraft.tags.Tag;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Collections;
@@ -13,12 +13,12 @@ import java.util.TreeSet;
 
 public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
 {
-    private final ITag.INamedTag<T>          tag;
+    private final Tag.Named<T>          tag;
     private final SortedSet<IRecipeIngredient> inputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
     public TagEquivalencyRecipe(
-      final ITag.INamedTag<T> tag,
+      final Tag.Named<T> tag,
       final ICompoundContainer<?> inputs,
       final ICompoundContainer<?> outputs)
     {
@@ -31,7 +31,7 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     }
 
     @Override
-    public ITag.INamedTag<T> getTag()
+    public Tag.Named<T> getTag()
     {
         return tag;
     }

@@ -6,8 +6,8 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,11 +27,11 @@ public class WorldCacheUtils
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void writeCachedResults(final ServerWorld world, final int id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
-        final File aequivaleoDirectory = new File(world.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
+    public static void writeCachedResults(final ServerLevel world, final int id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
+        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
-          String.format("%s_%s", world.getDimensionKey().getLocation().getNamespace(), world.getDimensionKey().getLocation().getPath()));
+          String.format("%s_%s", world.dimension().location().getNamespace(), world.dimension().location().getPath()));
         final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
 
         worldCacheDirectory.mkdirs();
@@ -50,7 +50,7 @@ public class WorldCacheUtils
         }
 
         final ByteBuf buf = Unpooled.buffer();
-        final PacketBuffer buffer = new PacketBuffer(buf);
+        final FriendlyByteBuf buffer = new FriendlyByteBuf(buf);
         final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> dataToWrite = new ArrayList<>(data.entrySet());
 
         IOUtils.writeCompoundDataEntries(buffer, dataToWrite);
@@ -68,11 +68,11 @@ public class WorldCacheUtils
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void cleanupCacheDirectory(final ServerWorld serverWorld) {
-        final File aequivaleoDirectory = new File(serverWorld.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
+    public static void cleanupCacheDirectory(final ServerLevel serverWorld) {
+        final File aequivaleoDirectory = new File(serverWorld.getChunkSource().level.getServer().storageSource.getDimensionPath(serverWorld.dimension()), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
-          String.format("%s_%s", serverWorld.getDimensionKey().getLocation().getNamespace(), serverWorld.getDimensionKey().getLocation().getPath()));
+          String.format("%s_%s", serverWorld.dimension().location().getNamespace(), serverWorld.dimension().location().getPath()));
 
         if (!worldCacheDirectory.exists())
             return;
@@ -90,11 +90,11 @@ public class WorldCacheUtils
 
     @NotNull
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final ServerWorld world, final int id) {
-        final File aequivaleoDirectory = new File(world.getChunkProvider().chunkManager.dimensionDirectory, Constants.MOD_ID);
+    public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final ServerLevel world, final int id) {
+        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
-          String.format("%s_%s", world.getDimensionKey().getLocation().getNamespace(), world.getDimensionKey().getLocation().getPath()));
+          String.format("%s_%s", world.dimension().location().getNamespace(), world.dimension().location().getPath()));
         final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
 
         worldCacheDirectory.mkdirs();
@@ -117,7 +117,7 @@ public class WorldCacheUtils
             return Optional.empty();
 
         final ByteBuf buf = Unpooled.wrappedBuffer(data);
-        final PacketBuffer buffer = new PacketBuffer(buf);
+        final FriendlyByteBuf buffer = new FriendlyByteBuf(buf);
 
         final List<Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>>> resultData = new ArrayList<>();
         try {

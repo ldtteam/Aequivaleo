@@ -3,7 +3,6 @@ package com.ldtteam.aequivaleo.api.recipe.equivalency.data;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.FalseCondition;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.commons.lang3.Validate;

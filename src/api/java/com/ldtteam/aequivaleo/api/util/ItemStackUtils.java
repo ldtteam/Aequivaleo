@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
 import com.google.common.collect.Maps;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.util.Tuple;
 import net.minecraftforge.common.ToolType;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -66,13 +66,13 @@ public class ItemStackUtils
         if (!isEmpty(itemStack1) &&
               !isEmpty(itemStack2) &&
               itemStack1.getItem().getRegistryName() == itemStack2.getItem().getRegistryName() &&
-              (itemStack1.getDamage() == itemStack2.getDamage() || !matchMeta))
+              (itemStack1.getDamageValue() == itemStack2.getDamageValue() || !matchMeta))
         {
             // Then sort on NBT
             if (itemStack1.hasTag() && itemStack2.hasTag())
             {
                 // Then sort on stack size
-                return ItemStack.areItemStackTagsEqual(itemStack1, itemStack2) || !matchNBT;
+                return ItemStack.tagMatches(itemStack1, itemStack2) || !matchNBT;
             }
             else
             {

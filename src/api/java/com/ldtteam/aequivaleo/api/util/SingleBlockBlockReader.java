@@ -1,32 +1,32 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
 import org.jetbrains.annotations.Nullable;
 
-public class SingleBlockBlockReader implements IBlockReader
+public class SingleBlockBlockReader implements BlockGetter
 {
     private final BlockPos   pos;
     private final BlockState blockState;
-    private final TileEntity entity;
+    private final BlockEntity entity;
     private final FluidState fluidState;
 
     public SingleBlockBlockReader(final BlockState blockState)
     {
-        this(BlockPos.ZERO, blockState, null, Fluids.EMPTY.getDefaultState());
+        this(BlockPos.ZERO, blockState, null, Fluids.EMPTY.defaultFluidState());
     }
 
-    public SingleBlockBlockReader(final BlockState blockState, final TileEntity entity)
+    public SingleBlockBlockReader(final BlockState blockState, final BlockEntity entity)
     {
-        this(BlockPos.ZERO, blockState, entity, Fluids.EMPTY.getDefaultState());
+        this(BlockPos.ZERO, blockState, entity, Fluids.EMPTY.defaultFluidState());
     }
 
-    public SingleBlockBlockReader(final BlockPos pos, final BlockState blockState, final TileEntity entity, final FluidState fluidState)
+    public SingleBlockBlockReader(final BlockPos pos, final BlockState blockState, final BlockEntity entity, final FluidState fluidState)
     {
         this.pos = pos;
         this.blockState = blockState;
@@ -36,7 +36,7 @@ public class SingleBlockBlockReader implements IBlockReader
 
     @Nullable
     @Override
-    public TileEntity getTileEntity(final BlockPos pos)
+    public BlockEntity getBlockEntity(final BlockPos pos)
     {
         if (pos == this.pos)
             return this.entity;
@@ -50,7 +50,7 @@ public class SingleBlockBlockReader implements IBlockReader
         if (pos == this.pos)
             return blockState;
 
-        return Blocks.AIR.getDefaultState();
+        return Blocks.AIR.defaultBlockState();
     }
 
     @Override
@@ -59,6 +59,18 @@ public class SingleBlockBlockReader implements IBlockReader
         if (pos == this.pos)
             return fluidState;
 
-        return Fluids.EMPTY.getDefaultState();
+        return Fluids.EMPTY.defaultFluidState();
+    }
+
+    @Override
+    public int getHeight()
+    {
+        return pos.getY();
+    }
+
+    @Override
+    public int getMinBuildHeight()
+    {
+        return getHeight();
     }
 }

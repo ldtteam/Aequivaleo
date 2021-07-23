@@ -13,12 +13,12 @@ import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemStack;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.NonNullList;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.tags.Tag;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -41,7 +41,7 @@ public final class WorldBootstrapper
         throw new IllegalStateException("Tried to initialize: WorldBootstrapper but this is a Utility class.");
     }
 
-    public static void onWorldReload(final ServerWorld world)
+    public static void onWorldReload(final ServerLevel world)
     {
         resetDataForWorld(world);
 
@@ -53,26 +53,26 @@ public final class WorldBootstrapper
         doHandlePluginLoad(world);
     }
 
-    private static void resetDataForWorld(final World world)
+    private static void resetDataForWorld(final Level world)
     {
-        CompoundInformationRegistry.getInstance(world.getDimensionKey()).reset();
-        EquivalencyRecipeRegistry.getInstance(world.getDimensionKey()).reset();
+        CompoundInformationRegistry.getInstance(world.dimension()).reset();
+        EquivalencyRecipeRegistry.getInstance(world.dimension()).reset();
     }
 
-    private static void doBootstrapTagInformation(final World world)
+    private static void doBootstrapTagInformation(final Level world)
     {
-        for (ITag.INamedTag<?> tag : TagEquivalencyRegistry.getInstance().get())
+        for (Tag.Named<?> tag : TagEquivalencyRegistry.getInstance().get())
         {
             doBootstrapSingleTagInformation(world, tag);
         }
     }
 
-    private static <T> void doBootstrapSingleTagInformation(final World world, final ITag.INamedTag<T> tag) {
-        final ICompoundContainer<ITag.INamedTag> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
+    private static <T> void doBootstrapSingleTagInformation(final Level world, final Tag.Named<T> tag) {
+        final ICompoundContainer<Tag.Named> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
 
 
         final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>();
-        for (T stack : tag.getAllElements())
+        for (T stack : tag.getValues())
         {
             ICompoundContainer<T> tiCompoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d);
             elementsOfTag.add(tiCompoundContainer);
@@ -80,7 +80,7 @@ public final class WorldBootstrapper
 
         for (ICompoundContainer<?> inputStack : elementsOfTag)
         {
-            EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+            EquivalencyRecipeRegistry.getInstance(world.dimension())
               .register(
                 new TagEquivalencyRecipe<>(
                   tag,
@@ -88,7 +88,7 @@ public final class WorldBootstrapper
                   inputStack
                 ));
 
-            EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+            EquivalencyRecipeRegistry.getInstance(world.dimension())
               .register(
                 new TagEquivalencyRecipe<>(
                   tag,
@@ -99,7 +99,7 @@ public final class WorldBootstrapper
     }
 
     private static void doBootstrapInstancedEquivalencies(
-      @NotNull final ServerWorld world
+      @NotNull final ServerLevel world
     ) {
         StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
           item,
@@ -108,7 +108,7 @@ public final class WorldBootstrapper
               final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
               try {
-                  EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+                  EquivalencyRecipeRegistry.getInstance(world.dimension())
                     .register(new InstancedEquivalency(
                       sourceContainer, targetContainer
                     ))
@@ -123,10 +123,10 @@ public final class WorldBootstrapper
           },
           consumer -> {
               final NonNullList<ItemStack> group = NonNullList.create();
-              if (item.getGroup() == null)
+              if (item.getItemCategory() == null)
                   return;
 
-              item.fillItemGroup(Objects.requireNonNull(item.getGroup()), group);
+              item.fillItemCategory(Objects.requireNonNull(item.getItemCategory()), group);
 
               if (group.size() == 1)
               {
@@ -142,7 +142,7 @@ public final class WorldBootstrapper
               final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
               try {
-                  EquivalencyRecipeRegistry.getInstance(world.getDimensionKey())
+                  EquivalencyRecipeRegistry.getInstance(world.dimension())
                     .register(new InstancedEquivalency(
                       sourceContainer, targetContainer
                     ))
@@ -156,7 +156,7 @@ public final class WorldBootstrapper
               }
           },
           consumer -> {
-              if (fluid.isEquivalentTo(Fluids.EMPTY))
+              if (fluid.isSame(Fluids.EMPTY))
                   return;
 
               consumer.accept(new FluidStack(fluid, 1));
@@ -165,15 +165,15 @@ public final class WorldBootstrapper
     }
 
     private static void doHandleCompoundTypeWrappers(
-      @NotNull final ServerWorld world) {
-        LOGGER.info(String.format("Setting up compound type instantiations: %s", world.getDimensionKey().getLocation()));
-        ModRegistries.COMPOUND_TYPE.forEach(type -> ICompoundInformationRegistry.getInstance(world.getDimensionKey())
+      @NotNull final ServerLevel world) {
+        LOGGER.info(String.format("Setting up compound type instantiations: %s", world.dimension().location()));
+        ModRegistries.COMPOUND_TYPE.forEach(type -> ICompoundInformationRegistry.getInstance(world.dimension())
           .registerLocking(type, Sets.newHashSet(new CompoundInstance(type, 1))));
     }
 
     private static void doHandlePluginLoad(
-      @NotNull final ServerWorld world) {
-        LOGGER.info(String.format("Invoking plugin callbacks: %s", world.getDimensionKey().getLocation()));
+      @NotNull final ServerLevel world) {
+        LOGGER.info(String.format("Invoking plugin callbacks: %s", world.dimension().location()));
         PluginManger.getInstance().run(plugin -> plugin.onReloadStartedFor(world));
     }
 }

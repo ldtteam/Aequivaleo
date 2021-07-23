@@ -9,10 +9,10 @@ import com.ldtteam.aequivaleo.api.util.Comparators;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.JsonToNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         {
             try
             {
-                return new ItemStackContainer(ItemStack.read(JsonToNBT.getTagFromJson(json.getAsJsonObject().get("stack").getAsString())), json.getAsJsonObject().get("count").getAsDouble());
+                return new ItemStackContainer(ItemStack.of(TagParser.parseTag(json.getAsJsonObject().get("stack").getAsString())), json.getAsJsonObject().get("count").getAsDouble());
             }
             catch (CommandSyntaxException e)
             {
@@ -66,22 +66,22 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         {
             final JsonObject object = new JsonObject();
             object.addProperty("count", src.getContentsCount());
-            object.addProperty("stack", src.getContents().write(new CompoundNBT()).toString());
+            object.addProperty("stack", src.getContents().save(new CompoundTag()).toString());
             return object;
         }
 
         @Override
-        public void write(final ICompoundContainer<ItemStack> object, final PacketBuffer buffer)
+        public void write(final ICompoundContainer<ItemStack> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeItemStack(object.getContents());
+            buffer.writeItem(object.getContents());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<ItemStack> read(final PacketBuffer buffer)
+        public ICompoundContainer<ItemStack> read(final FriendlyByteBuf buffer)
         {
             return new ItemStackContainer(
-              buffer.readItemStack(),
+              buffer.readItem(),
               buffer.readDouble()
             );
         }
@@ -104,7 +104,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
             return;
         }
 
-        this.hashCode = stack.write(new CompoundNBT()).hashCode();
+        this.hashCode = stack.save(new CompoundTag()).hashCode();
     }
 
     @Override

@@ -6,8 +6,8 @@ import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerF
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.api.util.Suppression;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -163,13 +163,13 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
     }
 
     @Override
-    public void write(final ICompoundContainer<?> object, final PacketBuffer buffer)
+    public void write(final ICompoundContainer<?> object, final FriendlyByteBuf buffer)
     {
         writeInternally(object, buffer);
     }
 
     @SuppressWarnings(Suppression.UNCHECKED)
-    private <T> void writeInternally(final ICompoundContainer<T> object, final PacketBuffer buffer)
+    private <T> void writeInternally(final ICompoundContainer<T> object, final FriendlyByteBuf buffer)
     {
         final ICompoundContainerFactory<T> containerFactory = this.getFactoryFor(object.getContents()).orElseThrow(() -> new JsonParseException("The given container can not be serialized. Its contained type: " + object.getContents().getClass().getCanonicalName() + " has no registered factory."));
 
@@ -180,7 +180,7 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
     }
 
     @Override
-    public ICompoundContainer<?> read(final PacketBuffer buffer)
+    public ICompoundContainer<?> read(final FriendlyByteBuf buffer)
     {
         final ForgeRegistry<ICompoundContainerFactory<?>> internalRegistry = (ForgeRegistry<ICompoundContainerFactory<?>>) getRegistry();
         return internalRegistry.getValue(buffer.readVarInt()).read(buffer);
