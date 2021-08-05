@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound.type.group;
 
+import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
@@ -9,6 +10,7 @@ import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -69,6 +71,18 @@ public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGro
      * @return True when instance is valid, false when not.
      */
     boolean isValidFor(ICompoundContainer<?> wrapper, CompoundInstance compoundInstance);
+
+    /**
+     * Allows for the adaptation of the candidate data that is produced by the given recipe.
+     * This allows for the implementation of a lossy crafting mechanic.
+     *
+     * @param recipe The recipe in question.
+     * @param candidateData The data calculated by the analyzer that is about to be added to an output.
+     * @return The data that should be added to the output.
+     */
+    default Collection<CompoundInstance> adaptRecipeResult(final IEquivalencyRecipe recipe, final Collection<CompoundInstance> candidateData) {
+        return candidateData;
+    }
 
     @Override
     default int compareTo(@NotNull ICompoundTypeGroup group) {

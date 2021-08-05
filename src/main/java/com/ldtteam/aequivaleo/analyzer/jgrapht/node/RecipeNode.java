@@ -4,10 +4,13 @@ import com.ldtteam.aequivaleo.analyzer.StatCollector;
 import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
+import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RecipeNode extends AbstractNode implements IRecipeNode
 {
@@ -164,6 +167,15 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
 
                 set.add(compoundInstance);
             }
+
+            final Map<ICompoundTypeGroup, Collection<CompoundInstance>> groupedInstances = GroupingUtils.groupByUsingSetToMap(
+              set,
+              compoundInstance -> compoundInstance.getType().getGroup()
+            );
+
+            final Set<CompoundInstance> reducedSet = groupedInstances.entrySet().stream()
+              .flatMap(entry -> entry.getKey().adaptRecipeResult(this.recipe, entry.getValue()).stream())
+              .collect(Collectors.toSet());
 
             neighbor.addCandidateResult(this, graph.getEdge(this, neighbor), Optional.of(set));
         }

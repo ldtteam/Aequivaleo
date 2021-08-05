@@ -1,0 +1,17 @@
+tasks.withType(Javadoc.class, {task ->
+    task.options.tags(
+            'apiNote:a:API Note:',
+            'implSpec:a:Implementation Requirements:',
+            'implNote:a:Implementation Note:'
+    )
+})
+
+tasks.withType(Test.class, { task ->
+    task.doFirst {
+        task.jvmArgs = [
+                '--add-opens', 'java.base/java.util.stream=ALL-UNNAMED',
+                '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+                '--add-opens', 'java.xml/jdk.xml.internal=ALL-UNNAMED'
+        ]
+    }
+})
