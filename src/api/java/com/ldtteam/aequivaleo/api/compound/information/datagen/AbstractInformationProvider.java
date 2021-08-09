@@ -215,7 +215,7 @@ public abstract class AbstractInformationProvider implements IDataProvider
         private final Set<ICondition> conditions = Sets.newLinkedHashSet();
 
         private SpecBuilder(final ITag<?> tag) {
-            this.targets.addAll(tag.getAllElements());
+            this.targets.add(tag);
         }
 
         private SpecBuilder(final Object... targets)
