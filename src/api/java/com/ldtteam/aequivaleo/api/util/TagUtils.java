@@ -82,17 +82,17 @@ public final class TagUtils
           .anyMatch(e -> areTagsEqual(e.getValue(), tag));
     }
 
-    public static boolean areTagsEqual(final ITag<?> leftTag, final ITag<?> rightTag) {
+    public static boolean areTagsEqual(final Tag<?> leftTag, final Tag<?> rightTag) {
         try {
-            return leftTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, rightTag)) &&
-                     rightTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, leftTag));
+            return leftTag.getValues().stream().allMatch(element -> isContainedInTag(element, rightTag)) &&
+                     rightTag.getValues().stream().allMatch(element -> isContainedInTag(element, leftTag));
         } catch (Exception ex) {
             return false; //Likely tags are not bound yet. Just bail out.
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> boolean  isContainedInTag(final Object candidate, final ITag<T> tag) {
+    private static <T> boolean  isContainedInTag(final Object candidate, final Tag<T> tag) {
         try {
             final T tCandidate = (T) candidate;
             return tag.contains(tCandidate);
