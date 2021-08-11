@@ -26,7 +26,7 @@ apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'maven'
+apply plugin: 'java-library'
 
 sourceSets {
     api {
@@ -167,14 +167,14 @@ dependencies {
     testRuntimeOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:'2.10.0'
 
     //Utilities
-    apiCompile 'com.intellij:annotations:+@jar'
-    vanillaCompile 'com.intellij:annotations:+@jar'
-    vanillaApiCompile 'com.intellij:annotations:+@jar'
-    compile "com.intellij:annotations:+@jar"
+    apiImplementation 'com.intellij:annotations:+@jar'
+    vanillaImplementation 'com.intellij:annotations:+@jar'
+    vanillaApiImplementation 'com.intellij:annotations:+@jar'
+    implementation "com.intellij:annotations:+@jar"
     testImplementation 'com.intellij:annotations:+@jar'
-    compile "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
-    compile "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
-    compile "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+    api "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
+    api "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
+    api "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
 
     implementation fg.deobf("curse.maven:cooking-for-blockheads-231484:3238962")
     implementation fg.deobf("curse.maven:goo-404147:3113043")
@@ -331,10 +331,8 @@ reobf {
     shadowJar {
     }
     apiJar {
-        classpath = sourceSets.api.compileClasspath
     }
     vanillaApiJar {
-        classpath = sourceSets.vanillaApi.compileClasspath
     }
 }
 
