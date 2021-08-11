@@ -76,7 +76,7 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
         public void write(final ICompoundContainer<Tag.Named> object, final FriendlyByteBuf buffer)
         {
             buffer.writeUtf(TagUtils.getTagCollectionName(object.getContents()).toString());
-            buffer.writeUtf(object.getContents().toString());
+            buffer.writeUtf(object.getContents().getName().toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
@@ -134,22 +134,47 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
-        return !(o instanceof CompoundTypeContainer) ? -1 : (int) (getContentsCount() - o.getContentsCount());
+        if (!(o instanceof TagContainer))
+            return -1;
+
+        final TagContainer other = (TagContainer) o;
+
+        final int tagTypeResult = TagUtils.getTagCollectionName(getContents()).compareTo(TagUtils.getTagCollectionName(other.getContents()));
+        if (tagTypeResult != 0)
+            return tagTypeResult;
+
+        final int tagNameResult = getContents().getName().compareTo(other.getContents().getName());
+        if (tagNameResult != 0)
+            return tagNameResult;
+
+        return (int) (getContentsCount() - other.getContentsCount());
     }
 
     @Override
     public int hashCode()
     {
-        return getContentsCount().hashCode();
+        int result = TagUtils.getTagCollectionName(getContents()).hashCode();
+        result = 31 * result + getContents().getName().hashCode();
+        result = 31 * result + getContentsCount().hashCode();
+        return result;
     }
 
     @Override
     public boolean equals(final Object obj)
     {
-        if (!(obj instanceof CompoundTypeContainer))
+        if (!(obj instanceof TagContainer))
             return false;
 
-        return ((CompoundTypeContainer) obj).getContentsCount().equals(getContentsCount());
+        final TagContainer other = (TagContainer) obj;
+        final ResourceLocation otherCollection = TagUtils.getTagCollectionName(other.getContents());
+
+        if (!other.getContentsCount().equals(this.getContentsCount()))
+            return false;
+
+        if (!otherCollection.equals(TagUtils.getTagCollectionName(this.tag)))
+            return false;
+
+        return TagUtils.areTagsEqual(this.getContents(), other.getContents());
     }
 
     @Override

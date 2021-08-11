@@ -82,7 +82,7 @@ public final class TagUtils
           .anyMatch(e -> areTagsEqual(e.getValue(), tag));
     }
 
-    private static boolean areTagsEqual(final ITag<?> leftTag, final ITag<?> rightTag) {
+    public static boolean areTagsEqual(final ITag<?> leftTag, final ITag<?> rightTag) {
         try {
             return leftTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, rightTag)) &&
                      rightTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, leftTag));
