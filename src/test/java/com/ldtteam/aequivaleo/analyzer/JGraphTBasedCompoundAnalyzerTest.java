@@ -667,7 +667,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     }
     
     public void addConversion(int count, String result, List<String> inputs) {
-        final Collection<Collection<String>> groupedInputs = GroupingUtils.groupByUsingList(inputs, Function.identity());
+        final Collection<Collection<String>> groupedInputs = GroupingUtils.groupByUsingList(inputs, s -> s);
         final Set<ICompoundContainer<?>> inputContainers = groupedInputs
           .stream()
           .map(cs -> cc(cs.iterator().next(), cs.size()))
