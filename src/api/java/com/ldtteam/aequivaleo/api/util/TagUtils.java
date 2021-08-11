@@ -79,7 +79,26 @@ public final class TagUtils
           .entrySet()
           .stream()
           .filter(e -> e.getKey().equals(tag.getName()))
-          .anyMatch(e -> e.getValue() == tag);
+          .anyMatch(e -> areTagsEqual(e.getValue(), tag));
+    }
+
+    private static boolean areTagsEqual(final ITag<?> leftTag, final ITag<?> rightTag) {
+        try {
+            return leftTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, rightTag)) &&
+                     rightTag.getAllElements().stream().allMatch(element -> isContainedInTag(element, leftTag));
+        } catch (Exception ex) {
+            return false; //Likely tags are not bound yet. Just bail out.
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> boolean  isContainedInTag(final Object candidate, final ITag<T> tag) {
+        try {
+            final T tCandidate = (T) candidate;
+            return tag.contains(tCandidate);
+        } catch(ClassCastException e) {
+            return false; //Obviously we are not contained in the tag if we can not be casted to the tags type.
+        }
     }
 
     public static Optional<Tag.Named<?>> getTag(final ResourceLocation tagCollectionName, final ResourceLocation location) {
