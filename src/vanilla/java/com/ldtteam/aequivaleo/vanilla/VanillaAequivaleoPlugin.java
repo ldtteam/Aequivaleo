@@ -12,7 +12,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
@@ -21,28 +20,27 @@ import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.UpgradeRecipe;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.Registry;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fml.ModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -158,34 +156,32 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .forEach(recipe -> processGenericRecipe(world, recipe));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static List<Recipe<?>> getRecipes(final RecipeType type, final Level world)
+    private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ServerLevel world)
     {
-        final List<? extends Recipe<?>> recipes = world.getRecipeManager().getAllRecipesFor(type);
-        return Lists.newArrayList(recipes);
+        return Lists.newArrayList(world.getRecipeManager().recipes.get(type).values());
     }
 
-    private static void processSmeltingRecipe(@NotNull final Level world, Recipe<?> iRecipe)
+    private static void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processCraftingRecipe(@NotNull final Level world, Recipe<?> iRecipe)
+    private static void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processStoneCuttingRecipe(@NotNull final Level world, Recipe<?> iRecipe)
+    private static void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processGenericRecipe(@NotNull final Level world, Recipe<?> iRecipe)
+    private static void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processSmithingRecipe(@NotNull final Level world, Recipe<?> iRecipe)
+    private static void processSmithingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world,
           iRecipe,
@@ -202,7 +198,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     }
 
     private static void processIRecipe(
-      @NotNull final Level world,
+      @NotNull final ServerLevel world,
       final Recipe<?> iRecipe,
       final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
@@ -229,12 +225,8 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
     private static void processBucketFluidRecipeFor(
       @NotNull final Level world, final Item item) {
-        //new SimpleIngredientBuilder().from(wrappedStacks).withCount(1d).createIngredient()
-
-        if (!(item instanceof BucketItem))
+        if (!(item instanceof final BucketItem bucketItem))
             return;
-
-        final BucketItem bucketItem = (BucketItem) item;
 
         if (bucketItem.getFluid().isSame(Fluids.EMPTY))
             return;

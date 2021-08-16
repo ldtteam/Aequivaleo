@@ -1,8 +1,8 @@
 package com.ldtteam.aequivaleo.vanilla.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ICookingEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ICookingEquivalencyRecipe;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.Validate;
 
@@ -56,12 +56,10 @@ public class CookingEquivalencyRecipe implements ICookingEquivalencyRecipe
         {
             return true;
         }
-        if (!(o instanceof CookingEquivalencyRecipe))
+        if (!(o instanceof final CookingEquivalencyRecipe that))
         {
             return false;
         }
-
-        final CookingEquivalencyRecipe that = (CookingEquivalencyRecipe) o;
 
         if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
         {

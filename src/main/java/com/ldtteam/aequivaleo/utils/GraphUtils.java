@@ -1,9 +1,9 @@
 package com.ldtteam.aequivaleo.utils;
 
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IEdge;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.IGraph;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.aequivaleo.INode;
-import com.ldtteam.aequivaleo.analyzer.jgrapht.graph.AequivaleoGraph;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
 
 public class GraphUtils
 {
