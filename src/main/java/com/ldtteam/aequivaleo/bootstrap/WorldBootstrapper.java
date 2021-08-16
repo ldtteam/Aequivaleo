@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.bootstrap;
 
 import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.analyzer.EquivalencyRecipeRegistry;
+import com.ldtteam.aequivaleo.analysis.EquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;

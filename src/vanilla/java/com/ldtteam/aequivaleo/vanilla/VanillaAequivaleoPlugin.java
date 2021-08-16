@@ -12,7 +12,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
@@ -159,33 +158,33 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static List<IRecipe<?>> getRecipes(final IRecipeType type, final World world)
+    private static List<IRecipe<?>> getRecipes(final IRecipeType type, final ServerWorld world)
     {
         final List<? extends IRecipe<?>> recipes = world.getRecipeManager().getRecipesForType(type);
         return Lists.newArrayList(recipes);
     }
 
-    private static void processSmeltingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    private static void processSmeltingRecipe(@NotNull final ServerWorld world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processCraftingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    private static void processCraftingRecipe(@NotNull final ServerWorld world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processStoneCuttingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    private static void processStoneCuttingRecipe(@NotNull final ServerWorld world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processGenericRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    private static void processGenericRecipe(@NotNull final ServerWorld world, IRecipe<?> iRecipe)
     {
         processIRecipe(world, iRecipe, IRecipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processSmithingRecipe(@NotNull final World world, IRecipe<?> iRecipe)
+    private static void processSmithingRecipe(@NotNull final ServerWorld world, IRecipe<?> iRecipe)
     {
         processIRecipe(world,
           iRecipe,
@@ -202,7 +201,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     }
 
     private static void processIRecipe(
-      @NotNull final World world,
+      @NotNull final ServerWorld world,
       final IRecipe<?> iRecipe,
       final Function<IRecipe<?>, NonNullList<Ingredient>> ingredientExtractor,
       final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
@@ -229,8 +228,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
     private static void processBucketFluidRecipeFor(
       @NotNull final World world, final Item item) {
-        //new SimpleIngredientBuilder().from(wrappedStacks).withCount(1d).createIngredient()
-
         if (!(item instanceof BucketItem))
             return;
 

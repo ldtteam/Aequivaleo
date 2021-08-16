@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.api;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
+import com.ldtteam.aequivaleo.api.analysis.IBlacklistDimensionManager;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.gameobject.equivalent.IGameObjectEquivalencyHandlerRegistry;
@@ -171,6 +172,13 @@ public interface IAequivaleoAPI
      * @return The current state.
      */
     AnalysisState getState(final RegistryKey<World> key);
+
+    /**
+     * The blacklist dimension manager.
+     *
+     * @return The manager for blacklisted dimensions.
+     */
+    IBlacklistDimensionManager getBlacklistDimensionManager();
 
     class Holder {
         private static IAequivaleoAPI apiInstance;

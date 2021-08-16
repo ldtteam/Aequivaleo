@@ -1,11 +1,12 @@
 package com.ldtteam.aequivaleo.api.plugin;
 
 import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import java.util.List;
 
 /**
  * Represents a plugin for Aequivaleo.
