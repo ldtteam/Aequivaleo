@@ -37,7 +37,7 @@ public class InnerNode
       final List<INode> innerVertices
     )
     {
-        setupGraphs(sourceGraph, innerVertices);
+        setupGraphs(sourceGraph, Sets.newHashSet(innerVertices));
         AnalysisLogHandler.debug(LOGGER, String.format("Created inner graph node: %s", toString()));
     }
 
@@ -376,7 +376,7 @@ public class InnerNode
         });
     }
 
-    private void setupGraphs(final IGraph graph, final List<INode> innerVertices)
+    private void setupGraphs(final IGraph graph, final Set<INode> innerVertices)
     {
         setupInnerGraph(graph, innerVertices);
         setupIOGraph(graph, innerVertices);
@@ -384,7 +384,7 @@ public class InnerNode
         this.hash = Objects.hash(ioGraph, innerGraph);
     }
 
-    private void setupInnerGraph(final IGraph graph, final List<INode> innerVertices)
+    private void setupInnerGraph(final IGraph graph, final Set<INode> innerVertices)
     {
         for (INode iNode : innerVertices)
         {
@@ -411,7 +411,7 @@ public class InnerNode
         cyclesReducer.reduce(innerGraph);
     }
 
-    private void setupIOGraph(final IGraph graph, final List<INode> innerVertices)
+    private void setupIOGraph(final IGraph graph, final Set<INode> innerVertices)
     {
         for (INode node : innerVertices)
         {
