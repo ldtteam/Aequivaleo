@@ -180,6 +180,8 @@ dependencies {
     implementation fg.deobf("curse.maven:goo-404147:3113043")
     implementation fg.deobf("curse.maven:patchouli-306770:3204037")
     implementation fg.deobf("curse.maven:farmers-delight-398521:3188508")
+    implementation fg.deobf("curse.maven:silent-gear-297039:3386805")
+    implementation fg.deobf("curse.maven:silent-lib-242998:3235738")
 
 }
 
@@ -514,13 +516,3 @@ publishing {
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
 }
-
-tasks.withType(Test.class, { task ->
-    task.doFirst {
-        task.jvmArgs = [
-                '--add-opens', 'java.base/java.util.stream=ALL-UNNAMED',
-                '--add-opens', 'java.base/java.io=ALL-UNNAMED',
-                '--add-opens', 'java.xml/jdk.xml.internal=ALL-UNNAMED'
-        ]
-    }
-})
