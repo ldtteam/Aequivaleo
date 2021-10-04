@@ -14,5 +14,9 @@ buildscript {
     }
 }
 
+plugins {
+  id "org.sonarqube" version "3.0"
+}
+
 apply from: 'https://raw.githubusercontent.com/ldtteam/OperaPublicaCreator/main/gradle/mod.gradle'
 project.getLogger().lifecycle("Loaded remote build.gradle with version: " + project.modVersion)
