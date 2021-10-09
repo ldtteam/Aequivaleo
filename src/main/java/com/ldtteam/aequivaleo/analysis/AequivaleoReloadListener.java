@@ -27,6 +27,7 @@ import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.server.packs.resources.Resource;
@@ -279,7 +280,7 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
 
         LOGGER.info("Analyzing information");
         try {
-            final ClassLoader classLoader = Aequivaleo.class.getClassLoader();
+            final ClassLoader classLoader = Minecraft.getInstance().getClass().getClassLoader();
             final AtomicInteger genericThreadCounter = new AtomicInteger();
             final int maxThreadCount = Math.max(1, Math.max(4, Runtime.getRuntime().availableProcessors() - 2));
             final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
@@ -291,15 +292,14 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
 
             RecipeCalculator.IngredientHandler.getInstance().reset();
 
-            CompletableFuture.allOf(buildAnalysisFutures(forceReload, valueData, lockedData, additionalRecipes, worlds))
-              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.SYNCING)))
-              .thenRunAsync(EquivalencyResults::updateAllPlayers)
-              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.POST_PROCESSING)))
-              .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))
-              ))
-              .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors())
-              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.COMPLETED)))
-              .thenRunAsync(aequivaleoReloadExecutor::shutdown);
+            CompletableFuture.allOf(buildAnalysisFutures(forceReload, valueData, lockedData, additionalRecipes, worlds, aequivaleoReloadExecutor))
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.SYNCING)), aequivaleoReloadExecutor)
+              .thenRunAsync(EquivalencyResults::updateAllPlayers, aequivaleoReloadExecutor)
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.POST_PROCESSING)), aequivaleoReloadExecutor)
+              .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))), aequivaleoReloadExecutor)
+              .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors(), aequivaleoReloadExecutor)
+              .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.COMPLETED)), aequivaleoReloadExecutor)
+              .thenRunAsync(aequivaleoReloadExecutor::shutdown, aequivaleoReloadExecutor);
         }
         catch (Exception ex)
         {
@@ -313,17 +313,18 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
       final Map<ResourceLocation, List<CompoundInstanceData>> valueData,
       final Map<ResourceLocation, List<CompoundInstanceData>> lockedData,
       final Map<ResourceLocation, List<IEquivalencyRecipe>> additionalRecipes,
-      final List<ServerLevel> worlds)
+      final List<ServerLevel> worlds, final ExecutorService aequivaleoReloadExecutor)
     {
         return GroupingUtils.groupByUsingSetToMap(worlds, (world) -> IBlacklistDimensionManager.getInstance().isBlacklisted(world.dimension()))
           .entrySet()
           .stream()
-          .map(e -> e.getKey() ? buildBlacklistedAnalysisFutures(Lists.newArrayList(e.getValue())) : buildRunnableAnalysisFutures(
+          .map(e -> e.getKey() ? buildBlacklistedAnalysisFutures(Lists.newArrayList(e.getValue()), aequivaleoReloadExecutor) : buildRunnableAnalysisFutures(
             forceReload,
             valueData,
             lockedData,
             additionalRecipes,
-            Lists.newArrayList(e.getValue())
+            Lists.newArrayList(e.getValue()),
+            aequivaleoReloadExecutor
           ))
           .flatMap(Collection::stream)
           .toArray(CompletableFuture[]::new);
@@ -331,11 +332,11 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
 
     @NotNull
     private static List<CompletableFuture<?>> buildBlacklistedAnalysisFutures(
-      final List<ServerLevel> worlds
-    )
+      final List<ServerLevel> worlds,
+      final ExecutorService aequivaleoReloadExecutor)
     {
         return worlds.stream()
-                 .map(world -> CompletableFuture.runAsync(() -> LOGGER.debug(String.format("Skipping analysis of: %s", world.dimension().location()))))
+                 .map(world -> CompletableFuture.runAsync(() -> LOGGER.debug(String.format("Skipping analysis of: %s", world.dimension().location())), aequivaleoReloadExecutor))
           .collect(Collectors.toList());
     }
 
@@ -345,7 +346,7 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
       final Map<ResourceLocation, List<CompoundInstanceData>> valueData,
       final Map<ResourceLocation, List<CompoundInstanceData>> lockedData,
       final Map<ResourceLocation, List<IEquivalencyRecipe>> additionalRecipes,
-      final List<ServerLevel> worlds)
+      final List<ServerLevel> worlds, final ExecutorService aequivaleoReloadExecutor)
     {
         final List<ServerLevel> runnableWorlds = worlds.stream().filter(world -> !AnalysisStateManager.getState(world.dimension()).isErrored()).collect(Collectors.toList());
 
@@ -362,7 +363,8 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
                 additionalRecipes.get(GENERAL_DATA_NAME),
                 Collections.emptyList(),
                 forceReload
-              )
+              ),
+              aequivaleoReloadExecutor
             ));
 
         final Collection<Collection<ServerLevel>> groups = GroupingUtils.groupByUsingSet(
@@ -387,7 +389,8 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
                additionalRecipes.get(GENERAL_DATA_NAME),
                additionalRecipes.get(groupWorlds.get(0).dimension().location()),
                forceReload
-             )
+             ),
+            aequivaleoReloadExecutor
            ))
           .collect(Collectors.toList());
     }
