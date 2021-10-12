@@ -1,13 +1,13 @@
 package com.ldtteam.aequivaleo.api.util;
 
 import com.google.common.collect.Lists;
-import net.minecraft.tags.*;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.Tags;
+import net.minecraft.tags.*;
+import net.minecraftforge.common.ForgeTagHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public final class TagUtils
@@ -32,19 +32,14 @@ public final class TagUtils
 
     public static TagCollection<?> getTagCollection(final ResourceLocation collectionId)
     {
-        switch (collectionId.toString())
-        {
-            case "minecraft:block":
-                return BlockTags.getAllTags();
-            case "minecraft:item":
-                return ItemTags.getAllTags();
-            case "minecraft:entity_type":
-                return EntityTypeTags.getAllTags();
-            case "minecraft:fluid":
-                return FluidTags.getAllTags();
-            default:
-                return SerializationTags.getInstance().getCustomTypeCollection(collectionId);
-        }
+        return switch (collectionId.toString())
+                 {
+                     case "minecraft:block" -> BlockTags.getAllTags();
+                     case "minecraft:item" -> ItemTags.getAllTags();
+                     case "minecraft:entity_type" -> EntityTypeTags.getAllTags();
+                     case "minecraft:fluid" -> FluidTags.getAllTags();
+                     default -> SerializationTags.getInstance().getOrEmpty(ResourceKey.createRegistryKey(collectionId));
+                 };
     }
 
     public static ResourceLocation getTagCollectionName(final Tag.Named<?> tag)
@@ -61,14 +56,14 @@ public final class TagUtils
         if (isContainedIn(EntityTypeTags.getAllTags(), tag))
             return new ResourceLocation("entity_type");
 
-        for (final Map.Entry<ResourceLocation, TagCollection<?>> resourceLocationITagCollectionEntry : SerializationTags.getInstance().getCustomTagTypes().entrySet())
-        {
-            if (isContainedIn(
-              resourceLocationITagCollectionEntry.getValue(),
-              tag
-            ))
-                return resourceLocationITagCollectionEntry.getKey();
-        }
+        final Optional<ResourceLocation> targetedCustomRegistry = ForgeTagHandler.getCustomTagTypeNames().stream()
+          .map(ResourceKey::createRegistryKey)
+          .filter(registryName -> isContainedIn(SerializationTags.getInstance().getOrEmpty(registryName), tag))
+          .map(ResourceKey::location)
+          .findFirst();
+
+        if (targetedCustomRegistry.isPresent())
+            return targetedCustomRegistry.get();
 
         throw new IllegalArgumentException("Could not find the collection for the tag: " + tag.getName());
     }

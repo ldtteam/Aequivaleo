@@ -1,19 +1,11 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import com.google.common.collect.Maps;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.util.Tuple;
-import net.minecraftforge.common.ToolType;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 public class ItemStackUtils
 {
-
-    private static final Map<ToolType, Tuple<ItemStack, Integer>> toolTypeBestToolMap = Maps.newConcurrentMap();
 
     /**
      * Private constructor to hide the implicit one.
@@ -80,29 +72,5 @@ public class ItemStackUtils
             }
         }
         return false;
-    }
-
-    public static synchronized ItemStack getBestTool(@NotNull final ToolType toolType)
-    {
-        if (toolTypeBestToolMap.isEmpty())
-        {
-            ForgeRegistries.ITEMS.getValues().parallelStream().forEach(item -> {
-                item.getToolTypes(new ItemStack(item)).forEach(toolTypeOnItem -> {
-                    final Integer toolLevel = item.getHarvestLevel(new ItemStack(item), toolTypeOnItem, null, null);
-
-                    synchronized (toolTypeBestToolMap)
-                    {
-                        if (toolTypeBestToolMap.containsKey(toolTypeOnItem) && toolTypeBestToolMap.get(toolTypeOnItem).getB() < toolLevel)
-                        {
-                            toolTypeBestToolMap.remove(toolTypeOnItem);
-                        }
-
-                        toolTypeBestToolMap.put(toolTypeOnItem, new Tuple<>(new ItemStack(item), toolLevel));
-                    }
-                });
-            });
-        }
-
-        return toolTypeBestToolMap.getOrDefault(toolType, new Tuple<>(ItemStack.EMPTY, 0)).getA();
     }
 }

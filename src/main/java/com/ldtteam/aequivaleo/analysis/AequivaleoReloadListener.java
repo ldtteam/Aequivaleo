@@ -74,7 +74,7 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
     public static void onServerStarted(final FMLServerStartedEvent serverStartedEvent)
     {
         LOGGER.info("Building initial equivalency graph.");
-        reloadResources(parseData(serverStartedEvent.getServer().getResourceManager()), false);
+        reloadResources(parseData(serverStartedEvent.getServer().getResourceManager()), false, serverStartedEvent.getClass().getClassLoader());
     }
 
     @NotNull
@@ -88,7 +88,7 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
     protected void apply(@NotNull final DataDrivenData objectIn, @NotNull final ResourceManager resourceManagerIn, @NotNull final ProfilerFiller profilerIn)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
-        reloadResources(objectIn, true);
+        reloadResources(objectIn, true, resourceManagerIn.getClass().getClassLoader());
     }
 
     private static DataDrivenData parseData(final ResourceManager resourceManager) {
@@ -267,7 +267,7 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
         return collectedData;
     }
 
-    private static void reloadResources(final DataDrivenData data, final boolean forceReload)
+    private static void reloadResources(final DataDrivenData data, final boolean forceReload, final ClassLoader classLoader)
     {
         final Map<ResourceLocation, List<CompoundInstanceData>> valueData = data.valueData;
         final Map<ResourceLocation, List<CompoundInstanceData>> lockedData = data.lockedData;
@@ -280,7 +280,6 @@ public class AequivaleoReloadListener extends SimplePreparableReloadListener<Aeq
 
         LOGGER.info("Analyzing information");
         try {
-            final ClassLoader classLoader = Minecraft.getInstance().getClass().getClassLoader();
             final AtomicInteger genericThreadCounter = new AtomicInteger();
             final int maxThreadCount = Math.max(1, Math.max(4, Runtime.getRuntime().availableProcessors() - 2));
             final ExecutorService aequivaleoReloadExecutor = Executors.newFixedThreadPool(maxThreadCount, runnable -> {
