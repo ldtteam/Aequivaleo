@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo;
 
+import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.apiimpl.AequivaleoAPI;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
@@ -33,6 +34,8 @@ public class Aequivaleo
 
         INSTANCE = this;
         IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
+        StreamUtils.setup(IAequivaleoAPI.getInstance());
+
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
         networkChannel = new NetworkChannel(Constants.MOD_ID);
 

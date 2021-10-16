@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.utils.ClassUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +47,9 @@ public final class PluginManger implements IAequivaleoPluginManager
     }
 
     public void run(Consumer<IAequivaleoPlugin> callback) {
-        getPlugins().parallelStream().forEach(callback);
+        StreamUtils.execute(
+          () -> getPlugins().parallelStream().forEach(callback)
+        );
     }
 
     public void detect() {
