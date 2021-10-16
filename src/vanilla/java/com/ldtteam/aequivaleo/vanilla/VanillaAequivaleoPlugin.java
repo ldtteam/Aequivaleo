@@ -169,6 +169,12 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ServerLevel world)
     {
+        if (world.getRecipeManager().recipes.get(type) == null)
+        {
+            LOGGER.error("Could not find any recipes for recipe type: " + type + " its recipes array value is null!");
+            return Lists.newArrayList();
+        }
+
         return Lists.newArrayList(world.getRecipeManager().recipes.get(type).values());
     }
 
