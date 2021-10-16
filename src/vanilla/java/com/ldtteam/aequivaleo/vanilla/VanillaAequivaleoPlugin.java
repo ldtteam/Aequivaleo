@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
@@ -98,9 +99,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .getRecipeTypesToBeProcessedAs(Constants.COOKING_RECIPE_TYPE)
           .forEach(type -> smeltingRecipe.addAll(getRecipes(type, world)));
 
-        smeltingRecipe
-          .parallelStream()
-          .forEach(recipe -> processSmeltingRecipe(world, recipe));
+        StreamUtils.execute(
+          () -> smeltingRecipe
+            .parallelStream()
+            .forEach(recipe -> processSmeltingRecipe(world, recipe))
+        );
 
         final List<Recipe<?>> stoneCuttingsRecipe = Lists.newArrayList();
 
@@ -109,9 +112,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .getRecipeTypesToBeProcessedAs(Constants.STONE_CUTTING_RECIPE_TYPE)
           .forEach(type -> stoneCuttingsRecipe.addAll(getRecipes(type, world)));
 
-        stoneCuttingsRecipe
-          .parallelStream()
-          .forEach(recipe -> processStoneCuttingRecipe(world, recipe));
+        StreamUtils.execute(
+          () -> stoneCuttingsRecipe
+              .parallelStream()
+              .forEach(recipe -> processStoneCuttingRecipe(world, recipe))
+        );
 
         final List<Recipe<?>> smithingRecipe = Lists.newArrayList();
 
@@ -120,9 +125,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .getRecipeTypesToBeProcessedAs(Constants.SMITHING_RECIPE_TYPE)
           .forEach(type -> smithingRecipe.addAll(getRecipes(type, world)));
 
-        smithingRecipe
-          .parallelStream()
-          .forEach(recipe -> processSmithingRecipe(world, recipe));
+        StreamUtils.execute(
+          () -> smithingRecipe
+            .parallelStream()
+            .forEach(recipe -> processSmithingRecipe(world, recipe))
+        );
 
         final List<Recipe<?>> craftingRecipes = Lists.newArrayList();
 
@@ -131,9 +138,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .getRecipeTypesToBeProcessedAs(Constants.SIMPLE_RECIPE_TYPE)
           .forEach(type -> craftingRecipes.addAll(getRecipes(type, world)));
 
-        craftingRecipes
-          .parallelStream()
-          .forEach(recipe -> processCraftingRecipe(world, recipe));
+        StreamUtils.execute(
+          () ->craftingRecipes
+            .parallelStream()
+            .forEach(recipe -> processCraftingRecipe(world, recipe))
+        );
 
         final List<Recipe<?>> genericRecipes = Lists.newArrayList();
 
@@ -151,9 +160,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
              entry -> genericRecipes.addAll(getRecipes(entry.getValue(), world))
           );
 
-        genericRecipes
-          .parallelStream()
-          .forEach(recipe -> processGenericRecipe(world, recipe));
+        StreamUtils.execute(
+          () -> genericRecipes
+            .parallelStream()
+            .forEach(recipe -> processGenericRecipe(world, recipe))
+        );
     }
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ServerLevel world)

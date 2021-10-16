@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.network.messages.PartialSyncResultsMessage;
 import com.ldtteam.aequivaleo.network.messages.SyncCompletedMessage;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
@@ -166,43 +167,44 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
         this.rawData = new ConcurrentHashMap<>(data);
         this.processedData.clear();
         this.groupedInstances.clear();
-        this.rawData.entrySet().parallelStream().forEach(e -> {
-            final Map<ICompoundTypeGroup, Collection<CompoundInstance>> instancesGroupedByGroup =
-              GroupingUtils.groupByUsingSetToMap(e.getValue(), i -> i.getType().getGroup());
 
-            instancesGroupedByGroup.forEach((group, instances) -> {
-                final Set<CompoundInstance> instanceSet = Collections.unmodifiableSet(
-                  new HashSet<>(instances)
-                );
+        StreamUtils.execute(
+          () -> this.rawData.entrySet().parallelStream().forEach(e -> {
+              final Map<ICompoundTypeGroup, Collection<CompoundInstance>> instancesGroupedByGroup =
+                GroupingUtils.groupByUsingSetToMap(e.getValue(), i -> i.getType().getGroup());
 
-                Object groupCacheObject = null;
-                try {
-                    final Optional<?> optionalWithConvertedData = group.mapEntry(
+              instancesGroupedByGroup.forEach((group, instances) -> {
+                  final Set<CompoundInstance> instanceSet = Set.copyOf(instances);
+
+                  Object groupCacheObject = null;
+                  try {
+                      final Optional<?> optionalWithConvertedData = group.mapEntry(
                         e.getKey(),
-                      instanceSet
-                    );
-                    if (optionalWithConvertedData.isPresent())
-                        groupCacheObject = optionalWithConvertedData.get();
-                }
-                catch (Exception ex) {
-                    LOGGER.error("Failed to convert container instance data of: " + e.getKey() + " to cache data for group: " + group, ex);
-                }
+                        instanceSet
+                      );
+                      if (optionalWithConvertedData.isPresent())
+                          groupCacheObject = optionalWithConvertedData.get();
+                  }
+                  catch (Exception ex) {
+                      LOGGER.error("Failed to convert container instance data of: " + e.getKey() + " to cache data for group: " + group, ex);
+                  }
 
-                if (groupCacheObject != null) {
-                    processedData.put(
-                      e.getKey(),
-                      group,
-                      groupCacheObject
-                    );
-                }
+                  if (groupCacheObject != null) {
+                      processedData.put(
+                        e.getKey(),
+                        group,
+                        groupCacheObject
+                      );
+                  }
 
-                groupedInstances.put(
-                  group,
-                  e.getKey(),
-                  instanceSet
-                );
-            });
-        });
+                  groupedInstances.put(
+                    group,
+                    e.getKey(),
+                    instanceSet
+                  );
+              });
+          })
+        );
     }
 
     public static void updateAllPlayers() {
