@@ -35,7 +35,7 @@ public class StreamUtils
     {
         final ClassLoader classLoader = api.getClass().getClassLoader();
         POOL = new ForkJoinPool(
-          Runtime.getRuntime().availableProcessors() - 4,
+          Math.max(4, Runtime.getRuntime().availableProcessors() - 4),
           forkJoinPool -> {
               final ForkJoinWorkerThread thread = new ForkJoinWorkerThread(forkJoinPool) {};
               thread.setContextClassLoader(classLoader);
