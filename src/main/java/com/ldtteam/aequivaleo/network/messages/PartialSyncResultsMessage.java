@@ -6,7 +6,7 @@ import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import com.ldtteam.aequivaleo.utils.IOUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

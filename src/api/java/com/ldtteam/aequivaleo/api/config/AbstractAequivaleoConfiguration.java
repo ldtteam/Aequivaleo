@@ -2,7 +2,7 @@ package com.ldtteam.aequivaleo.api.config;
 
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraftforge.common.ForgeConfigSpec.*;
-import net.minecraftforge.fmllegacy.ForgeI18n;
+import net.minecraftforge.common.ForgeI18n;
 
 import java.util.List;
 import java.util.function.Predicate;

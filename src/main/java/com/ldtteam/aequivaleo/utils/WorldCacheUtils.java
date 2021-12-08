@@ -28,7 +28,7 @@ public class WorldCacheUtils
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void writeCachedResults(final ServerLevel world, final int id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
-        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()), Constants.MOD_ID);
+        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()).toAbsolutePath().toFile().getAbsolutePath(), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
           String.format("%s_%s", world.dimension().location().getNamespace(), world.dimension().location().getPath()));
@@ -69,7 +69,7 @@ public class WorldCacheUtils
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void cleanupCacheDirectory(final ServerLevel serverWorld) {
-        final File aequivaleoDirectory = new File(serverWorld.getChunkSource().level.getServer().storageSource.getDimensionPath(serverWorld.dimension()), Constants.MOD_ID);
+        final File aequivaleoDirectory = new File(serverWorld.getChunkSource().level.getServer().storageSource.getDimensionPath(serverWorld.dimension()).toAbsolutePath().toFile().toString(), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
           String.format("%s_%s", serverWorld.dimension().location().getNamespace(), serverWorld.dimension().location().getPath()));
@@ -91,7 +91,7 @@ public class WorldCacheUtils
     @NotNull
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final ServerLevel world, final int id) {
-        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()), Constants.MOD_ID);
+        final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()).toAbsolutePath().toFile().getAbsolutePath(), Constants.MOD_ID);
         final File cacheDirectory = new File(aequivaleoDirectory, "cache");
         final File worldCacheDirectory = new File(cacheDirectory,
           String.format("%s_%s", world.dimension().location().getNamespace(), world.dimension().location().getPath()));
