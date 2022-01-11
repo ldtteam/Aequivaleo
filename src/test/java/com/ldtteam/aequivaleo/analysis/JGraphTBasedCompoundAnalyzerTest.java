@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
@@ -29,7 +30,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.junit.After;
 import org.junit.Before;
@@ -168,9 +168,9 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
 
-        ForgeRegistry<ICompoundType> typeReg = mock(ForgeRegistry.class);
-        when(typeReg.getID(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
-        when(typeReg.getKeys()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
+        ISyncedRegistry<ICompoundType> typeReg = mock(ISyncedRegistry.class);
+        when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
+        when(typeReg.getAllKnownRegistryNames()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
         when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
         ModRegistries.COMPOUND_TYPE = typeReg;
 

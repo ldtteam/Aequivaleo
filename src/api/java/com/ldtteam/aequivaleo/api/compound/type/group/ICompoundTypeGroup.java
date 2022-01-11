@@ -3,8 +3,10 @@ package com.ldtteam.aequivaleo.api.compound.type.group;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntryType;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import net.minecraftforge.registries.IForgeRegistryEntry;
@@ -22,7 +24,7 @@ import java.util.Set;
  *   * Equivalencies aspects
  *   * EMC.
  */
-public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGroup>, Comparable<ICompoundTypeGroup>
+public interface ICompoundTypeGroup extends IForgeRegistryEntry<ICompoundTypeGroup>, Comparable<ICompoundTypeGroup>, ISyncedRegistryEntryType<ICompoundType>
 {
 
     /**

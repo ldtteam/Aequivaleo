@@ -24,7 +24,7 @@ public final class CompoundInstanceRefSerializer implements JsonSerializer<Compo
         final ResourceLocation location = context.deserialize(object.get("type"), ResourceLocation.class);
         final Double count = object.getAsJsonPrimitive("amount").getAsDouble();
 
-        if (!ModRegistries.COMPOUND_TYPE.containsKey(location))
+        if (ModRegistries.COMPOUND_TYPE.get(location).isEmpty())
         {
             return null;
         }
@@ -39,8 +39,8 @@ public final class CompoundInstanceRefSerializer implements JsonSerializer<Compo
     public JsonElement serialize(final CompoundInstanceRef src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonObject object = new JsonObject();
-        object.addProperty("amount", src.getAmount());
-        object.add("type", context.serialize(src.getType()));
+        object.addProperty("amount", src.amount());
+        object.add("type", context.serialize(src.type()));
 
         return object;
     }

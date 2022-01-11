@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.api.util;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
 public final class ModRegistries
@@ -13,7 +14,7 @@ public final class ModRegistries
         throw new IllegalStateException("Tried to initialize: ModRegistries but this is a Utility class.");
     }
 
-    public static IForgeRegistry<ICompoundType> COMPOUND_TYPE;
+    public static ISyncedRegistry<ICompoundType> COMPOUND_TYPE;
     public static IForgeRegistry<ICompoundContainerFactory<?>> CONTAINER_FACTORY;
     public static IForgeRegistry<ICompoundTypeGroup> COMPOUND_TYPE_GROUP;
 }

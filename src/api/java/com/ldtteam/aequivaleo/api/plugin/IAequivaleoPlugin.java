@@ -58,4 +58,9 @@ public interface IAequivaleoPlugin
      */
     @OnlyIn(Dist.CLIENT)
     default void onDataSynced(final ResourceKey<Level> worldRegistryKey) {};
+
+    /**
+     * Invoked when the compound type synced registry has been synced to the client.
+     */
+    default void onCompoundTypeRegistrySync() {};
 }

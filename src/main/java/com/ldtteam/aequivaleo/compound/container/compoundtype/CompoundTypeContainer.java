@@ -48,7 +48,11 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
             final ResourceLocation typeName = new ResourceLocation(json.getAsJsonObject().get("compound_type").getAsString());
             final double amount = json.getAsJsonObject().get("count").getAsDouble();
 
-            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(typeName), amount);
+            return ModRegistries.COMPOUND_TYPE.get(
+              typeName
+            )
+                     .map(type -> new CompoundTypeContainer(type, amount))
+                     .orElseThrow(() -> new JsonParseException("Could not find compound type with name " + typeName));
         }
 
         @Override
@@ -74,7 +78,12 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
         @Override
         public ICompoundContainer<ICompoundType> read(final FriendlyByteBuf buffer)
         {
-            return new CompoundTypeContainer(ModRegistries.COMPOUND_TYPE.getValue(new ResourceLocation(buffer.readUtf(32767))), buffer.readDouble());
+            final String typeName = buffer.readUtf(32767);
+            return ModRegistries.COMPOUND_TYPE.get(
+              new ResourceLocation(typeName)
+            )
+                     .map(type -> new CompoundTypeContainer(type, buffer.readDouble()))
+                     .orElseThrow(() -> new IllegalArgumentException("Could not find compound type with name " + typeName));
         }
     }
 
