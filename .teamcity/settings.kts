@@ -54,7 +54,7 @@ project {
             }
         }
     }
-    subProjectsOrder = arrayListOf(RelativeId("Release"), RelativeId("UpgradeBetaRelease"), RelativeId("Beta"), RelativeId("UpgradeAlphaBeta"), RelativeId("Alpha"), RelativeId("OfficialPublications"), RelativeId("Branches"), RelativeId("PullRequests2"))
+    subProjectsOrder = arrayListOf(RelativeId("UpgradeBetaRelease"), RelativeId("UpgradeAlphaBeta"), RelativeId("Alpha"), RelativeId("OfficialPublications"), RelativeId("Branches"))
 
     subProject(OfficialPublications)
     subProject(UpgradeAlphaBeta)
@@ -63,7 +63,6 @@ project {
     subProject(UpgradeBetaRelease)
     subProject(Release)
     subProject(Alpha)
-    subProject(PullRequests2)
 }
 
 
@@ -92,6 +91,10 @@ object Alpha_Release : BuildType({
     params {
         param("env.Version.Patch", "${OfficialPublications_CommonB.depParamRefs.buildNumber}")
         param("Default.Branch", "version/latest")
+    }
+
+    vcs {
+        branchFilter = "+:*"
     }
 
     steps {
@@ -214,62 +217,6 @@ object OfficialPublications_CommonB : BuildType({
     templates(AbsoluteId("LetSDevTogether_CommonBuildCounter"))
     name = "Common Build Counter"
     description = "Represents the version counter within Minecolonies for official releases."
-})
-
-
-object PullRequests2 : Project({
-    name = "Pull Requests"
-    description = "All open pull requests"
-
-    buildType(PullRequests2_BuildAndTest)
-    buildType(PullRequests2_CommonBuildCounter)
-
-    params {
-        text("Default.Branch", "ci/default", label = "Default branch", description = "The default branch for pull requests.", readOnly = true, allowEmpty = false)
-        param("VCS.Branches", """
-            -:refs/heads/*
-            +:refs/pull/(*)/head
-            -:refs/heads/(CI/*)
-        """.trimIndent())
-        text("env.Version", "%env.Version.Major%.%env.Version.Minor%.%build.counter%-PR", label = "Version", description = "The version of the project.", display = ParameterDisplay.HIDDEN, allowEmpty = true)
-    }
-
-    cleanup {
-        baseRule {
-            all(days = 60)
-        }
-    }
-})
-
-object PullRequests2_BuildAndTest : BuildType({
-    templates(AbsoluteId("LetSDevTogether_BuildWithTesting"))
-    name = "Build and Test"
-    description = "Builds and Tests the pull request."
-
-    artifactRules = """
-        +:build\libs\*.jar => build\libs
-        +:build\distributions\mods-*.zip => build\distributions
-    """.trimIndent()
-
-    params {
-        param("env.Version.Patch", "${PullRequests2_CommonBuildCounter.depParamRefs.buildNumber}")
-        param("env.Version.Suffix", "-PR")
-    }
-
-    dependencies {
-        snapshot(PullRequests2_CommonBuildCounter) {
-            reuseBuilds = ReuseBuilds.NO
-            onDependencyFailure = FailureAction.FAIL_TO_START
-        }
-    }
-    
-    disableSettings("BUILD_EXT_15")
-})
-
-object PullRequests2_CommonBuildCounter : BuildType({
-    templates(AbsoluteId("LetSDevTogether_CommonBuildCounter"))
-    name = "Common Build Counter"
-    description = "Defines version numbers uniquely over all Pull Request builds"
 })
 
 
