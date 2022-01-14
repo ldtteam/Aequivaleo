@@ -2,9 +2,7 @@ package com.ldtteam.aequivaleo.registry;
 
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.Aequivaleo;
-import com.ldtteam.aequivaleo.api.registry.ISyncedRegistry;
-import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntry;
-import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntryType;
+import com.ldtteam.aequivaleo.api.registry.*;
 import com.ldtteam.aequivaleo.network.messages.CompoundTypeSyncedRegistryNetworkPacket;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.mojang.serialization.Codec;
@@ -20,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> & ISyncedRegistryEntry<T>> implements ISyncedRegistry<T>
@@ -130,6 +129,12 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
           t -> consumer.accept(t.getRegistryName(), t)
         );
         syncedEntriesMap.forEach(consumer);
+    }
+
+    @Override
+    public <E extends IRegistryEntry> IRegistryView<E> createView(Function<T, Optional<E>> viewFilter)
+    {
+        return new ShadowRegistry<>(this, viewFilter);
     }
 
     @Override

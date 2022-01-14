@@ -5,13 +5,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
-public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends Iterable<T>
+/**
+ * Represents a registry that is synced with the client.
+ *
+ * @param <T> The type of the entry in the registry.
+ */
+public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IRegistryView<T>
 {
 
     /**
@@ -27,6 +29,7 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends Iter
      * @param entry The entry to get the registry name of.
      * @return The registry name of the entry.
      */
+    @Override
     default ResourceLocation getRegistryNameOf(final T entry) {
         return entry.getRegistryName();
     }
@@ -40,14 +43,6 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends Iter
      * @return The id of the entry.
      */
     int getSynchronizationIdOf(final T entry);
-
-    /**
-     * Returns the entry of the registry with the given key.
-     *
-     * @param key The key to look up in the registry.
-     * @return An optional, potentially containing the entry of the registry with the given key.
-     */
-    Optional<T> get(final ResourceLocation key);
 
     /**
      * Adds a new entry to the registry.
@@ -70,20 +65,6 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends Iter
      * @return The type name to type producer. Useful for serialization handling.
      */
     Function<ResourceLocation, ISyncedRegistryEntryType<T>> getTypeProducer();
-
-    /**
-     * Returns a stream of all entries in this registry.
-     *
-     * @return The stream of all entries in this registry.
-     */
-    Stream<T> stream();
-
-    /**
-     * Invokes the callback for each entry in this registry.
-     *
-     * @param consumer The key and value consumer.
-     */
-    void forEach(final BiConsumer<ResourceLocation, T> consumer);
 
     /**
      * Returns all types which are known to this synced registry.

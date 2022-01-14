@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param <T> The type of the registry entry.
  */
-public interface ISyncedRegistryEntry<T extends ISyncedRegistryEntry<T>>
+public interface ISyncedRegistryEntry<T extends ISyncedRegistryEntry<T>> extends IRegistryEntry
 {
 
     /**
@@ -16,11 +16,4 @@ public interface ISyncedRegistryEntry<T extends ISyncedRegistryEntry<T>>
      * @return The type of the entry.
      */
     ISyncedRegistryEntryType<T> getType();
-
-    /**
-     * The name of the entry in the registry.
-     *
-     * @return The name of the entry.
-     */
-    ResourceLocation getRegistryName();
 }
