@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.network;
 
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.ldtteam.aequivaleo.network.messages.CompoundTypeSyncedRegistryNetworkPacket;
 import com.ldtteam.aequivaleo.network.messages.IMessage;
 import com.ldtteam.aequivaleo.network.messages.PartialSyncResultsMessage;
 import com.ldtteam.aequivaleo.network.messages.SyncCompletedMessage;
@@ -53,6 +54,7 @@ public class NetworkChannel
         int idx = 0;
         registerMessage(++idx, PartialSyncResultsMessage.class, PartialSyncResultsMessage::new);
         registerMessage(++idx, SyncCompletedMessage.class, SyncCompletedMessage::new);
+        registerMessage(++idx, CompoundTypeSyncedRegistryNetworkPacket.class, CompoundTypeSyncedRegistryNetworkPacket::new);
     }
 
     /**

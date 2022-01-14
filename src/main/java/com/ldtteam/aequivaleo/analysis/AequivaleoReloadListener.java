@@ -54,10 +54,7 @@ import org.jgrapht.alg.util.Triple;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -74,7 +71,10 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
     private static final Gson GSON = IAequivaleoAPI.getInstance().getGson();
 
-    private final List<Supplier<ISyncedRegistry<?>>> syncedRegistries = new ArrayList<>();
+    private static final List<Supplier<ISyncedRegistry<?>>> SYNCED_REGISTRIES = new ArrayList<>();
+    static {
+        SYNCED_REGISTRIES.add(() -> ModRegistries.COMPOUND_TYPE);
+    }
 
     @SubscribeEvent
     public static void onAddReloadListener(final AddReloadListenerEvent reloadListenerEvent)
@@ -92,7 +92,6 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
     public AequivaleoReloadListener()
     {
-        this.syncedRegistries.add(() -> ModRegistries.COMPOUND_TYPE);
     }
 
     private static void reloadResources(final DataDrivenData data, final boolean forceReload, final ClassLoader classLoader)
@@ -124,6 +123,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
             CompletableFuture.allOf(buildAnalysisFutures(forceReload, valueData, lockedData, additionalRecipes, worlds, aequivaleoReloadExecutor))
               .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.SYNCING)), aequivaleoReloadExecutor)
+              .thenRunAsync(AequivaleoReloadListener::synchronizeSyncedRegistries, aequivaleoReloadExecutor)
               .thenRunAsync(EquivalencyResults::updateAllPlayers, aequivaleoReloadExecutor)
               .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.POST_PROCESSING)), aequivaleoReloadExecutor)
               .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))), aequivaleoReloadExecutor)
@@ -463,7 +463,6 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         return CompletableFuture
           .runAsync(this::resetSyncedRegistries, backgroundExecutor)
           .thenComposeAsync(unused -> loadSyncRegistries(resourceManager, backgroundExecutor, backgroundProfiler), backgroundExecutor)
-          .thenRunAsync(this::synchronizeSyncedRegistries, backgroundExecutor)
           .thenApplyAsync((syncRegistryResult) -> this.prepare(resourceManager, backgroundProfiler), backgroundExecutor)
           .thenCompose(barrier::wait)
           .thenAcceptAsync((data) -> this.apply(data, resourceManager, foregroundProfiler), foregroundExecutor);
@@ -471,7 +470,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
     private void resetSyncedRegistries()
     {
-        this.syncedRegistries.stream()
+        SYNCED_REGISTRIES.stream()
           .map(Supplier::get)
           .forEach(ISyncedRegistry::clear);
     }
@@ -482,7 +481,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
       @NotNull final ProfilerFiller profiler)
     {
         return CompletableFuture.allOf(
-          this.syncedRegistries.stream()
+          SYNCED_REGISTRIES.stream()
             .map(Supplier::get)
             .map(registry -> loadSyncedRegistry(resourceManager, backgroundExecutor, profiler, registry))
             .toArray(CompletableFuture[]::new)
@@ -490,9 +489,9 @@ public class AequivaleoReloadListener implements PreparableReloadListener
          .thenApply(unused -> Unit.INSTANCE);
     }
 
-    private void synchronizeSyncedRegistries()
+    private static void synchronizeSyncedRegistries()
     {
-        this.syncedRegistries.stream()
+        SYNCED_REGISTRIES.stream()
           .map(Supplier::get)
           .forEach(ISyncedRegistry::synchronizeAll);
     }
