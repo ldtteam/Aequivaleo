@@ -6,6 +6,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
@@ -101,67 +102,69 @@ public final class WorldBootstrapper
     private static void doBootstrapInstancedEquivalencies(
       @NotNull final ServerLevel world
     ) {
-        StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
-          item,
-          o -> {
-              final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
-              final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
+        StreamUtils.execute(() -> {
+            StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+              item,
+              o -> {
+                  final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
+                  final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
-              try {
-                  EquivalencyRecipeRegistry.getInstance(world.dimension())
-                    .register(new InstancedEquivalency(
-                      sourceContainer, targetContainer
-                    ))
-                    .register(new InstancedEquivalency(
-                      targetContainer, sourceContainer
-                    ));
-              } catch (Exception ex) {
-                  LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                    item.getRegistryName(),
-                    o), ex);
+                  try {
+                      EquivalencyRecipeRegistry.getInstance(world.dimension())
+                        .register(new InstancedEquivalency(
+                          sourceContainer, targetContainer
+                        ))
+                        .register(new InstancedEquivalency(
+                          targetContainer, sourceContainer
+                        ));
+                  } catch (Exception ex) {
+                      LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
+                        item.getRegistryName(),
+                        o), ex);
+                  }
+              },
+              consumer -> {
+                  final NonNullList<ItemStack> group = NonNullList.create();
+                  if (item.getItemCategory() == null)
+                      return;
+
+                  item.fillItemCategory(Objects.requireNonNull(item.getItemCategory()), group);
+
+                  if (group.size() == 1)
+                  {
+                      consumer.accept(group.get(0));
+                  }
               }
-          },
-          consumer -> {
-              final NonNullList<ItemStack> group = NonNullList.create();
-              if (item.getItemCategory() == null)
-                  return;
+            ));
 
-              item.fillItemCategory(Objects.requireNonNull(item.getItemCategory()), group);
+            StreamSupport.stream(ForgeRegistries.FLUIDS.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+              fluid,
+              o -> {
+                  final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(fluid, 1);
+                  final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
 
-              if (group.size() == 1)
-              {
-                  consumer.accept(group.get(0));
+                  try {
+                      EquivalencyRecipeRegistry.getInstance(world.dimension())
+                        .register(new InstancedEquivalency(
+                          sourceContainer, targetContainer
+                        ))
+                        .register(new InstancedEquivalency(
+                          targetContainer, sourceContainer
+                        ));
+                  } catch (Exception ex) {
+                      LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
+                        fluid.getRegistryName(),
+                        o), ex);
+                  }
+              },
+              consumer -> {
+                  if (fluid.isSame(Fluids.EMPTY))
+                      return;
+
+                  consumer.accept(new FluidStack(fluid, 1));
               }
-          }
-        ));
-
-        StreamSupport.stream(ForgeRegistries.FLUIDS.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
-          fluid,
-          o -> {
-              final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(fluid, 1);
-              final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
-
-              try {
-                  EquivalencyRecipeRegistry.getInstance(world.dimension())
-                    .register(new InstancedEquivalency(
-                      sourceContainer, targetContainer
-                    ))
-                    .register(new InstancedEquivalency(
-                      targetContainer, sourceContainer
-                    ));
-              } catch (Exception ex) {
-                  LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                    fluid.getRegistryName(),
-                    o), ex);
-              }
-          },
-          consumer -> {
-              if (fluid.isSame(Fluids.EMPTY))
-                  return;
-
-              consumer.accept(new FluidStack(fluid, 1));
-          }
-        ));
+            ));
+        });
     }
 
     private static void doHandleCompoundTypeWrappers(
