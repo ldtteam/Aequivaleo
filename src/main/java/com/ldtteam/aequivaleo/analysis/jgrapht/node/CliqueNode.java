@@ -378,7 +378,9 @@ public class CliqueNode
     @Override
     public void onOutgoingEdgeEnabled(final INode target, final IEdge edge)
     {
-        disabledIoGraphEdges.rowKeySet().forEach(sourceNode -> {
+        final Set<INode> sourceNodes = new HashSet<>(disabledIoGraphEdges.rowKeySet());
+
+        sourceNodes.forEach(sourceNode -> {
             if (disabledIoGraphEdges.contains(sourceNode, target)) {
                 ioGraph.addEdge(sourceNode, target, disabledIoGraphEdges.get(sourceNode, target));
                 disabledIoGraphEdges.remove(sourceNode, target);
