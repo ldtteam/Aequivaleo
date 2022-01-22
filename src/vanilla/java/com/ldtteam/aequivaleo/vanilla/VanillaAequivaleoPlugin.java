@@ -221,23 +221,29 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
       final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     )
     {
-        if (iRecipe.getResultItem().isEmpty())
+        try {
+            if (iRecipe.getResultItem().isEmpty())
+            {
+                return;
+            }
+
+            final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
+              iRecipe,
+              ingredientExtractor,
+              IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
+              recipeFactory
+            ).collect(Collectors.toList());
+
+            if (variants.isEmpty() && !iRecipe.getId().getNamespace().equals("minecraft")) {
+                LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
+            }
+
+            variants.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
+        }
+        catch (Exception ex)
         {
-            return;
+            LOGGER.error("A recipe has throw an exception while processing: " + iRecipe.getId(), ex);
         }
-
-        final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
-          iRecipe,
-          ingredientExtractor,
-          IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
-          recipeFactory
-        ).collect(Collectors.toList());
-
-        if (variants.isEmpty() && !iRecipe.getId().getNamespace().equals("minecraft")) {
-            LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
-        }
-
-        variants.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
     }
 
     private static void processBucketFluidRecipeFor(
