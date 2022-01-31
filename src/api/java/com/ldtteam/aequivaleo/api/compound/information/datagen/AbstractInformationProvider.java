@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class AbstractInformationProvider implements DataProvider
@@ -121,6 +118,7 @@ public abstract class AbstractInformationProvider implements DataProvider
                 final String fileName = data.getContainers()
                                           .stream()
                                           .filter(ICompoundContainer::canBeLoadedFromDisk)
+                                          .sorted(Comparator.comparing(ICompoundContainer::getContentAsFileName))
                                           .map(ICompoundContainer::getContentAsFileName)
                                           .findFirst()
                                           .orElseThrow(() -> new IllegalStateException("Could not find disk loadable container, even though previous check passed!"));
