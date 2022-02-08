@@ -25,7 +25,7 @@ public interface ISyncedRegistryEntryType<T extends ISyncedRegistryEntry<T>>
      *
      * @return The codec used during synchronization of the entries with this type. Return null if not supported!
      */
-    default Codec<T> getEntryCodec() {
+    default Codec<? extends T> getEntryCodec() {
         return null;
     }
 

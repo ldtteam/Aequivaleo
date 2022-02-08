@@ -34,12 +34,15 @@ import com.ldtteam.aequivaleo.utils.WorldUtils;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleReloadInstance;
 import net.minecraft.util.Unit;
+import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -63,6 +66,9 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
 public class AequivaleoReloadListener implements PreparableReloadListener
 {
+
+    private static final AequivaleoReloadListener INSTANCE = new AequivaleoReloadListener();
+
     private static final String JSON_EXTENSION        = ".json";
     private static final int    JSON_EXTENSION_LENGTH = JSON_EXTENSION.length();
 
@@ -80,14 +86,30 @@ public class AequivaleoReloadListener implements PreparableReloadListener
     public static void onAddReloadListener(final AddReloadListenerEvent reloadListenerEvent)
     {
         LOGGER.info("Registering reload listener for graph rebuilding.");
-        reloadListenerEvent.addListener(new AequivaleoReloadListener());
+        reloadListenerEvent.addListener(INSTANCE);
     }
 
     @SubscribeEvent
     public static void onServerStarted(final ServerStartedEvent serverStartedEvent)
     {
         LOGGER.info("Building initial equivalency graph.");
-        reloadResources(parseData(serverStartedEvent.getServer().getResourceManager()), false, serverStartedEvent.getClass().getClassLoader());
+
+        INSTANCE.reload(
+          new PreparationBarrier() {
+              @Override
+              public <T> @NotNull CompletableFuture<T> wait(final @NotNull T preparedValue)
+              {
+                  //We complete immediately in a prepared state.
+                  return CompletableFuture.completedFuture(preparedValue);
+              }
+          },
+          serverStartedEvent.getServer().getResourceManager(),
+          InactiveProfiler.INSTANCE,
+          InactiveProfiler.INSTANCE,
+          Util.backgroundExecutor(),
+          Runnable::run,
+          false
+        );
     }
 
     public AequivaleoReloadListener()
@@ -460,12 +482,25 @@ public class AequivaleoReloadListener implements PreparableReloadListener
       @NotNull Executor foregroundExecutor
     )
     {
+        return reload(barrier, resourceManager, backgroundProfiler, foregroundProfiler, backgroundExecutor, foregroundExecutor, true);
+    }
+
+    public final @NotNull CompletableFuture<Void> reload(
+      @NotNull PreparableReloadListener.PreparationBarrier barrier,
+      @NotNull ResourceManager resourceManager,
+      @NotNull ProfilerFiller backgroundProfiler,
+      @NotNull ProfilerFiller foregroundProfiler,
+      @NotNull Executor backgroundExecutor,
+      @NotNull Executor foregroundExecutor,
+      final boolean forceReload
+    )
+    {
         return CompletableFuture
           .runAsync(this::resetSyncedRegistries, backgroundExecutor)
           .thenComposeAsync(unused -> loadSyncRegistries(resourceManager, backgroundExecutor, backgroundProfiler), backgroundExecutor)
           .thenApplyAsync((syncRegistryResult) -> this.prepare(resourceManager, backgroundProfiler), backgroundExecutor)
           .thenCompose(barrier::wait)
-          .thenAcceptAsync((data) -> this.apply(data, resourceManager, foregroundProfiler), foregroundExecutor);
+          .thenAcceptAsync((data) -> this.apply(data, resourceManager, foregroundProfiler, forceReload), foregroundExecutor);
     }
 
     private void resetSyncedRegistries()
@@ -502,10 +537,10 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         return parseData(resourceManagerIn);
     }
 
-    protected void apply(@NotNull final DataDrivenData objectIn, @NotNull final ResourceManager resourceManagerIn, @NotNull final ProfilerFiller profilerIn)
+    protected void apply(@NotNull final DataDrivenData objectIn, @NotNull final ResourceManager resourceManagerIn, @NotNull final ProfilerFiller profilerIn, final boolean forcedReload)
     {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
-        reloadResources(objectIn, true, resourceManagerIn.getClass().getClassLoader());
+        reloadResources(objectIn, forcedReload, resourceManagerIn.getClass().getClassLoader());
     }
 
     private <T extends ISyncedRegistryEntry<T>> CompletableFuture<Unit> loadSyncedRegistry(
@@ -550,12 +585,12 @@ public class AequivaleoReloadListener implements PreparableReloadListener
                           throw new IllegalStateException("Tried to load a registry entry for a type without a codec");
                       }
 
-                      final DataResult<Pair<T, JsonElement>> entry = type.getEntryCodec().decode(JsonOps.INSTANCE, GSON.fromJson(reader, JsonElement.class));
+                      final DataResult<? extends Pair<? extends T, JsonElement>> entry = type.getEntryCodec().decode(JsonOps.INSTANCE, GSON.fromJson(reader, JsonElement.class));
                       if (entry.error().isPresent()) {
                           LOGGER.error("Failed to load {}: {}", name, entry.error().get());
                       }
                       else if (entry.result().isPresent()) {
-                          final Pair<T, JsonElement> resultData = entry.result().get();
+                          final Pair<? extends T, JsonElement> resultData = entry.result().get();
                           final T result = resultData.getFirst();
 
                           registry.add(result);
