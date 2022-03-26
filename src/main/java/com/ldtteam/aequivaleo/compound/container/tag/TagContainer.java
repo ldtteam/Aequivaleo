@@ -4,24 +4,21 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import com.ldtteam.aequivaleo.api.util.TagUtils;
-import com.ldtteam.aequivaleo.compound.container.compoundtype.CompoundTypeContainer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.tags.Tag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.ForgeTagHandler;
+import net.minecraft.tags.TagKey;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
-import java.util.Objects;
-import java.util.Optional;
 
 @SuppressWarnings("rawtypes")
-public class TagContainer implements ICompoundContainer<Tag.Named>
+public class TagContainer implements ICompoundContainer<TagKey<?>>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Tag.Named>
+    @SuppressWarnings("unchecked")
+    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<TagKey<?>>
     {
 
         public Factory()
@@ -31,20 +28,20 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
 
         @NotNull
         @Override
-        public Class<Tag.Named> getContainedType()
+        public Class<TagKey<?>> getContainedType()
         {
-            return Tag.Named.class;
+            return (Class<TagKey<?>>) (Class) TagKey.class;
         }
 
         @NotNull
         @Override
-        public ICompoundContainer<Tag.Named> create(@NotNull final Tag.Named instance, @NotNull final double count)
+        public ICompoundContainer<TagKey<?>> create(@NotNull final TagKey<?> instance, @NotNull final double count)
         {
             return new TagContainer(instance, count);
         }
 
         @Override
-        public ICompoundContainer<Tag.Named> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
+        public ICompoundContainer<TagKey<?>> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
         {
             if (!json.isJsonObject())
                 throw new JsonParseException("JSON for tag container needs to be an object.");
@@ -53,49 +50,48 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
             final ResourceLocation tagName = new ResourceLocation(json.getAsJsonObject().get("tagName").getAsString());
             final double amount = json.getAsJsonObject().get("count").getAsDouble();
 
-            Optional<Tag.Named<?>> tag = TagUtils.getTag(tagType, tagName);
-            return new TagContainer(tag.orElseGet(() -> ForgeTagHandler.createOptionalTag(tagType, tagName)), amount);
+            TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(tagType), tagName);
+            return new TagContainer(key, amount);
         }
 
         @Override
-        public JsonElement serialize(final ICompoundContainer<Tag.Named> src, final Type typeOfSrc, final JsonSerializationContext context)
+        public JsonElement serialize(final ICompoundContainer<TagKey<?>> src, final Type typeOfSrc, final JsonSerializationContext context)
         {
             if (!src.isValid())
                 throw new IllegalArgumentException("Can not serialize a container which is invalid.");
 
-
             final JsonObject result = new JsonObject();
-            result.addProperty("tagType", TagUtils.getTagCollectionName(src.getContents()).toString());
-            result.addProperty("tagName", Objects.requireNonNull(src.getContents().getName()).toString());
+            result.addProperty("tagType", src.getContents().registry().location().toString());
+            result.addProperty("tagName", src.getContents().location().toString());
             result.addProperty("count", src.getContentsCount());
 
             return result;
         }
 
         @Override
-        public void write(final ICompoundContainer<Tag.Named> object, final FriendlyByteBuf buffer)
+        public void write(final ICompoundContainer<TagKey<?>> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeUtf(TagUtils.getTagCollectionName(object.getContents()).toString());
-            buffer.writeUtf(object.getContents().getName().toString());
+            buffer.writeUtf(object.getContents().registry().location().toString());
+            buffer.writeUtf(object.getContents().location().toString());
             buffer.writeDouble(object.getContentsCount());
         }
 
         @Override
-        public ICompoundContainer<Tag.Named> read(final FriendlyByteBuf buffer)
+        public ICompoundContainer<TagKey<?>> read(final FriendlyByteBuf buffer)
         {
             final ResourceLocation tagType = new ResourceLocation(buffer.readUtf(32767));
             final ResourceLocation tagName = new ResourceLocation(buffer.readUtf(32767));
             final double amount = buffer.readDouble();
 
-            Optional<Tag.Named<?>> tag = TagUtils.getTag(tagType, tagName);
-            return new TagContainer(tag.orElseGet(() -> ForgeTagHandler.createOptionalTag(tagType, tagName)), amount);
+            TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(tagType), tagName);
+            return new TagContainer(key, amount);
         }
     }
 
-    private final Tag.Named   tag;
+    private final TagKey<?> tag;
     private final Double count;
 
-    public TagContainer(final Tag.Named tag, final Double count)
+    public TagContainer(final TagKey<?> tag, final Double count)
     {
         this.tag = tag;
         this.count = count;
@@ -108,7 +104,7 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
     }
 
     @Override
-    public Tag.Named getContents()
+    public TagKey<?> getContents()
     {
         return tag;
     }
@@ -128,22 +124,20 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
     @Override
     public String getContentAsFileName()
     {
-        return TagUtils.getTagCollectionName(getContents()).toString().replace(":", "_") + "_" + getContents().getName().toString().replace(":", "_");
+        return tag.registry().location().toString().replace(":", "_") + "_" + tag.location().toString().replace(":", "_");
     }
 
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
-        if (!(o instanceof TagContainer))
+        if (!(o instanceof final TagContainer other))
             return -1;
 
-        final TagContainer other = (TagContainer) o;
-
-        final int tagTypeResult = TagUtils.getTagCollectionName(getContents()).compareTo(TagUtils.getTagCollectionName(other.getContents()));
+        final int tagTypeResult = tag.registry().compareTo(other.tag.registry());
         if (tagTypeResult != 0)
             return tagTypeResult;
 
-        final int tagNameResult = getContents().getName().compareTo(other.getContents().getName());
+        final int tagNameResult = getContents().location().compareTo(other.getContents().location());
         if (tagNameResult != 0)
             return tagNameResult;
 
@@ -153,33 +147,31 @@ public class TagContainer implements ICompoundContainer<Tag.Named>
     @Override
     public int hashCode()
     {
-        int result = TagUtils.getTagCollectionName(getContents()).hashCode();
-        result = 31 * result + getContents().getName().hashCode();
-        result = 31 * result + getContentsCount().hashCode();
+        int result = tag.hashCode();
+        result = 31 * result + count.hashCode();
         return result;
     }
 
     @Override
     public boolean equals(final Object obj)
     {
-        if (!(obj instanceof TagContainer))
+        if (!(obj instanceof final TagContainer other))
             return false;
 
-        final TagContainer other = (TagContainer) obj;
-        final ResourceLocation otherCollection = TagUtils.getTagCollectionName(other.getContents());
+        final ResourceLocation otherCollection = other.tag.registry().location();
 
         if (!other.getContentsCount().equals(this.getContentsCount()))
             return false;
 
-        if (!otherCollection.equals(TagUtils.getTagCollectionName(this.tag)))
+        if (!otherCollection.equals(tag.registry().location()))
             return false;
 
-        return TagUtils.areTagsEqual(this.getContents(), other.getContents());
+        return tag.location().equals(other.tag.location());
     }
 
     @Override
     public String toString()
     {
-        return String.format("%s x %s", count, isValid() ? "[" + TagUtils.getTagCollectionName(getContents()).toString() + "]" + getContents().getName().toString() : "<UNKNOWN>");
+        return String.format("%s x %s", count, isValid() ? "[" + getContents().registry().location().toString() + "]" + getContents().location().toString() : "<UNKNOWN>");
     }
 }

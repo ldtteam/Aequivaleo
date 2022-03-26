@@ -1,21 +1,12 @@
 package com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data;
 
-import com.google.common.collect.Sets;
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.TagIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializer;
 import com.ldtteam.aequivaleo.api.util.Constants;
-import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.compound.data.serializers.CompoundContainerSetSerializer;
 import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
-import java.util.SortedSet;
 
 public class TagIngredientSerializer implements IIngredientSerializer<TagIngredient>
 {
@@ -56,7 +47,7 @@ public class TagIngredientSerializer implements IIngredientSerializer<TagIngredi
     public JsonObject serialize(final TagIngredient src, final Type typeOfSrc, final JsonSerializationContext context)
     {
         final JsonObject object = new JsonObject();
-        object.add("type", context.serialize(src.getTagType()));
+        object.add("type", context.serialize(src.getRegistryName()));
         object.add("name", context.serialize(src.getTagName()));
         object.addProperty("amount", src.getRequiredCount());
         return object;

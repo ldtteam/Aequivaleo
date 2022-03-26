@@ -1,52 +1,46 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
 
+import com.google.common.base.Suppliers;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import net.minecraft.tags.Tag;
-import net.minecraft.tags.TagCollection;
-import net.minecraft.tags.StaticTagHelper;
-import net.minecraft.tags.StaticTags;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
-import java.util.Objects;
-import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class TagIngredient implements IRecipeIngredient
 {
 
-    private final ResourceLocation tagType;
-    private final ResourceLocation tagName;
-    private final SortedSet<ICompoundContainer<?>> containers;
-    private final double count;
+    private final ResourceKey<? extends Registry<?>>                   registryName;
+    private final TagKey<?>                                     tagName;
+    private final Supplier<SortedSet<ICompoundContainer<?>>> containers;
+    private final double                                     count;
 
-    public TagIngredient(final ResourceLocation tagType, final ResourceLocation tagName, final double count) {
-        this.tagType = tagType;
-        this.tagName = tagName;
+    public TagIngredient(final ResourceLocation registryName, final ResourceLocation tagName, final double count) {
+        this.registryName = (ResourceKey<Registry<?>>) (ResourceKey) ResourceKey.createRegistryKey(registryName);
+        this.tagName = TagKey.create((ResourceKey<? extends Registry<Object>>) this.registryName, tagName);
         this.count = count;
 
-        this.containers = new TreeSet<>();
-
-        Optional.ofNullable(StaticTags.get(tagType))
-          .map(StaticTagHelper::getAllTags)
-          .map(TagCollection::getAllTags)
-          .filter(c -> c.containsKey(tagName))
-          .ifPresent(t -> addContainersFrom(t.get(tagName)));
-    }
-
-    private void addContainersFrom(final Tag<?> tag)
-    {
-        this.containers.addAll(
-          tag.getValues().stream().map(e -> IAequivaleoAPI.getInstance().getCompoundContainerFactoryManager().wrapInContainer(e, 1)).collect(Collectors.toSet())
-        );
+        this.containers = Suppliers.memoize(() -> {
+            return ServerLifecycleHooks.getCurrentServer().registryAccess().registryOrThrow(this.registryName)
+                     .getOrCreateTag((TagKey<Object>) this.tagName)
+                     .stream()
+                     .map(e -> IAequivaleoAPI.getInstance().getCompoundContainerFactoryManager().wrapInContainer(e.value(), 1))
+                     .collect(Collectors.toCollection(TreeSet::new));
+        });
     }
 
     @Override
     public SortedSet<ICompoundContainer<?>> getCandidates()
     {
-        return containers;
+        return containers.get();
     }
 
     @Override
@@ -55,13 +49,13 @@ public class TagIngredient implements IRecipeIngredient
         return count;
     }
 
-    public ResourceLocation getTagType()
+    public ResourceLocation getRegistryName()
     {
-        return tagType;
+        return registryName.getRegistryName();
     }
 
     public ResourceLocation getTagName()
     {
-        return tagName;
+        return tagName.location();
     }
 }

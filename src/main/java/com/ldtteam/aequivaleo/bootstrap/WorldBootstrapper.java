@@ -14,6 +14,8 @@ import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.tags.Tag;
@@ -62,20 +64,19 @@ public final class WorldBootstrapper
 
     private static void doBootstrapTagInformation(final Level world)
     {
-        for (Tag.Named<?> tag : TagEquivalencyRegistry.getInstance().get())
+        for (TagKey<?> tag : TagEquivalencyRegistry.getInstance().getTags())
         {
             doBootstrapSingleTagInformation(world, tag);
         }
     }
 
-    private static <T> void doBootstrapSingleTagInformation(final Level world, final Tag.Named<T> tag) {
-        final ICompoundContainer<Tag.Named> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
-
+    private static <T> void doBootstrapSingleTagInformation(final Level world, final TagKey<T> tag) {
+        final ICompoundContainer<TagKey> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
 
         final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>();
-        for (T stack : tag.getValues())
+        for (Holder<T> stack : world.registryAccess().registryOrThrow(tag.registry()).getOrCreateTag(tag))
         {
-            ICompoundContainer<T> tiCompoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(stack, 1d);
+            ICompoundContainer<T> tiCompoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(stack.value(), 1d);
             elementsOfTag.add(tiCompoundContainer);
         }
 

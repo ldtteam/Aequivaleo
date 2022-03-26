@@ -36,7 +36,7 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
     @Override
     public IForgeRegistry<ICompoundContainerFactory<?>> getRegistry()
     {
-        return ModRegistries.CONTAINER_FACTORY;
+        return ModRegistries.CONTAINER_FACTORY.get();
     }
 
     private final LinkedList<ExactTypedRegistryEntry<?>> typedRegistryEntries = new LinkedList<>();

@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.analysis;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -108,8 +109,8 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(mod.getConfiguration()).thenReturn(config);
 
         List<ICompoundContainerFactory<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Factory());
-        ModRegistries.CONTAINER_FACTORY = mock(IForgeRegistry.class);
-        when(ModRegistries.CONTAINER_FACTORY.iterator()).thenReturn(containerFactories.iterator());
+        ModRegistries.CONTAINER_FACTORY = Suppliers.memoize(() -> mock(IForgeRegistry.class));
+        when(ModRegistries.CONTAINER_FACTORY.get().iterator()).thenReturn(containerFactories.iterator());
         CompoundContainerFactoryManager.getInstance().bake();
 
         when(typeUnknownIsZero.getGroup()).thenReturn(groupUnknownIsZero);

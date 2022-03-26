@@ -16,7 +16,7 @@ import java.util.regex.PatternSyntaxException;
  */
 public class ServerConfiguration extends AbstractAequivaleoConfiguration
 {
-    public ForgeConfigSpec.ConfigValue<List<? extends String>> tagsToRegister;
+    public ForgeConfigSpec.ConfigValue<List<? extends String>> itemTagsToRegister;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
@@ -26,7 +26,7 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
 			  "recipes");
         createCategory(builder,
 			  "tags");
-        tagsToRegister = defineList(
+        itemTagsToRegister = defineList(
           builder,
           "recipes.tags.tagsToRegister",
           new ImmutableList.Builder<String>()

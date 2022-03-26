@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.compound.information.datagen;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -63,9 +64,9 @@ public class AbstractInformationProviderTest
 
         final ICompoundContainerFactory<?> factory = new LoadableStringCompoundContainer.Factory();
         List<ICompoundContainerFactory<?>> containerFactories = ImmutableList.of(factory);
-        ModRegistries.CONTAINER_FACTORY = mock(IForgeRegistry.class);
-        when(ModRegistries.CONTAINER_FACTORY.iterator()).thenReturn(containerFactories.iterator());
-        when(ModRegistries.CONTAINER_FACTORY.getValue(any())).thenAnswer((Answer<ICompoundContainerFactory<?>>) invocation -> factory);
+        ModRegistries.CONTAINER_FACTORY = Suppliers.memoize(() -> mock(IForgeRegistry.class));
+        when(ModRegistries.CONTAINER_FACTORY.get().iterator()).thenReturn(containerFactories.iterator());
+        when(ModRegistries.CONTAINER_FACTORY.get().getValue(any())).thenAnswer((Answer<ICompoundContainerFactory<?>>) invocation -> factory);
         CompoundContainerFactoryManager.getInstance().bake();
 
         saveTestTarget = mock(AbstractInformationProvider.class);

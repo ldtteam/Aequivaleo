@@ -10,6 +10,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.IForgeRegistryEntry;
+import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.LogManager;
@@ -22,36 +23,31 @@ public final class CompoundTypesRegistrar
     private static final Logger LOGGER = LogManager.getLogger();
 
     @SubscribeEvent
-    public static void onRegisterNewRegistry(final RegistryEvent.NewRegistry event)
+    public static void onRegisterNewRegistry(final NewRegistryEvent event)
     {
         LOGGER.info("Registering the compound type group registry with forge.");
-        makeCompoundTypeGroupsRegistry().create();
-        ModRegistries.COMPOUND_TYPE_GROUP = RegistryManager.ACTIVE.getRegistry(ICompoundTypeGroup.class);
+        ModRegistries.COMPOUND_TYPE_GROUP = event.create(makeCompoundTypeGroupsRegistry());
 
         LOGGER.info("Registering the compound type registry with forge.");
-        makeCompoundTypesRegistry().create();
-
         ModRegistries.COMPOUND_TYPE = new ForgeRegistryBackedSyncedRegistry<>(
-          RegistryManager.ACTIVE.getRegistry(ICompoundType.class),
+          event.create(makeCompoundTypesRegistry()),
           ModRegistries.COMPOUND_TYPE_GROUP
         );
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends IForgeRegistryEntry<T>> RegistryBuilder<T> makeCompoundTypesRegistry() {
-        return new RegistryBuilder<T>()
+    private static RegistryBuilder<ICompoundType> makeCompoundTypesRegistry(){
+        return new RegistryBuilder<ICompoundType>()
                  .setName(new ResourceLocation(Constants.MOD_ID, "compound_type"))
                  .setIDRange(1, Integer.MAX_VALUE - 1)
                  .disableSaving()
-                 .setType((Class<T>) ICompoundType.class);
+                 .setType(ICompoundType.class);
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends IForgeRegistryEntry<T>> RegistryBuilder<T> makeCompoundTypeGroupsRegistry() {
-        return new RegistryBuilder<T>()
+    private static RegistryBuilder<ICompoundTypeGroup> makeCompoundTypeGroupsRegistry() {
+        return new RegistryBuilder<ICompoundTypeGroup>()
           .setName(new ResourceLocation(Constants.MOD_ID, "compound_type_group"))
           .setIDRange(1, Integer.MAX_VALUE - 1)
           .disableSaving()
-          .setType((Class<T>) ICompoundTypeGroup.class);
+          .setType(ICompoundTypeGroup.class);
     }
 }

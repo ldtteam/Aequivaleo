@@ -19,12 +19,13 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> & ISyncedRegistryEntry<T>> implements ISyncedRegistry<T>
+public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> & ISyncedRegistryEntry<T>, G extends ISyncedRegistryEntryType<T> & IForgeRegistryEntry<G>> implements ISyncedRegistry<T>
 {
-    private final IForgeRegistry<T> backingInternalRegistry;
-    private final IForgeRegistry<? extends ISyncedRegistryEntryType<T>> backingTypeRegistry;
+    private final Supplier<IForgeRegistry<T>> backingInternalRegistry;
+    private final Supplier<IForgeRegistry<G>> backingTypeRegistry;
 
     private final Codec<T> entryCodec;
 
@@ -32,16 +33,17 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     private final List<T> syncedEntriesList = Collections.synchronizedList(Lists.newArrayList());
 
     public ForgeRegistryBackedSyncedRegistry(
-      final IForgeRegistry<T> backingInternalRegistry,
-      final IForgeRegistry<? extends ISyncedRegistryEntryType<T>> backingTypeRegistry) {
+      final Supplier<IForgeRegistry<T>> backingInternalRegistry,
+      final Supplier<IForgeRegistry<G>> backingTypeRegistry
+    ) {
         this.backingInternalRegistry = backingInternalRegistry;
         this.backingTypeRegistry = backingTypeRegistry;
 
         Codec<ISyncedRegistryEntryType<T>> serializerCodec = ResourceLocation.CODEC
           .comapFlatMap(
             name -> {
-                if (backingTypeRegistry.containsKey(name))
-                    return DataResult.success(backingTypeRegistry.getValue(name));
+                if (backingTypeRegistry.get().containsKey(name))
+                    return DataResult.success(backingTypeRegistry.get().getValue(name));
                 return DataResult.error("Object " + name + " not present in the registry");
             },
             ISyncedRegistryEntryType::getRegistryName
@@ -61,8 +63,8 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     @Override
     public int getSynchronizationIdOf(final T entry)
     {
-        if (backingInternalRegistry.containsKey(entry.getRegistryName())) {
-            return ((ForgeRegistry<T>) backingInternalRegistry).getID(entry);
+        if (backingInternalRegistry.get().containsKey(entry.getRegistryName())) {
+            return ((ForgeRegistry<T>) backingInternalRegistry.get()).getID(entry);
         }
 
         return this.syncedEntriesList.indexOf(entry);
@@ -71,9 +73,9 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     @Override
     public Optional<T> get(final ResourceLocation key)
     {
-        if (backingInternalRegistry.containsKey(key))
+        if (backingInternalRegistry.get().containsKey(key))
         {
-            return Optional.ofNullable(backingInternalRegistry.getValue(key));
+            return Optional.ofNullable(backingInternalRegistry.get().getValue(key));
         }
 
         if (syncedEntriesMap.containsKey(key))
@@ -104,20 +106,20 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     @Override
     public Set<ResourceLocation> getAllKnownRegistryNames()
     {
-        return ImmutableSet.<ResourceLocation>builder().addAll(backingInternalRegistry.getKeys()).addAll(syncedEntriesMap.keySet()).build();
+        return ImmutableSet.<ResourceLocation>builder().addAll(backingInternalRegistry.get().getKeys()).addAll(syncedEntriesMap.keySet()).build();
     }
 
     @Override
     public Function<ResourceLocation, ISyncedRegistryEntryType<T>> getTypeProducer()
     {
-        return backingTypeRegistry::getValue;
+        return backingTypeRegistry.get()::getValue;
     }
 
     @Override
     public Stream<T> stream()
     {
         return Stream.concat(
-          backingInternalRegistry.getValues().stream(),
+          backingInternalRegistry.get().getValues().stream(),
           syncedEntriesList.stream()
         );
     }
@@ -125,7 +127,7 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     @Override
     public void forEach(final BiConsumer<ResourceLocation, T> consumer)
     {
-        backingInternalRegistry.forEach(
+        backingInternalRegistry.get().forEach(
           t -> consumer.accept(t.getRegistryName(), t)
         );
         syncedEntriesMap.forEach(consumer);
@@ -140,7 +142,7 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     @Override
     public Set<ISyncedRegistryEntryType<T>> getTypes()
     {
-        return Sets.newHashSet(backingTypeRegistry.getValues());
+        return Sets.newHashSet(backingTypeRegistry.get().getValues());
     }
 
     @Override
@@ -186,7 +188,7 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     public Iterator<T> iterator()
     {
         final List<T> values = ImmutableList.<T>builder()
-                                 .addAll(backingInternalRegistry.getValues())
+                                 .addAll(backingInternalRegistry.get().getValues())
                                  .addAll(syncedEntriesList)
                                  .build();
         return values.iterator();

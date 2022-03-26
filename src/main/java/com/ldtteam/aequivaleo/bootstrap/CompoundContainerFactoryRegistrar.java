@@ -18,26 +18,28 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.NewRegistryEvent;
 import net.minecraftforge.registries.RegistryManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class CompoundContainerFactoryRegistrar
 {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @SubscribeEvent
-    public static void onRegisterRegistry(@NotNull RegistryEvent.NewRegistry event) {
+    public static void onRegisterRegistry(@NotNull NewRegistryEvent event) {
         LOGGER.info("Registering the container factory registry with forge.");
-        RegistryUtils.makeRegistry("container_factory", ICompoundContainerFactory.class)
+        ModRegistries.CONTAINER_FACTORY = (Supplier<IForgeRegistry<ICompoundContainerFactory<?>>>) (Supplier) event.create(RegistryUtils.makeRegistry("container_factory", ICompoundContainerFactory.class)
           .onBake((owner, stage) -> {
               LOGGER.info("Received bake callback for the container factory registry. Triggering baking of type map on manager.");
               CompoundContainerFactoryManager.getInstance().bake();
-          }).create();
-        ModRegistries.CONTAINER_FACTORY = RegistryManager.ACTIVE.getRegistry(ICompoundContainerFactory.class);
+          }));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

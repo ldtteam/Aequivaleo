@@ -25,7 +25,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Container;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -74,10 +74,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         LOGGER.info("Running aequivaleo common setup.");
         LOGGER.debug("Registering tags.");
 
-        configuration.getServer().tagsToRegister
+        configuration.getServer().itemTagsToRegister
           .get()
           .stream()
           .map(ResourceLocation::new)
+          .map(name -> TagKey.create(Registry.ITEM_REGISTRY, name))
           .forEach(ITagEquivalencyRegistry.getInstance()::addTag);
 
         LOGGER.debug("Registering recipe processing types.");

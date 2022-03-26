@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.bootstrap;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.heat.Heat;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -22,5 +23,5 @@ public final class ModContainerFactoryTypes
     public static ICompoundContainerFactory<FluidStack> FLUIDSTACK;
     public static ICompoundContainerFactory<Heat>          HEAT;
     public static ICompoundContainerFactory<ICompoundType> COMPOUND_TYPE;
-    public static ICompoundContainerFactory<Tag.Named> TAG;
+    public static ICompoundContainerFactory<TagKey<?>>        TAG;
 }

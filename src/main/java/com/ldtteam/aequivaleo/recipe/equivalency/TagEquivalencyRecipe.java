@@ -5,6 +5,7 @@ import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ITagEquivalencyReci
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Collections;
@@ -13,12 +14,12 @@ import java.util.TreeSet;
 
 public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
 {
-    private final Tag.Named<T>          tag;
+    private final TagKey<T>                    tag;
     private final SortedSet<IRecipeIngredient> inputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
     public TagEquivalencyRecipe(
-      final Tag.Named<T> tag,
+      final TagKey<T> tag,
       final ICompoundContainer<?> inputs,
       final ICompoundContainer<?> outputs)
     {
@@ -31,7 +32,7 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     }
 
     @Override
-    public Tag.Named<T> getTag()
+    public TagKey<T> getTag()
     {
         return tag;
     }
@@ -67,12 +68,10 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
         {
             return true;
         }
-        if (!(o instanceof TagEquivalencyRecipe))
+        if (!(o instanceof final TagEquivalencyRecipe that))
         {
             return false;
         }
-
-        final TagEquivalencyRecipe that = (TagEquivalencyRecipe) o;
 
         if (getTag() != null ? !getTag().equals(that.getTag()) : that.getTag() != null)
         {
@@ -97,6 +96,6 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     @Override
     public String toString()
     {
-        return String.format("Equivalent via Tag: %s", tag.getName());
+        return String.format("Equivalent via Tag: %s", tag.location());
     }
 }
