@@ -22,7 +22,6 @@ import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,24 +38,28 @@ public class JGraphTBasedCompoundAnalyzer
 
     private static final Object ANALYSIS_LOCK = new Object();
 
-    private final List<ServerLevel> worlds;
-    private final ServerLevel world;
-    private final boolean     forceReload;
-    private final boolean writeCachedData;
+    private final List<IAnalysisOwner> owners;
+    private final IAnalysisOwner       primaryOwner;
+    private final boolean              forceReload;
+    private final boolean              writeCachedData;
 
     private Map<ICompoundContainer<?>, Set<CompoundInstance>> results = new TreeMap<>();
 
-    public JGraphTBasedCompoundAnalyzer(final List<ServerLevel> worlds, final boolean forceReload, final boolean writeCachedData) {
-        this.worlds = worlds;
-        this.world = worlds.get(0);
+    public JGraphTBasedCompoundAnalyzer(final List<? extends IAnalysisOwner> owners, final boolean forceReload, final boolean writeCachedData)
+    {
+        this.owners = new ArrayList<>(owners);
+        this.primaryOwner = owners.get(0);
         this.forceReload = forceReload;
         this.writeCachedData = writeCachedData;
 
-        if (this.world == null)
+        if (this.primaryOwner == null)
+        {
             throw new IllegalArgumentException("First passed world is null");
+        }
     }
 
-    public BuildRecipeGraph createGraph() {
+    public BuildRecipeGraph createGraph()
+    {
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = new TreeMap<>();
 
         final IGraph recipeGraph = new AequivaleoGraph();
@@ -64,8 +67,8 @@ public class JGraphTBasedCompoundAnalyzer
         final Map<ICompoundContainer<?>, INode> compoundNodes = new HashMap<>();
         final Map<IRecipeIngredient, INode> ingredientNodes = new HashMap<>();
 
-        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(world.dimension())
-                                           .get())
+        for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(primaryOwner.getIdentifier())
+          .get())
         {
             if (recipe.getInputs().isEmpty())
             {
@@ -122,7 +125,7 @@ public class JGraphTBasedCompoundAnalyzer
             }
         }
 
-        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.dimension()).getValueInformation().keySet())
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().keySet())
         {
             INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
@@ -145,12 +148,12 @@ public class JGraphTBasedCompoundAnalyzer
                 throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
             }
 
-            node.forceSetResult(CompoundInformationRegistry.getInstance(world.dimension()).getValueInformation().get(valueWrapper));
+            node.forceSetResult(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().get(valueWrapper));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())
         {
-            GraphIOHandler.getInstance().export(world.dimension().location().toString().replace(":", "_").concat(".json"), recipeGraph);
+            GraphIOHandler.getInstance().export(primaryOwner.getIdentifier().location().toString().replace(":", "_").concat(".json"), recipeGraph);
         }
 
         final Set<ContainerNode> rootNodes = findRootNodes(recipeGraph);
@@ -158,7 +161,9 @@ public class JGraphTBasedCompoundAnalyzer
         final Set<INode> notDefinedGraphNodes = new HashSet<>();
         for (ContainerNode n : rootNodes)
         {
-            if (n.getWrapper().map(w -> getLockedInformationInstances(w).isEmpty()).orElse(false) && n.getWrapper().map(w -> getValueInformationInstances(w).isEmpty()).orElse(false))
+            if (n.getWrapper().map(w -> getLockedInformationInstances(w).isEmpty()).orElse(false) && n.getWrapper()
+              .map(w -> getValueInformationInstances(w).isEmpty())
+              .orElse(false))
             {
                 notDefinedGraphNodes.add(n);
             }
@@ -182,7 +187,8 @@ public class JGraphTBasedCompoundAnalyzer
           source);
     }
 
-    private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode) {
+    private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode)
+    {
 
         LOGGER.warn("Starting clique reduction.");
 
@@ -190,10 +196,13 @@ public class JGraphTBasedCompoundAnalyzer
           (graph, iNodes, iRecipeNodes, iRecipeInputNodes) -> new CliqueNode(graph, iNodes),
           sets -> {
               if (sets.size() == 1)
+              {
                   return Sets.newHashSet(); //Cover a weird etch case where a clique exists out of a single node........
+              }
 
               //Short circuit if all of them have only one node.
-              if (sets.stream().allMatch(s -> s.size() == 1)) {
+              if (sets.stream().allMatch(s -> s.size() == 1))
+              {
                   return sets.stream().flatMap(Set::stream).collect(Collectors.toSet());
               }
 
@@ -204,19 +213,19 @@ public class JGraphTBasedCompoundAnalyzer
                   .findAny();
 
               return targetRecipeType.map(type -> sets.stream()
-                                                    .map(nodes -> {
-                                                        for (IRecipeNode node : nodes)
-                                                        {
-                                                            if (node.getRecipe().getClass().equals(type))
-                                                            {
-                                                                return Optional.of(node).get();
-                                                            }
-                                                        }
-                                                        return null;
-                                                    })
-                                                    .filter(Objects::nonNull)
-                                                    .collect(Collectors.toSet()))
-                       .orElseGet(Sets::newHashSet);
+                  .map(nodes -> {
+                      for (IRecipeNode node : nodes)
+                      {
+                          if (node.getRecipe().getClass().equals(type))
+                          {
+                              return Optional.of(node).get();
+                          }
+                      }
+                      return null;
+                  })
+                  .filter(Objects::nonNull)
+                  .collect(Collectors.toSet()))
+                .orElseGet(Sets::newHashSet);
           }, INode::onNeighborReplaced);
 
         cliqueReducer.reduce(recipeGraph);
@@ -250,32 +259,36 @@ public class JGraphTBasedCompoundAnalyzer
 
     public void calculate()
     {
-        if (this.world == null)
+        if (this.primaryOwner == null)
+        {
             throw new IllegalArgumentException("First passed world is null");
+        }
 
         final BuildRecipeGraph buildRecipeGraph = createGraph();
         final IGraph noneReducedGraph = buildRecipeGraph.getRecipeGraph();
-        final Map<ICompoundContainer<?>, Set<CompoundInstance>>                      resultingCompounds = buildRecipeGraph.getResultingCompounds();
-        final Map<ICompoundContainer<?>, INode>  compoundNodes = buildRecipeGraph.getCompoundNodes();
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = buildRecipeGraph.getResultingCompounds();
+        final Map<ICompoundContainer<?>, INode> compoundNodes = buildRecipeGraph.getCompoundNodes();
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.getNotDefinedGraphNodes();
         final SourceNode source = buildRecipeGraph.getSourceNode();
 
         final CacheKey key = new CacheKey(ModList.get(), noneReducedGraph);
         final int graphHash = key.hashCode();
-        if (!forceReload) {
+        if (!forceReload)
+        {
             //We are allowed to lookup cached values
-            final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults(world, graphHash);
-            if (cachedResults.isPresent()) {
-                LOGGER.warn(String.format("Using cached results for: %s", WorldUtils.formatWorldNames(getWorlds())));
+            final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults(primaryOwner, graphHash);
+            if (cachedResults.isPresent())
+            {
+                LOGGER.warn(String.format("Using cached results for: %s", WorldUtils.formatWorldNames(getOwners())));
                 this.results = cachedResults.get();
-                LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), WorldUtils.formatWorldNames(getWorlds())));
+                LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), WorldUtils.formatWorldNames(getOwners())));
                 return;
             }
         }
 
         final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
 
-        final StatCollector statCollector = new StatCollector(WorldUtils.formatWorldNames(getWorlds()), recipeGraph.vertexSet().size());
+        final StatCollector statCollector = new StatCollector(WorldUtils.formatWorldNames(getOwners()), recipeGraph.vertexSet().size());
         final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
 
         while (analysisBFSGraphIterator.hasNext())
@@ -285,14 +298,17 @@ public class JGraphTBasedCompoundAnalyzer
 
         statCollector.onCalculationComplete();
 
-        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().keySet())
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getLockingInformation().keySet())
         {
             INode node;
             if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
             {
                 LOGGER.debug(String.format("Adding missing locking node for container: %s", valueWrapper));
                 compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
-                resultingCompounds.computeIfAbsent(valueWrapper, wrapper -> Sets.newHashSet()).addAll(CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().get(valueWrapper));
+                resultingCompounds.computeIfAbsent(valueWrapper, wrapper -> Sets.newHashSet())
+                  .addAll(Objects.requireNonNull(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier())
+                    .getLockingInformation()
+                    .get(valueWrapper)));
             }
             node = compoundNodes.get(valueWrapper);
 
@@ -301,7 +317,7 @@ public class JGraphTBasedCompoundAnalyzer
                 throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
             }
 
-            node.forceSetResult(CompoundInformationRegistry.getInstance(world.dimension()).getLockingInformation().get(valueWrapper));
+            node.forceSetResult(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getLockingInformation().get(valueWrapper));
         }
 
         extractCompoundInstancesFromGraph(recipeGraph.vertexSet(), resultingCompounds, notDefinedGraphNodes);
@@ -310,18 +326,19 @@ public class JGraphTBasedCompoundAnalyzer
         {
             synchronized (ANALYSIS_LOCK)
             {
-                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", WorldUtils.formatWorldNames(getWorlds())));
+                AequivaleoLogger.startBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", WorldUtils.formatWorldNames(getOwners())));
                 for (INode node : notDefinedGraphNodes)
                 {
                     if (node instanceof IContainerNode)
                     {
-                        AequivaleoLogger.bigWarningMessage(String.format("Missing root information for: %s. Removing from recipe graph.", ((IContainerNode) node).getWrapper().map(Object::toString).orElse("<UNKNOWN>")));
+                        AequivaleoLogger.bigWarningMessage(String.format("Missing root information for: %s. Removing from recipe graph.",
+                          ((IContainerNode) node).getWrapper().map(Object::toString).orElse("<UNKNOWN>")));
                     }
                     recipeGraph.removeVertex(node);
                 }
-                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", WorldUtils.formatWorldNames(getWorlds())));
+                AequivaleoLogger.endBigWarning(String.format("WARNING: Missing root equivalency data in world: %s", WorldUtils.formatWorldNames(getOwners())));
 
-                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", WorldUtils.formatWorldNames(getWorlds())));
+                AequivaleoLogger.startBigWarning(String.format("RESULT: Compound analysis for world: %s", WorldUtils.formatWorldNames(getOwners())));
                 for (Map.Entry<ICompoundContainer<?>, Set<CompoundInstance>> entry : resultingCompounds.entrySet())
                 {
                     ICompoundContainer<?> wrapper = entry.getKey();
@@ -331,18 +348,19 @@ public class JGraphTBasedCompoundAnalyzer
                         AequivaleoLogger.bigWarningMessage("{}: {}", wrapper, compounds);
                     }
                 }
-                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", WorldUtils.formatWorldNames(getWorlds())));
+                AequivaleoLogger.endBigWarning(String.format("RESULT: Compound analysis for world: %s", WorldUtils.formatWorldNames(getOwners())));
             }
         }
         else
         {
-            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", WorldUtils.formatWorldNames(getWorlds())));
+            AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", WorldUtils.formatWorldNames(getOwners())));
         }
 
-        if (writeCachedData) {
-            LOGGER.warn(String.format("Writing results to cache for: %s", WorldUtils.formatWorldNames(getWorlds())));
-            WorldCacheUtils.writeCachedResults(world, graphHash, resultingCompounds);
-            LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), WorldUtils.formatWorldNames(getWorlds())));
+        if (writeCachedData)
+        {
+            LOGGER.warn(String.format("Writing results to cache for: %s", WorldUtils.formatWorldNames(getOwners())));
+            WorldCacheUtils.writeCachedResults(primaryOwner, graphHash, resultingCompounds);
+            LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), WorldUtils.formatWorldNames(getOwners())));
         }
         this.results = resultingCompounds;
     }
@@ -354,7 +372,8 @@ public class JGraphTBasedCompoundAnalyzer
     {
         for (INode v : vertices)
         {
-            if (v instanceof IInnerNode) {
+            if (v instanceof IInnerNode)
+            {
                 extractCompoundInstancesFromGraph(((IInnerNode) v).getInnerNodes(), resultingCompounds, notDefinedGraphNodes);
             }
             else if (v instanceof IContainerNode containerWrapperGraphNode)
@@ -368,9 +387,12 @@ public class JGraphTBasedCompoundAnalyzer
                 else
                 {
                     if (!resultingCompounds.containsKey(containerWrapperGraphNode.getWrapper().orElse(null)))
+                    {
                         resultingCompounds.putIfAbsent(containerWrapperGraphNode.getWrapper().orElse(null), new TreeSet<>());
+                    }
 
-                    resultingCompounds.get(containerWrapperGraphNode.getWrapper().orElse(null)).addAll(containerWrapperGraphNode.getResultingValue().orElse(Collections.emptySet()));
+                    resultingCompounds.get(containerWrapperGraphNode.getWrapper().orElse(null))
+                      .addAll(containerWrapperGraphNode.getResultingValue().orElse(Collections.emptySet()));
                 }
             }
         }
@@ -437,7 +459,7 @@ public class JGraphTBasedCompoundAnalyzer
     {
         Set<INode> set = new HashSet<>();
         for (INode v : graph
-                                                             .vertexSet())
+          .vertexSet())
         {
             if (graph.incomingEdgesOf(v).isEmpty())
             {
@@ -449,24 +471,24 @@ public class JGraphTBasedCompoundAnalyzer
 
     private Set<CompoundInstance> getLockedInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<CompoundInstance> lockedInstances = CompoundInformationRegistry.getInstance(world.dimension())
-                                                        .getLockingInformation()
-                                                        .get(createUnitWrapper(wrapper));
+        final Set<CompoundInstance> lockedInstances = CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier())
+          .getLockingInformation()
+          .get(createUnitWrapper(wrapper));
 
         return Objects.requireNonNullElseGet(lockedInstances, HashSet::new);
     }
 
     private Set<CompoundInstance> getValueInformationInstances(@NotNull final ICompoundContainer<?> wrapper)
     {
-        final Set<CompoundInstance> valueInstances = CompoundInformationRegistry.getInstance(world.dimension())
-                                                       .getValueInformation()
-                                                       .get(createUnitWrapper(wrapper));
+        final Set<CompoundInstance> valueInstances = CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier())
+          .getValueInformation()
+          .get(createUnitWrapper(wrapper));
 
         return Objects.requireNonNullElseGet(valueInstances, HashSet::new);
     }
 
-    public List<ServerLevel> getWorlds()
+    public List<IAnalysisOwner> getOwners()
     {
-        return worlds;
+        return owners;
     }
 }

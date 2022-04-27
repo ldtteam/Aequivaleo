@@ -27,7 +27,6 @@ import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundC
 import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecipe;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
@@ -59,9 +58,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @PrepareForTest({Aequivaleo.class, ModList.class})
 public class JGraphTBasedCompoundAnalyzerTest
 {
-
     ResourceKey<Level>           key;
-    ServerLevel                  world;
     JGraphTBasedCompoundAnalyzer analyzer;
 
 
@@ -82,9 +79,7 @@ public class JGraphTBasedCompoundAnalyzerTest
     {
         key = mock(ResourceKey.class);
         when(key.location()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase()));
-        world = mock(ServerLevel.class);
-        when(world.dimension()).thenReturn(key);
-        analyzer = new JGraphTBasedCompoundAnalyzer(Lists.newArrayList(world), true, false);
+        analyzer = new JGraphTBasedCompoundAnalyzer(Lists.newArrayList(new TestAnalysisOwner(currentTestName, key)), true, false);
 
         input = CompoundInformationRegistry.getInstance(key);
 
@@ -193,6 +188,9 @@ public class JGraphTBasedCompoundAnalyzerTest
         input.registerLocking("A", s(cz( 1.0)));
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        System.out.println(result.keySet().size());
+
         assertEquals(s(cz( 1.0)), result.get(cc("A")));
     }
 

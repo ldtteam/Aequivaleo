@@ -35,15 +35,16 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.Util;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleReloadInstance;
 import net.minecraft.util.Unit;
 import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -404,6 +405,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
       final List<ServerLevel> worlds, final ExecutorService aequivaleoReloadExecutor)
     {
         final List<ServerLevel> runnableWorlds = worlds.stream().filter(world -> !AnalysisStateManager.getState(world.dimension()).isErrored()).collect(Collectors.toList());
+        final List<LevelAnalysisOwner> analysisOwners = runnableWorlds.stream().map(LevelAnalysisOwner::new).collect(Collectors.toList());
 
         if (containsOnlyGenericData(valueData) &&
               containsOnlyGenericData(lockedData) &&
@@ -411,7 +413,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         {
             return Lists.newArrayList(CompletableFuture.runAsync(
               new AequivaleoWorldAnalysisRunner(
-                runnableWorlds,
+                analysisOwners,
                 valueData.get(GENERAL_DATA_NAME),
                 Collections.emptyList(),
                 lockedData.get(GENERAL_DATA_NAME),
@@ -438,7 +440,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
           .filter(groupWorlds -> groupWorlds.size() > 0)
           .map(groupWorlds -> CompletableFuture.runAsync(
             new AequivaleoWorldAnalysisRunner(
-              runnableWorlds,
+              analysisOwners,
               valueData.get(GENERAL_DATA_NAME),
               valueData.get(groupWorlds.get(0).dimension().location()),
               lockedData.get(GENERAL_DATA_NAME),
@@ -609,7 +611,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
     private static class AequivaleoWorldAnalysisRunner implements Runnable
     {
-        private final List<ServerLevel>          worlds;
+        private final List<LevelAnalysisOwner>       analysisOwners;
         private final List<CompoundInstanceData> valueGeneralData;
         private final List<CompoundInstanceData> valueWorldData;
         private final List<CompoundInstanceData> lockedGeneralData;
@@ -619,7 +621,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         private final boolean                    forceReload;
 
         private AequivaleoWorldAnalysisRunner(
-          final List<ServerLevel> worlds,
+          final List<LevelAnalysisOwner> analysisOwners,
           final List<CompoundInstanceData> valueGeneralData,
           final List<CompoundInstanceData> valueWorldData,
           final List<CompoundInstanceData> lockedGeneralData,
@@ -631,7 +633,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
             this.valueGeneralData = valueGeneralData;
             this.valueWorldData = valueWorldData;
             this.lockedGeneralData = lockedGeneralData;
-            this.worlds = worlds;
+            this.analysisOwners = analysisOwners;
             this.lockedWorldData = lockedWorldData;
             this.genericAdditionalRecipes = genericAdditionalRecipes;
             this.worldAdditionalRecipes = worldAdditionalRecipes;
@@ -646,15 +648,18 @@ public class AequivaleoReloadListener implements PreparableReloadListener
 
         private void reloadEquivalencyData()
         {
-            LOGGER.info(String.format("Starting aequivaleo data reload for world: %s", WorldUtils.formatWorldNames(getWorlds())));
+            LOGGER.info(String.format("Starting aequivaleo data reload for world: %s", WorldUtils.formatWorldNames(getAnalysisOwners())));
             try
             {
-                if (getWorlds().stream().anyMatch(world -> AnalysisStateManager.getState(world.dimension()).isErrored()))
+                if (getAnalysisOwners().stream().anyMatch(world -> AnalysisStateManager.getState(world.getIdentifier()).isErrored()))
                 {
                     throw new IllegalStateException("Tried to run an analysis for an error dimension!");
                 }
 
-                getWorlds().forEach(WorldBootstrapper::onWorldReload);
+                getAnalysisOwners()
+                  .stream()
+                  .map(LevelAnalysisOwner::serverLevel)
+                  .forEach(WorldBootstrapper::onWorldReload);
 
                 final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
                 final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueWorldGroupedData = groupDataByContainer(valueWorldData);
@@ -668,37 +673,37 @@ public class AequivaleoReloadListener implements PreparableReloadListener
                 processCompoundInstanceData(valueGeneralGroupedData, valueWorldGroupedData, valueTargetMap);
                 processCompoundInstanceData(lockedGeneralGroupedData, lockedWorldGroupedData, lockedTargetMap);
 
-                getWorlds().forEach(world -> {
-                    valueTargetMap.forEach(ICompoundInformationRegistry.getInstance(world.dimension())
+                getAnalysisOwners().forEach(analysisOwner -> {
+                    valueTargetMap.forEach(ICompoundInformationRegistry.getInstance(analysisOwner.getIdentifier())
                                              ::registerValue);
 
-                    lockedTargetMap.forEach(ICompoundInformationRegistry.getInstance(world.dimension())
+                    lockedTargetMap.forEach(ICompoundInformationRegistry.getInstance(analysisOwner.getIdentifier())
                                               ::registerLocking);
 
-                    genericAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(world.dimension())::register);
-                    worldAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(world.dimension())::register);
+                    genericAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(analysisOwner.getIdentifier())::register);
+                    worldAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(analysisOwner.getIdentifier())::register);
                 });
 
 
-                AnalysisStateManager.setStateIfNotError(getWorlds(), AnalysisState.PROCESSING);
+                AnalysisStateManager.setStateIfNotError(getAnalysisOwners().stream().map(LevelAnalysisOwner::serverLevel).collect(Collectors.toList()), AnalysisState.PROCESSING);
 
-                JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getWorlds(), forceReload, true);
+                JGraphTBasedCompoundAnalyzer analyzer = new JGraphTBasedCompoundAnalyzer(getAnalysisOwners(), forceReload, true);
 
                 final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
-                getWorlds().forEach(world -> EquivalencyResults.getInstance(world.dimension()).set(result));
+                getAnalysisOwners().forEach(world -> EquivalencyResults.getInstance(world.getIdentifier()).set(result));
             }
             catch (Throwable t)
             {
-                LOGGER.fatal(String.format("Failed to analyze: %s", WorldUtils.formatWorldNames(getWorlds())), t);
-                AnalysisStateManager.setState(getWorlds(), AnalysisState.ERRORED);
+                LOGGER.fatal(String.format("Failed to analyze: %s", WorldUtils.formatWorldNames(getAnalysisOwners())), t);
+                AnalysisStateManager.setState(getAnalysisOwners().stream().map(LevelAnalysisOwner::serverLevel).collect(Collectors.toList()), AnalysisState.ERRORED);
             }
-            LOGGER.info(String.format("Finished aequivaleo data reload for world: %s", WorldUtils.formatWorldNames(getWorlds())));
+            LOGGER.info(String.format("Finished aequivaleo data reload for world: %s", WorldUtils.formatWorldNames(getAnalysisOwners())));
         }
 
-        public List<ServerLevel> getWorlds()
+        public List<LevelAnalysisOwner> getAnalysisOwners()
         {
-            return worlds;
+            return analysisOwners;
         }
 
         private static Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> groupDataByContainer(final List<CompoundInstanceData> data)
@@ -743,5 +748,24 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         final Map<ResourceLocation, List<CompoundInstanceData>> valueData         = new HashMap<>();
         final Map<ResourceLocation, List<CompoundInstanceData>> lockedData        = new HashMap<>();
         final Map<ResourceLocation, List<IEquivalencyRecipe>>   dataDrivenRecipes = new HashMap<>();
+    }
+
+    private record LevelAnalysisOwner(ServerLevel serverLevel) implements IAnalysisOwner
+    {
+        @Override
+        public ResourceKey<Level> getIdentifier()
+        {
+            return serverLevel.dimension();
+        }
+
+        @Override
+        public File getCacheDirectory()
+        {
+            final File aequivaleoDirectory =
+              new File(serverLevel.getChunkSource().level.getServer().storageSource.getDimensionPath(serverLevel.dimension()).toAbsolutePath().toFile().getAbsolutePath(),
+                Constants.MOD_ID);
+            final File cacheDirectory = new File(aequivaleoDirectory, "cache");
+            return new File(cacheDirectory, String.format("%s_%s", serverLevel.dimension().location().getNamespace(), serverLevel.dimension().location().getPath()));
+        }
     }
 }
