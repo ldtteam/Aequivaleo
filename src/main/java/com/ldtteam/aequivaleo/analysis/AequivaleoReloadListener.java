@@ -47,6 +47,7 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -83,7 +84,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         SYNCED_REGISTRIES.add(() -> ModRegistries.COMPOUND_TYPE);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onAddReloadListener(final AddReloadListenerEvent reloadListenerEvent)
     {
         LOGGER.info("Registering reload listener for graph rebuilding.");
@@ -683,7 +684,6 @@ public class AequivaleoReloadListener implements PreparableReloadListener
                     genericAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(analysisOwner.getIdentifier())::register);
                     worldAdditionalRecipes.forEach(IEquivalencyRecipeRegistry.getInstance(analysisOwner.getIdentifier())::register);
                 });
-
 
                 AnalysisStateManager.setStateIfNotError(getAnalysisOwners().stream().map(LevelAnalysisOwner::serverLevel).collect(Collectors.toList()), AnalysisState.PROCESSING);
 
