@@ -3,11 +3,8 @@ package com.ldtteam.aequivaleo.testing.compound.container.testing;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
@@ -88,7 +85,6 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
         return false;
     }
 
-    @SuppressWarnings("unchecked")
     public static class Factory implements ICompoundContainerFactory<String>
     {
 
@@ -125,22 +121,6 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
         @Override
         public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
             return new LoadableStringCompoundContainer(buffer.readUtf(32767), 1d);
-        }
-
-        @Override
-        public ICompoundContainerFactory<?> setRegistryName(ResourceLocation resourceLocation) {
-            return this;
-        }
-
-        @Nullable
-        @Override
-        public ResourceLocation getRegistryName() {
-            return new ResourceLocation(Constants.MOD_ID, "loadable_string");
-        }
-
-        @Override
-        public Class<ICompoundContainerFactory<?>> getRegistryType() {
-            return ((Class<ICompoundContainerFactory<?>>)((Class<?>) ICompoundContainerFactory.class));
         }
     }
 }

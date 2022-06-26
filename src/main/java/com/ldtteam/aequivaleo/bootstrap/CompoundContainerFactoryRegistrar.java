@@ -12,62 +12,45 @@ import com.ldtteam.aequivaleo.compound.container.itemstack.ItemContainer;
 import com.ldtteam.aequivaleo.compound.container.itemstack.ItemStackContainer;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.container.tag.TagContainer;
-import net.minecraftforge.event.RegistryEvent;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.NewRegistryEvent;
-import net.minecraftforge.registries.RegistryManager;
+import net.minecraftforge.registries.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
+@SuppressWarnings("unchecked")
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class CompoundContainerFactoryRegistrar
 {
+    private static final ResourceLocation REGISTRY_NAME = new ResourceLocation(Constants.MOD_ID, "container_factory");
     private static final Logger LOGGER = LogManager.getLogger();
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    @SubscribeEvent
-    public static void onRegisterRegistry(@NotNull NewRegistryEvent event) {
-        LOGGER.info("Registering the container factory registry with forge.");
-        ModRegistries.CONTAINER_FACTORY = (Supplier<IForgeRegistry<ICompoundContainerFactory<?>>>) (Supplier) event.create(RegistryUtils.makeRegistry("container_factory", ICompoundContainerFactory.class)
-          .onBake((owner, stage) -> {
-              LOGGER.info("Received bake callback for the container factory registry. Triggering baking of type map on manager.");
-              CompoundContainerFactoryManager.getInstance().bake();
-          }));
+    public static final DeferredRegister<ICompoundContainerFactory<?>> COMPOUND_CONTAINER_FACTORY_REGISTRY = DeferredRegister.create(
+            ResourceKey.createRegistryKey(REGISTRY_NAME),
+            Constants.MOD_ID
+    );
+
+    static {
+        ModRegistries.CONTAINER_FACTORY = COMPOUND_CONTAINER_FACTORY_REGISTRY.makeRegistry(() -> ((RegistryBuilder<ICompoundContainerFactory<?>>) (Object)  RegistryUtils.makeRegistry(ICompoundContainerFactory.class)
+                .onBake((owner, stage) -> CompoundContainerFactoryManager.getInstance().bake())
+        ));
+
+        ModContainerFactoryTypes.ITEM = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("item", ItemContainer.Factory::new);
+        ModContainerFactoryTypes.ITEMSTACK = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("itemstack", ItemStackContainer.Factory::new);
+        ModContainerFactoryTypes.FLUID = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("fluid", FluidContainer.Factory::new);
+        ModContainerFactoryTypes.FLUIDSTACK = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("fluidstack", FluidStackContainer.Factory::new);
+        ModContainerFactoryTypes.HEAT = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("heat", HeatContainer.Factory::new);
+        ModContainerFactoryTypes.COMPOUND_TYPE = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("compound_type", CompoundTypeContainer.Factory::new);
+        ModContainerFactoryTypes.TAG = COMPOUND_CONTAINER_FACTORY_REGISTRY.register("tag", TagContainer.Factory::new);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onDataGeneration(GatherDataEvent event) {
         LOGGER.info("Data generation triggered. Baking container factory manager.");
         CompoundContainerFactoryManager.getInstance().bake();
-    }
-
-    @SubscribeEvent
-    public static void onRegisterFactories(@NotNull RegistryEvent.Register<ICompoundContainerFactory<?>> event) {
-        final IForgeRegistry<ICompoundContainerFactory<?>> registry = event.getRegistry();
-
-        ModContainerFactoryTypes.ITEM = new ItemContainer.Factory();
-        ModContainerFactoryTypes.ITEMSTACK = new ItemStackContainer.Factory();
-        ModContainerFactoryTypes.FLUID = new FluidContainer.Factory();
-        ModContainerFactoryTypes.FLUIDSTACK = new FluidStackContainer.Factory();
-        ModContainerFactoryTypes.HEAT = new HeatContainer.Factory();
-        ModContainerFactoryTypes.COMPOUND_TYPE = new CompoundTypeContainer.Factory();
-        ModContainerFactoryTypes.TAG = new TagContainer.Factory();
-
-        registry.registerAll(
-          ModContainerFactoryTypes.ITEM,
-          ModContainerFactoryTypes.ITEMSTACK,
-          ModContainerFactoryTypes.FLUID,
-          ModContainerFactoryTypes.FLUIDSTACK,
-          ModContainerFactoryTypes.HEAT,
-          ModContainerFactoryTypes.COMPOUND_TYPE,
-          ModContainerFactoryTypes.TAG
-        );
     }
 }

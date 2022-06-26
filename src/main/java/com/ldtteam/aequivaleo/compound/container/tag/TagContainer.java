@@ -3,12 +3,10 @@ package com.ldtteam.aequivaleo.compound.container.tag;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -18,12 +16,11 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
 {
 
     @SuppressWarnings("unchecked")
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<TagKey<?>>
+    public static final class Factory implements ICompoundContainerFactory<TagKey<?>>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "tag");
         }
 
         @NotNull
@@ -35,7 +32,7 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
 
         @NotNull
         @Override
-        public ICompoundContainer<TagKey<?>> create(@NotNull final TagKey<?> instance, @NotNull final double count)
+        public ICompoundContainer<TagKey<?>> create(@NotNull final TagKey<?> instance, final double count)
         {
             return new TagContainer(instance, count);
         }
@@ -172,6 +169,6 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
     @Override
     public String toString()
     {
-        return String.format("%s x %s", count, isValid() ? "[" + getContents().registry().location().toString() + "]" + getContents().location().toString() : "<UNKNOWN>");
+        return String.format("%s x %s", count, isValid() ? "[" + getContents().registry().location() + "]" + getContents().location() : "<UNKNOWN>");
     }
 }

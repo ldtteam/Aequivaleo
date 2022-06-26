@@ -6,6 +6,7 @@ import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Type;
+import java.util.Optional;
 
 public final class CompoundInstanceRefSerializer implements JsonSerializer<CompoundInstanceRef>, JsonDeserializer<CompoundInstanceRef>
 {
@@ -24,7 +25,7 @@ public final class CompoundInstanceRefSerializer implements JsonSerializer<Compo
         final ResourceLocation location = context.deserialize(object.get("type"), ResourceLocation.class);
         final Double count = object.getAsJsonPrimitive("amount").getAsDouble();
 
-        if (ModRegistries.COMPOUND_TYPE.get(location).isEmpty())
+        if (ModRegistries.COMPOUND_TYPE.get().get(location).isEmpty())
         {
             return null;
         }

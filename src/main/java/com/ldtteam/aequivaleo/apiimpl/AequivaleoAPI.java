@@ -16,6 +16,8 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
+import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
+import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
@@ -30,12 +32,18 @@ import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
+import com.ldtteam.aequivaleo.registry.ShadowRegistry;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.crafting.conditions.ICondition;
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
+import java.util.function.Function;
 
 public final class AequivaleoAPI implements IAequivaleoAPI
 {
@@ -100,19 +108,19 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     }
 
     @Override
-    public GsonBuilder setupGson(final GsonBuilder builder)
+    public GsonBuilder setupGson(final GsonBuilder builder, final ICondition.IContext context)
     {
         return builder
                  .setLenient()
                  .registerTypeAdapter(CompoundInstanceDataModeSerializer.HANDLED_TYPE, new CompoundInstanceDataModeSerializer())
-                 .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer())
+                 .registerTypeAdapter(CompoundInstanceDataSerializer.HANDLED_TYPE, new CompoundInstanceDataSerializer(context))
                  .registerTypeAdapter(CompoundInstanceRefSerializer.HANDLED_TYPE, new CompoundInstanceRefSerializer())
                  .registerTypeAdapter(CompoundInstanceRefSetSerializer.HANDLED_TYPE, new CompoundInstanceRefSetSerializer())
                  .registerTypeAdapter(CompoundContainerSetSerializer.HANDLED_TYPE, new CompoundContainerSetSerializer())
                  .registerTypeAdapter(CompoundContainerFactoryManager.HANDLED_TYPE, CompoundContainerFactoryManager.getInstance())
                  .registerTypeAdapter(IngredientSerializerRegistry.HANDLED_TYPE, IngredientSerializerRegistry.getInstance())
                  .registerTypeAdapter(IngredientSetSerializer.HANDLED_TYPE, new IngredientSetSerializer())
-                 .registerTypeAdapter(GenericRecipeDataSerializer.HANDLED_TYPE, new GenericRecipeDataSerializer())
+                 .registerTypeAdapter(GenericRecipeDataSerializer.HANDLED_TYPE, new GenericRecipeDataSerializer(context))
                  .registerTypeAdapter(ResourceLocation.class, new ResourceLocation.Serializer());
     }
 
@@ -150,5 +158,10 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IBlacklistDimensionManager getBlacklistDimensionManager()
     {
         return BlacklistDimensionManager.getInstance();
+    }
+
+    @Override
+    public <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter) {
+        return new ShadowRegistry<>(registry, viewFilter);
     }
 }

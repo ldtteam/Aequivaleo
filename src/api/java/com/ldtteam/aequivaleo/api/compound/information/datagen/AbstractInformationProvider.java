@@ -11,10 +11,11 @@ import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainer
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.HashCache;
 import net.minecraft.data.DataProvider;
-import net.minecraft.tags.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,11 +47,11 @@ public abstract class AbstractInformationProvider implements DataProvider
     }
 
     @Override
-    public void run(@NotNull final HashCache cache) throws IOException
+    public void run(@NotNull final CachedOutput cache) throws IOException
     {
         this.calculateDataToSave();
 
-        final Gson gson = IAequivaleoAPI.getInstance().getGson();
+        final Gson gson = IAequivaleoAPI.getInstance().getGson(ICondition.IContext.EMPTY);
 
         this.writeData(
           cache,
@@ -84,7 +85,7 @@ public abstract class AbstractInformationProvider implements DataProvider
 
     @VisibleForTesting
     void writeData(
-      final HashCache cache,
+      final CachedOutput cache,
       final Gson gson,
       final WorldData worldData
     ) throws IOException
@@ -125,8 +126,7 @@ public abstract class AbstractInformationProvider implements DataProvider
 
                 final Path itemPath = dataSavePath.resolve(String.format("%s.json", fileName));
 
-                DataProvider.save(
-                  gson,
+                DataProvider.saveStable(
                   cache,
                   gson.toJsonTree(data),
                   itemPath
@@ -137,7 +137,7 @@ public abstract class AbstractInformationProvider implements DataProvider
 
     public abstract void calculateDataToSave();
 
-    public SpecBuilder specFor(final Tag<?> tag) {
+    public SpecBuilder specFor(final TagKey<?> tag) {
         return new SpecBuilder(tag);
     }
 
@@ -212,7 +212,7 @@ public abstract class AbstractInformationProvider implements DataProvider
         private final Set<CompoundInstanceRef> instanceRefs = Sets.newLinkedHashSet();
         private final Set<ICondition> conditions = Sets.newLinkedHashSet();
 
-        private SpecBuilder(final Tag<?> tag) {
+        private SpecBuilder(final TagKey<?> tag) {
             this.targets.add(tag);
         }
 

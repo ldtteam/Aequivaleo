@@ -7,9 +7,7 @@ import com.google.gson.JsonSerializationContext;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
@@ -111,22 +109,6 @@ public class StringCompoundContainer implements ICompoundContainer<String>
 
         @Override
         public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
-            return null;
-        }
-
-        @Override
-        public ICompoundContainerFactory<?> setRegistryName(ResourceLocation resourceLocation) {
-            return null;
-        }
-
-        @Nullable
-        @Override
-        public ResourceLocation getRegistryName() {
-            return null;
-        }
-
-        @Override
-        public Class<ICompoundContainerFactory<?>> getRegistryType() {
             return null;
         }
     }

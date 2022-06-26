@@ -4,13 +4,14 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.*;
+import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.util.Comparators;
+import com.ldtteam.aequivaleo.api.util.FluidStackUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,12 +20,11 @@ import java.lang.reflect.Type;
 public class FluidStackContainer implements ICompoundContainer<FluidStack>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<FluidStack>
+    public static final class Factory implements ICompoundContainerFactory<FluidStack>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "fluidstack");
         }
 
         @NotNull
@@ -35,7 +35,7 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         }
 
         @Override
-        public ICompoundContainer<FluidStack> create(@NotNull final FluidStack instance, @NotNull final double count)
+        public @NotNull ICompoundContainer<FluidStack> create(@NotNull final FluidStack instance, @NotNull final double count)
         {
             final FluidStack stack = instance.copy();
             stack.setAmount(1);

@@ -13,13 +13,12 @@ import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
-import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.network.messages.PartialSyncResultsMessage;
 import com.ldtteam.aequivaleo.network.messages.SyncCompletedMessage;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -68,7 +67,6 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
         if (playerLoggedInEvent.getPlayer() instanceof ServerPlayer) {
             LOGGER.info("Sending results data to player: " + playerLoggedInEvent.getPlayer().getScoreboardName());
             EquivalencyResults.updatePlayer((ServerPlayer) playerLoggedInEvent.getPlayer());
-            ModRegistries.COMPOUND_TYPE.synchronizePlayer((ServerPlayer) playerLoggedInEvent.getPlayer());
         }
     }
 

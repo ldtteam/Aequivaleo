@@ -3,27 +3,27 @@ package com.ldtteam.aequivaleo.registry;
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.registry.*;
+import com.ldtteam.aequivaleo.api.util.RegistryUtils;
 import com.ldtteam.aequivaleo.network.messages.CompoundTypeSyncedRegistryNetworkPacket;
-import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> & ISyncedRegistryEntry<T>, G extends ISyncedRegistryEntryType<T> & IForgeRegistryEntry<G>> implements ISyncedRegistry<T>
+public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>, G extends ISyncedRegistryEntryType<T>> implements ISyncedRegistry<T>
 {
+    private final ResourceKey<? extends Registry<T>> backingInternalRegistryKey;
     private final Supplier<IForgeRegistry<T>> backingInternalRegistry;
     private final Supplier<IForgeRegistry<G>> backingTypeRegistry;
 
@@ -33,9 +33,11 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     private final List<T> syncedEntriesList = Collections.synchronizedList(Lists.newArrayList());
 
     public ForgeRegistryBackedSyncedRegistry(
-      final Supplier<IForgeRegistry<T>> backingInternalRegistry,
-      final Supplier<IForgeRegistry<G>> backingTypeRegistry
+            final ResourceKey<? extends Registry<T>> backingInternalRegistryKey,
+            final Supplier<IForgeRegistry<T>> backingInternalRegistry,
+            final Supplier<IForgeRegistry<G>> backingTypeRegistry
     ) {
+        this.backingInternalRegistryKey = backingInternalRegistryKey;
         this.backingInternalRegistry = backingInternalRegistry;
         this.backingTypeRegistry = backingTypeRegistry;
 
@@ -67,7 +69,16 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
             return ((ForgeRegistry<T>) backingInternalRegistry.get()).getID(entry);
         }
 
-        return this.syncedEntriesList.indexOf(entry);
+        return backingInternalRegistry.get().getValues().size() + this.syncedEntriesList.indexOf(entry);
+    }
+
+    @Override
+    public T get(final int synchronizationId) {
+        if (backingInternalRegistry.get().getValues().size() < synchronizationId) {
+            return syncedEntriesList.get(synchronizationId - backingInternalRegistry.get().getValues().size());
+        }
+
+        return RegistryUtils.getFull(getBackingRegistryKey()).getValue(synchronizationId);
     }
 
     @Override
@@ -125,15 +136,6 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
     }
 
     @Override
-    public void forEach(final BiConsumer<ResourceLocation, T> consumer)
-    {
-        backingInternalRegistry.get().forEach(
-          t -> consumer.accept(t.getRegistryName(), t)
-        );
-        syncedEntriesMap.forEach(consumer);
-    }
-
-    @Override
     public <E extends IRegistryEntry> IRegistryView<E> createView(Function<T, Optional<E>> viewFilter)
     {
         return new ShadowRegistry<>(this, viewFilter);
@@ -181,6 +183,11 @@ public class ForgeRegistryBackedSyncedRegistry<T extends IForgeRegistryEntry<T> 
         clear();
         this.syncedEntriesList.addAll(entries);
         this.syncedEntriesList.forEach(entry -> this.syncedEntriesMap.put(entry.getRegistryName(), entry));
+    }
+
+    @Override
+    public @NotNull ResourceKey<? extends Registry<T>> getBackingRegistryKey() {
+        return backingInternalRegistryKey;
     }
 
     @NotNull

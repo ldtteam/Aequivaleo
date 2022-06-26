@@ -16,9 +16,10 @@ import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.LoadableStringCompoundContainer;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.HashCache;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.assertj.core.util.Sets;
 import org.junit.Before;
@@ -37,8 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.*;
@@ -47,18 +48,16 @@ import static org.powermock.api.mockito.PowerMockito.*;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
 @PrepareForTest({IAequivaleoAPI.class, DataProvider.class, ICompoundContainerFactoryManager.class})
-public class AbstractInformationProviderTest
-{
+public class AbstractInformationProviderTest {
 
     AbstractInformationProvider saveTestTarget;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         mockStatic(IAequivaleoAPI.class, ICompoundContainerFactoryManager.class);
         final IAequivaleoAPI api = mock(IAequivaleoAPI.class);
         when(IAequivaleoAPI.getInstance()).thenReturn(api);
-        when(api.getGson()).thenReturn(new Gson());
+        when(api.getGson(ICondition.IContext.EMPTY)).thenReturn(new Gson());
 
         when(ICompoundContainerFactoryManager.getInstance()).thenReturn(CompoundContainerFactoryManager.getInstance());
 
@@ -73,9 +72,8 @@ public class AbstractInformationProviderTest
     }
 
     @Test
-    public void assureActCallsCalculate() throws IOException
-    {
-        final HashCache cache = mock(HashCache.class);
+    public void assureActCallsCalculate() throws IOException {
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -94,9 +92,8 @@ public class AbstractInformationProviderTest
     }
 
     @Test
-    public void assureWriteDataCallsGetPaths() throws IOException
-    {
-        final HashCache cache = mock(HashCache.class);
+    public void assureWriteDataCallsGetPaths() throws IOException {
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -114,9 +111,8 @@ public class AbstractInformationProviderTest
     }
 
     @Test
-    public void assureWorldDataIsCalledForOneAdditionalWorlds() throws IOException
-    {
-        final HashCache cache = mock(HashCache.class);
+    public void assureWorldDataIsCalledForOneAdditionalWorlds() throws IOException {
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
 
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
@@ -143,9 +139,8 @@ public class AbstractInformationProviderTest
     }
 
     @Test
-    public void assureWorldDataIsCalledForMultipleAdditionalWorlds() throws IOException
-    {
-        final HashCache cache = mock(HashCache.class);
+    public void assureWorldDataIsCalledForMultipleAdditionalWorlds() throws IOException {
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
 
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
@@ -178,7 +173,7 @@ public class AbstractInformationProviderTest
 
     @Test
     public void assureWriteDataRetrievesDataFromWorldData() throws IOException {
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
@@ -197,25 +192,24 @@ public class AbstractInformationProviderTest
     }
 
     @Test
-    public void assureDataProviderSaveIsCalled() throws Exception
-    {
+    public void assureDataProviderSaveIsCalled() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -230,29 +224,28 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(1));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 
     @Test
-    public void assureDataProviderSaveIsNotCalled() throws Exception
-    {
+    public void assureDataProviderSaveIsNotCalled() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new StringCompoundContainer("test", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new StringCompoundContainer("test", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -267,29 +260,28 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(0));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 
     @Test
-    public void assureDataProviderSaveIsCalledForEachPath() throws Exception
-    {
+    public void assureDataProviderSaveIsCalledForEachPath() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -304,39 +296,38 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(2));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 
     @Test
-    public void assureDataProviderSaveIsCalledForEachEntry() throws Exception
-    {
+    public void assureDataProviderSaveIsCalledForEachEntry() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -351,39 +342,38 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(2));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 
     @Test
-    public void assureDataProviderSaveIsCalledForEachPathAndEachEntry() throws Exception
-    {
+    public void assureDataProviderSaveIsCalledForEachPathAndEachEntry() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
         mockedDataToWrite.put(
-          Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Sets.newLinkedHashSet(new LoadableStringCompoundContainer("test2", 1d)),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test2"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -398,30 +388,29 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(4));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 
 
     @Test
-    public void assureDataProviderSaveIsNotCalledWithEmptyContainerSet() throws Exception
-    {
+    public void assureDataProviderSaveIsNotCalledWithEmptyContainerSet() throws Exception {
         mockStatic(DataProvider.class);
-        doNothing().when(DataProvider.class, "save", any(), any(), any(), any());
+        doNothing().when(DataProvider.class, "saveStable", any(), any(), any());
 
-        final HashCache cache = mock(HashCache.class);
+        final CachedOutput cache = mock(CachedOutput.class);
         final AbstractInformationProvider target = mock(AbstractInformationProvider.class);
         final AbstractInformationProvider.WorldData generalData = mock(AbstractInformationProvider.WorldData.class);
 
         final Map<Set<ICompoundContainer<?>>, AbstractInformationProvider.DataSpec> mockedDataToWrite = Maps.newHashMap();
         mockedDataToWrite.put(
-          Collections.emptySet(),
-          new AbstractInformationProvider.DataSpec(
-            CompoundInstanceData.Mode.REPLACING,
-            Sets.newLinkedHashSet(
-              new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
-            ),
-            Sets.newHashSet()
-          )
+                Collections.emptySet(),
+                new AbstractInformationProvider.DataSpec(
+                        CompoundInstanceData.Mode.REPLACING,
+                        Sets.newLinkedHashSet(
+                                new CompoundInstanceRef(new ResourceLocation(Constants.MOD_ID, "test"), 1d)
+                        ),
+                        Sets.newHashSet()
+                )
         );
 
         when(generalData.getPath()).thenReturn("test");
@@ -436,6 +425,6 @@ public class AbstractInformationProviderTest
 
         target.writeData(cache, new Gson(), generalData);
         verifyStatic(DataProvider.class, times(0));
-        DataProvider.save(any(), any(), any(), any());
+        DataProvider.saveStable(any(), any(), any());
     }
 }

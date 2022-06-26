@@ -6,14 +6,13 @@ import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.api.util.Comparators;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.registries.ForgeRegistryEntry;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,12 +22,11 @@ import java.util.Objects;
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ItemStack>
+    public static final class Factory implements ICompoundContainerFactory<ItemStack>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "itemstack");
         }
 
         @NotNull
@@ -39,7 +37,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         }
 
         @Override
-        public ICompoundContainer<ItemStack> create(@NotNull final ItemStack instance, @NotNull final double count)
+        public @NotNull ICompoundContainer<ItemStack> create(@NotNull final ItemStack instance, @NotNull final double count)
         {
             final ItemStack stack = instance.copy();
             stack.setCount(1);
@@ -146,8 +144,10 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     public String getContentAsFileName()
     {
 
-        return "itemstack_" + Objects.requireNonNull(getContents().getItem().getRegistryName())
-                           .getNamespace() + "_" + getContents().getItem().getRegistryName().getPath();
+        return "itemstack_%s_%s".formatted(
+                Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getNamespace(),
+                Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getPath()
+        );
     }
 
     @Override

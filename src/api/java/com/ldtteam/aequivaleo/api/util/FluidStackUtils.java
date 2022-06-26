@@ -1,7 +1,10 @@
 package com.ldtteam.aequivaleo.api.util;
 
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class FluidStackUtils
 {
@@ -33,10 +36,13 @@ public class FluidStackUtils
      * @param matchNBT   Set to true to match nbt
      * @return True when they are equal except the stacksize, false when not.
      */
+    @SuppressWarnings("SameParameterValue")
     @NotNull
     private static Boolean compareFluidStacksIgnoreStackSize(final FluidStack fluidStack1, final FluidStack fluidStack2, final boolean matchNBT)
     {
-        if (fluidStack1.getFluid().getRegistryName() == fluidStack2.getFluid().getRegistryName())
+        if (Objects.equals(
+                ForgeRegistries.FLUIDS.getKey(fluidStack1.getFluid()),
+                ForgeRegistries.FLUIDS.getKey(fluidStack2.getFluid())))
         {
             // Then sort on NBT
             if (fluidStack1.hasTag() && fluidStack2.hasTag())

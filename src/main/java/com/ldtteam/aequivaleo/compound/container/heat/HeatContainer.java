@@ -3,24 +3,20 @@ package com.ldtteam.aequivaleo.compound.container.heat;
 import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.heat.Heat;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
 
 public class HeatContainer implements ICompoundContainer<Heat>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Heat>
+    public static final class Factory implements ICompoundContainerFactory<Heat>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "heat");
         }
 
         @NotNull

@@ -5,6 +5,7 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
+import net.minecraft.server.ReloadableServerResources;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +20,12 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
     public static final Logger LOGGER = LogManager.getLogger();
     public static final Type HANDLED_TYPE = CompoundInstanceData.class;
 
+    private final ICondition.IContext context;
+
+    public CompoundInstanceDataSerializer(final ICondition.IContext context) {
+        this.context = context;
+    }
+
     @Override
     public CompoundInstanceData deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
     {
@@ -27,7 +34,7 @@ public final class CompoundInstanceDataSerializer implements JsonSerializer<Comp
 
         final JsonObject object = json.getAsJsonObject();
 
-        if (!CraftingHelper.processConditions(object, "conditions")) {
+        if (!CraftingHelper.processConditions(object, "conditions", this.context)) {
             return CompoundInstanceData.DISABLED;
         }
 

@@ -4,14 +4,12 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,12 +19,12 @@ import java.util.Objects;
 public class ItemContainer implements ICompoundContainer<Item>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Item>
+    public static final class Factory implements ICompoundContainerFactory<Item>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "item");
+
         }
 
         @NotNull
@@ -37,7 +35,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         }
 
         @Override
-        public ICompoundContainer<Item> create(@NotNull final Item instance, final double count)
+        public @NotNull ICompoundContainer<Item> create(@NotNull final Item instance, final double count)
         {
             return new ItemContainer(instance, count);
         }
@@ -53,14 +51,14 @@ public class ItemContainer implements ICompoundContainer<Item>
         {
             final JsonObject object = new JsonObject();
             object.addProperty("count", src.getContentsCount());
-            object.addProperty("item", Objects.requireNonNull(src.getContents().getRegistryName()).toString());
+            object.addProperty("item", Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(src.getContents())).toString());
             return object;
         }
 
         @Override
         public void write(final ICompoundContainer<Item> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeVarInt(RegistryUtils.getFull(Item.class).getID(object.getContents()));
+            buffer.writeVarInt(RegistryUtils.getFull(ForgeRegistries.ITEMS.getRegistryKey()).getID(object.getContents()));
             buffer.writeDouble(object.getContentsCount());
         }
 
@@ -68,7 +66,7 @@ public class ItemContainer implements ICompoundContainer<Item>
         public ICompoundContainer<Item> read(final FriendlyByteBuf buffer)
         {
             return new ItemContainer(
-              RegistryUtils.getFull(Item.class).getValue(buffer.readVarInt()),
+              RegistryUtils.getFull(ForgeRegistries.ITEMS.getRegistryKey()).getValue(buffer.readVarInt()),
               buffer.readDouble()
             );
         }
@@ -81,7 +79,7 @@ public class ItemContainer implements ICompoundContainer<Item>
     public ItemContainer(final Item item, final double count) {
         this.item = item;
         this.count = count;
-        this.hashCode = Objects.requireNonNull(item.getRegistryName()).hashCode();
+        this.hashCode = Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(item)).hashCode();
     }
 
     @Override
@@ -122,8 +120,8 @@ public class ItemContainer implements ICompoundContainer<Item>
     @Override
     public String getContentAsFileName()
     {
-        return "item_" + Objects.requireNonNull(getContents().getRegistryName())
-                            .getNamespace() + "_" + getContents().getRegistryName().getPath();
+        return "item_" + Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents()))
+                            .getNamespace() + "_" + Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents())).getPath();
     }
 
     @Override
@@ -134,13 +132,12 @@ public class ItemContainer implements ICompoundContainer<Item>
             return -1;
 
         final Object contents = Validate.notNull(o.getContents());
-        if (!(contents instanceof Item))
+        if (!(contents instanceof final Item otherItem))
         {
             return Item.class.getName().compareTo(contents.getClass().getName());
         }
 
-        final Item otherItem = (Item) contents;
-        return Objects.requireNonNull(otherItem.getRegistryName()).compareTo(item.getRegistryName());
+        return Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(otherItem)).compareTo(Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents())));
     }
 
     @Override
@@ -150,18 +147,16 @@ public class ItemContainer implements ICompoundContainer<Item>
         {
             return true;
         }
-        if (!(o instanceof ItemContainer))
+        if (!(o instanceof final ItemContainer that))
         {
             return false;
         }
-
-        final ItemContainer that = (ItemContainer) o;
 
         if (Double.compare(that.count, count) != 0)
         {
             return false;
         }
-        return Objects.equals(item.getRegistryName(), that.getContents().getRegistryName());
+        return Objects.equals(Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents())), Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(that.getContents())));
     }
 
     @Override
@@ -173,6 +168,6 @@ public class ItemContainer implements ICompoundContainer<Item>
     @Override
     public String toString()
     {
-        return String.format("%s x Item: %s", count, item.getRegistryName());
+        return String.format("%s x Item: %s", count, Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents())));
     }
 }

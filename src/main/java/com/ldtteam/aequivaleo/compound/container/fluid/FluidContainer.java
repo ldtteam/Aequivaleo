@@ -4,14 +4,12 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,12 +19,11 @@ import java.util.Objects;
 public class FluidContainer implements ICompoundContainer<Fluid>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<Fluid>
+    public static final class Factory implements ICompoundContainerFactory<Fluid>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "fluid");
         }
 
         @NotNull
@@ -37,7 +34,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         }
 
         @Override
-        public ICompoundContainer<Fluid> create(@NotNull final Fluid instance, final double count)
+        public @NotNull ICompoundContainer<Fluid> create(@NotNull final Fluid instance, final double count)
         {
             return new FluidContainer(instance, count);
         }
@@ -53,14 +50,14 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         {
             final JsonObject object = new JsonObject();
             object.addProperty("count", src.getContentsCount());
-            object.addProperty("fluid", Objects.requireNonNull(src.getContents().getRegistryName()).toString());
+            object.addProperty("fluid", Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(src.getContents())).toString());
             return object;
         }
 
         @Override
         public void write(final ICompoundContainer<Fluid> object, final FriendlyByteBuf buffer)
         {
-            buffer.writeVarInt(RegistryUtils.getFull(Fluid.class).getID(object.getContents()));
+            buffer.writeVarInt(RegistryUtils.getFull(ForgeRegistries.FLUIDS.getRegistryKey()).getID(object.getContents()));
             buffer.writeDouble(object.getContentsCount());
         }
 
@@ -68,7 +65,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         public ICompoundContainer<Fluid> read(final FriendlyByteBuf buffer)
         {
             return new FluidContainer(
-              RegistryUtils.getFull(Fluid.class).getValue(buffer.readVarInt()),
+              RegistryUtils.getFull(ForgeRegistries.FLUIDS.getRegistryKey()).getValue(buffer.readVarInt()),
               buffer.readDouble()
             );
         }
@@ -81,7 +78,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     public FluidContainer(final Fluid fluid, final double count) {
         this.fluid = fluid;
         this.count = count;
-        this.hashCode = Objects.requireNonNull(fluid.getRegistryName()).hashCode();
+        this.hashCode = Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluid)).hashCode();
     }
 
     @Override
@@ -111,8 +108,10 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     @Override
     public String getContentAsFileName()
     {
-        return "fluid_" + Objects.requireNonNull(getContents().getRegistryName())
-          .getNamespace() + "_" + getContents().getRegistryName().getPath();
+        return "fluid_%s_%s".formatted(
+                Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())).getNamespace(),
+                Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())).getPath()
+        );
     }
 
     @Override
@@ -123,13 +122,12 @@ public class FluidContainer implements ICompoundContainer<Fluid>
             return -1;
 
         final Object contents = Validate.notNull(o.getContents());
-        if (!(contents instanceof Fluid))
+        if (!(contents instanceof final Fluid otherFluid))
         {
             return Fluid.class.getName().compareTo(contents.getClass().getName());
         }
 
-        final Fluid otherFluid = (Fluid) contents;
-        return Objects.requireNonNull(otherFluid.getRegistryName()).compareTo(fluid.getRegistryName());
+        return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(otherFluid)).compareTo(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluid)));
     }
 
     @Override
@@ -139,18 +137,16 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         {
             return true;
         }
-        if (!(o instanceof FluidContainer))
+        if (!(o instanceof final FluidContainer that))
         {
             return false;
         }
-
-        final FluidContainer that = (FluidContainer) o;
 
         if (Double.compare(that.count, count) != 0)
         {
             return false;
         }
-        return Objects.equals(fluid.getRegistryName(), that.getContents().getRegistryName());
+        return Objects.equals(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())), Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(that.getContents())));
     }
 
     @Override
@@ -162,6 +158,6 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     @Override
     public String toString()
     {
-        return String.format("%s x Fluid: %s", count, fluid.getRegistryName());
+        return String.format("%s x Fluid: %s", count, Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())));
     }
 }

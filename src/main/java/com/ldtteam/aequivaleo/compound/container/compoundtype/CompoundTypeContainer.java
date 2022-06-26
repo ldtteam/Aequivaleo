@@ -4,11 +4,9 @@ import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
-import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
@@ -17,12 +15,11 @@ import java.util.Objects;
 public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
 {
 
-    public static final class Factory extends ForgeRegistryEntry<ICompoundContainerFactory<?>> implements ICompoundContainerFactory<ICompoundType>
+    public static final class Factory implements ICompoundContainerFactory<ICompoundType>
     {
 
         public Factory()
         {
-            setRegistryName(Constants.MOD_ID, "compound_type");
         }
 
         @NotNull
@@ -34,7 +31,7 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
 
         @NotNull
         @Override
-        public ICompoundContainer<ICompoundType> create(@NotNull final ICompoundType instance, @NotNull final double count)
+        public ICompoundContainer<ICompoundType> create(@NotNull final ICompoundType instance, final double count)
         {
             return new CompoundTypeContainer(instance, count);
         }
@@ -48,9 +45,7 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
             final ResourceLocation typeName = new ResourceLocation(json.getAsJsonObject().get("compound_type").getAsString());
             final double amount = json.getAsJsonObject().get("count").getAsDouble();
 
-            return ModRegistries.COMPOUND_TYPE.get(
-              typeName
-            )
+            return ModRegistries.COMPOUND_TYPE.get().get(typeName)
                      .map(type -> new CompoundTypeContainer(type, amount))
                      .orElseThrow(() -> new JsonParseException("Could not find compound type with name " + typeName));
         }
@@ -79,9 +74,7 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
         public ICompoundContainer<ICompoundType> read(final FriendlyByteBuf buffer)
         {
             final String typeName = buffer.readUtf(32767);
-            return ModRegistries.COMPOUND_TYPE.get(
-              new ResourceLocation(typeName)
-            )
+            return ModRegistries.COMPOUND_TYPE.get().get(new ResourceLocation(typeName))
                      .map(type -> new CompoundTypeContainer(type, buffer.readDouble()))
                      .orElseThrow(() -> new IllegalArgumentException("Could not find compound type with name " + typeName));
         }

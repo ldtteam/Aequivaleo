@@ -1,8 +1,11 @@
 package com.ldtteam.aequivaleo.api.registry;
 
 import com.mojang.serialization.Codec;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
@@ -43,6 +46,14 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
      * @return The id of the entry.
      */
     int getSynchronizationIdOf(final T entry);
+
+    /**
+     * Gets the entry with the given synchronization id.
+     *
+     * @param synchronizationId The synchronization id of the entry to get.
+     * @return The entry with the given synchronization id.
+     */
+    T get(int synchronizationId);
 
     /**
      * Adds a new entry to the registry.
@@ -104,4 +115,12 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
      * @param entries The entries that should make up the registry.
      */
     void forceLoad(List<T> entries);
+
+    /**
+     * The registry key of the backing static registry.
+     *
+     * @return The registry key of the backing static registry.
+     */
+    @NotNull
+    ResourceKey<? extends Registry<T>> getBackingRegistryKey();
 }

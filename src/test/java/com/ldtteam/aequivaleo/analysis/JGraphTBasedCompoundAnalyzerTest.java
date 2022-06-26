@@ -168,7 +168,7 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
         when(typeReg.getAllKnownRegistryNames()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
         when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
-        ModRegistries.COMPOUND_TYPE = typeReg;
+        ModRegistries.COMPOUND_TYPE = () -> typeReg;
 
         final ModList modList = mock(ModList.class);
         when(modList.getMods()).thenReturn(Collections.emptyList());

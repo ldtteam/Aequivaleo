@@ -3,11 +3,11 @@ package com.ldtteam.aequivaleo.registry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -15,6 +15,32 @@ public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> 
 {
     private final IRegistryView<T> source;
     private final Function<T, Optional<E>> filter;
+
+    public ShadowRegistry(final IForgeRegistry<T> source, final Function<T, Optional<E>> viewFilter) {
+        this.source = new IRegistryView<T>() {
+            @Override
+            public Optional<T> get(final ResourceLocation name) {
+                return Optional.ofNullable(source.getValue(name));
+            }
+
+            @Override
+            public Stream<T> stream() {
+                return source.getValues().stream();
+            }
+
+            @Override
+            public <E extends IRegistryEntry> IRegistryView<E> createView(final Function<T, Optional<E>> viewFilter) {
+                return new ShadowRegistry<>(this, viewFilter);
+            }
+
+            @NotNull
+            @Override
+            public Iterator<T> iterator() {
+                return source.iterator();
+            }
+        };
+        this.filter = viewFilter;
+    }
 
     public ShadowRegistry(final IRegistryView<T> source, final Function<T, Optional<E>> viewFilter) {
         this.source = source;
@@ -37,15 +63,6 @@ public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> 
           .map(filter)
           .filter(Optional::isPresent)
           .map(Optional::get);
-    }
-
-    @Override
-    public void forEach(final BiConsumer<ResourceLocation, E> consumer)
-    {
-        source.forEach((name, entry) -> {
-           final Optional<E> filtered = filter.apply(entry);
-            filtered.ifPresent(e -> consumer.accept(e.getRegistryName(), e));
-        });
     }
 
     @Override

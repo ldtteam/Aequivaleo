@@ -28,13 +28,11 @@ public class TagIngredient implements IRecipeIngredient
         this.tagName = TagKey.create((ResourceKey<? extends Registry<Object>>) this.registryName, tagName);
         this.count = count;
 
-        this.containers = Suppliers.memoize(() -> {
-            return ServerLifecycleHooks.getCurrentServer().registryAccess().registryOrThrow(this.registryName)
-                     .getOrCreateTag((TagKey<Object>) this.tagName)
-                     .stream()
-                     .map(e -> IAequivaleoAPI.getInstance().getCompoundContainerFactoryManager().wrapInContainer(e.value(), 1))
-                     .collect(Collectors.toCollection(TreeSet::new));
-        });
+        this.containers = Suppliers.memoize(() -> ServerLifecycleHooks.getCurrentServer().registryAccess().registryOrThrow(this.registryName)
+                 .getOrCreateTag((TagKey<Object>) this.tagName)
+                 .stream()
+                 .map(e -> IAequivaleoAPI.getInstance().getCompoundContainerFactoryManager().wrapInContainer(e.value(), 1))
+                 .collect(Collectors.toCollection(TreeSet::new)));
     }
 
     @Override
@@ -51,7 +49,7 @@ public class TagIngredient implements IRecipeIngredient
 
     public ResourceLocation getRegistryName()
     {
-        return registryName.getRegistryName();
+        return registryName.registry();
     }
 
     public ResourceLocation getTagName()

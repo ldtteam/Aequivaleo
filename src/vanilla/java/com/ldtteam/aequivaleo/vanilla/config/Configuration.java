@@ -13,8 +13,8 @@ public class Configuration
     /**
      * Loaded serverside, synced on connection
      */
-    private final ModConfig server;
-    private final ServerConfiguration serverConfig;
+    private final ModConfig common;
+    private final CommonConfiguration commonConfiguration;
 
     /**
      * Builds configuration tree.
@@ -23,15 +23,15 @@ public class Configuration
      */
     public Configuration(final ModContainer modContainer)
     {
-        final Pair<ServerConfiguration, ForgeConfigSpec> ser = new ForgeConfigSpec.Builder().configure(ServerConfiguration::new);
-        server = new ModConfig(ModConfig.Type.SERVER, ser.getRight(), modContainer, "vanilla-aequivaleo-server.toml");
-        serverConfig = ser.getLeft();
-        modContainer.addConfig(server);
+        final Pair<CommonConfiguration, ForgeConfigSpec> ser = new ForgeConfigSpec.Builder().configure(CommonConfiguration::new);
+        common = new ModConfig(ModConfig.Type.COMMON, ser.getRight(), modContainer, "vanilla-aequivaleo.toml");
+        commonConfiguration = ser.getLeft();
+        modContainer.addConfig(common);
     }
 
-    public ServerConfiguration getServer()
+    public CommonConfiguration getCommon()
     {
-        return serverConfig;
+        return commonConfiguration;
     }
 
 }

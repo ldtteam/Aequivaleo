@@ -4,7 +4,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
@@ -15,8 +14,7 @@ import java.util.function.Predicate;
  */
 public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundContainer<T>>,
                                                            JsonDeserializer<ICompoundContainer<T>>,
-                                                           IPacketBufferSerializer<ICompoundContainer<T>>,
-                                                           IForgeRegistryEntry<ICompoundContainerFactory<?>>
+                                                           IPacketBufferSerializer<ICompoundContainer<T>>
 {
 
     /**
@@ -26,7 +24,7 @@ public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundCo
     @NotNull
     default Predicate<Object> getCanHandlePredicate() {
         return getContainedType()::isInstance;
-    };
+    }
 
     /**
      * The contained type, used in {@link #getCanHandlePredicate()} to create an instance of check.

@@ -13,22 +13,28 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
+import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
+import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * The API for aequivaleo.
  * Retrieved via an IMC with a callback or via its {@link #getInstance()} method.
  */
-public interface IAequivaleoAPI
-{
+public interface IAequivaleoAPI {
 
     /**
      * Returns the instance of the api, once it has been initialized.
@@ -42,6 +48,7 @@ public interface IAequivaleoAPI
 
     /**
      * Gives access to the registry that handles the callbacks that convert game objects to their wrapped instances.
+     *
      * @return The registry that handles the callbacks used to convert game objects into wrapped counterparts.
      */
     ICompoundContainerFactoryManager getCompoundContainerFactoryManager();
@@ -55,6 +62,7 @@ public interface IAequivaleoAPI
 
     /**
      * Gives access to the registry that holds the recipe information for a given world.
+     *
      * @param worldKey The world key to get the equivalency recipe information for.
      * @return The recipe registry for a given world.
      */
@@ -102,30 +110,33 @@ public interface IAequivaleoAPI
     /**
      * Sets up a new Gson instance and create the serialization handler.
      *
+     * @param context The server context to use for deserialization.
      * @return The Gson serialization handler.
      */
-    default Gson getGson() {
-        return setupGson()
-                 .setPrettyPrinting()
-                 .create();
+    default Gson getGson(final ICondition.IContext context) {
+        return setupGson(context)
+                .setPrettyPrinting()
+                .create();
     }
 
     /**
      * Setups a new {@link GsonBuilder} to use with Aequivaleos serializers.
      *
+     * @param context The server context to use for deserialization.
      * @return The new {@link GsonBuilder} setup to be used with Aequivaleo.
      */
-    default GsonBuilder setupGson() {
-        return setupGson(new GsonBuilder());
+    default GsonBuilder setupGson(final ICondition.IContext context) {
+        return setupGson(new GsonBuilder(), context);
     }
 
     /**
      * Allows for Aequivaleo to inject its serialization handlers into the given {@link GsonBuilder}.
      *
      * @param builder The builder to inject serializers into.
+     * @param context The server context to use for deserialization.
      * @return The builder with the serializers setup as type adapters.
      */
-    GsonBuilder setupGson(GsonBuilder builder);
+    GsonBuilder setupGson(GsonBuilder builder, final ICondition.IContext context);
 
     /**
      * Gives access to the recipe type processing registry.
@@ -162,7 +173,7 @@ public interface IAequivaleoAPI
      * @return The aequivaleo mod container.
      */
     default ModContainer getAequivaleoContainer() {
-        return ModList.get().getModContainerById(Constants.MOD_ID).orElseThrow(()->new RuntimeException("Where is Aequivaleo???!"));
+        return ModList.get().getModContainerById(Constants.MOD_ID).orElseThrow(() -> new RuntimeException("Where is Aequivaleo???!"));
     }
 
     /**
@@ -180,16 +191,25 @@ public interface IAequivaleoAPI
      */
     IBlacklistDimensionManager getBlacklistDimensionManager();
 
+    /**
+     * Makes an Aequivaleo registry view of the given registry and the view filter.
+     *
+     * @param registry The registry to filter.
+     * @param viewFilter The view filter to apply.
+     * @return The registry view for that filter from the given registry.
+     * @param <T> The type of the source registry.
+     * @param <E> The type of the view entries.
+     */
+    <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter);
+
     class Holder {
         private static IAequivaleoAPI apiInstance;
 
-        public static IAequivaleoAPI getInstance()
-        {
+        public static IAequivaleoAPI getInstance() {
             return apiInstance;
         }
 
-        public static void setInstance(final IAequivaleoAPI instance)
-        {
+        public static void setInstance(final IAequivaleoAPI instance) {
             if (apiInstance != null)
                 throw new IllegalStateException("Can not setup API twice!");
 

@@ -18,7 +18,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.tags.Tag;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -120,8 +119,9 @@ public final class WorldBootstrapper
                         ));
                   } catch (Exception ex) {
                       LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                        item.getRegistryName(),
+                        ForgeRegistries.ITEMS.getKey(item),
                         o), ex);
+
                   }
               },
               consumer -> {
@@ -154,7 +154,7 @@ public final class WorldBootstrapper
                         ));
                   } catch (Exception ex) {
                       LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                        fluid.getRegistryName(),
+                        ForgeRegistries.FLUIDS.getKey(fluid),
                         o), ex);
                   }
               },
@@ -171,7 +171,7 @@ public final class WorldBootstrapper
     private static void doHandleCompoundTypeWrappers(
       @NotNull final ServerLevel world) {
         LOGGER.info(String.format("Setting up compound type instantiations: %s", world.dimension().location()));
-        ModRegistries.COMPOUND_TYPE.forEach(type -> ICompoundInformationRegistry.getInstance(world.dimension())
+        ModRegistries.COMPOUND_TYPE.get().forEach(type -> ICompoundInformationRegistry.getInstance(world.dimension())
           .registerLocking(type, Sets.newHashSet(new CompoundInstance(type, 1))));
     }
 

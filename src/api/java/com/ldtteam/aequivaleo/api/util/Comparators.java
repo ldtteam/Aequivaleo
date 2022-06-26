@@ -143,7 +143,7 @@ public final class Comparators
                 }
                 else
                 {
-                    return Objects.requireNonNull(fluidStack1.getFluid().getRegistryName()).compareTo(fluidStack2.getFluid().getRegistryName());
+                    return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluidStack1.getFluid())).compareTo(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluidStack2.getFluid())));
                 }
             }
             else

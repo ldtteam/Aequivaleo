@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.api.compound.type;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntryType;
-import net.minecraftforge.registries.IForgeRegistryEntry;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -18,10 +18,10 @@ import java.util.Comparator;
  *   * Energy
  *   * etc.
  */
-public interface ICompoundType extends IForgeRegistryEntry<ICompoundType>, Comparable<ICompoundType>, ISyncedRegistryEntry<ICompoundType>
+public interface ICompoundType extends Comparable<ICompoundType>, ISyncedRegistryEntry<ICompoundType>
 {
 
-    Comparator<ICompoundType> COMPARATOR = Comparator.nullsLast(Comparator.comparing(IForgeRegistryEntry::getRegistryName));
+    Comparator<ICompoundType> COMPARATOR = Comparator.nullsLast(Comparator.comparing((type) -> ModRegistries.COMPOUND_TYPE.get().getRegistryNameOf(type)));
 
     /**
      * The group this compound type belongs to.

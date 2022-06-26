@@ -93,9 +93,8 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
      * @throws IllegalArgumentException When T can not be wrapped properly {@code canBeWrapped(tInstance) == false;}
      */
     @Override
-    @SuppressWarnings(Suppression.UNCHECKED)
     @NotNull
-    public <T> ICompoundContainer<T> wrapInContainer(@NotNull final T gameObject, @NotNull final double count) throws IllegalArgumentException
+    public <T> ICompoundContainer<T> wrapInContainer(@NotNull final T gameObject, final double count) throws IllegalArgumentException
     {
         notNull(gameObject);
         return getFactoryFor(gameObject).map(factory -> factory.create(gameObject, count))
@@ -117,9 +116,9 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         for (Iterator<ExactTypedRegistryEntry<?>> iterator = this.typedRegistryEntries.descendingIterator(); iterator.hasNext(); )
         {
             final ExactTypedRegistryEntry<?> e = iterator.next();
-            if (e.getCanHandlePredicate().test(input))
+            if (e.canHandlePredicate().test(input))
             {
-                ICompoundContainerFactory<?> f = e.getFactory();
+                ICompoundContainerFactory<?> f = e.factory();
                 ICompoundContainerFactory<T> tiCompoundContainerFactory = (ICompoundContainerFactory<T>) f;
                 return Optional.of(tiCompoundContainerFactory);
             }
@@ -141,8 +140,7 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         if (containerFactory == null)
             throw new JsonParseException(String.format("The given container type is unknown: %s", typeName));
 
-        final ICompoundContainer<?> container = containerFactory.deserialize(dataElement, typeOfT, context);
-        return container;
+        return containerFactory.deserialize(dataElement, typeOfT, context);
     }
 
     @Override
@@ -151,12 +149,11 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         return serializeInternally(src, typeOfSrc, context);
     }
 
-    @SuppressWarnings(Suppression.UNCHECKED)
     private <T> JsonElement serializeInternally(final ICompoundContainer<T> src, final Type typeOfSrc, final JsonSerializationContext context) {
         final ICompoundContainerFactory<T> containerFactory = this.getFactoryFor(src.getContents()).orElseThrow(() -> new JsonParseException("The given container can not be serialized. Its contained type: " + src.getContents().getClass().getCanonicalName() + " has no registered factory."));
 
         final JsonObject resultData = new JsonObject();
-        resultData.addProperty("type", Objects.requireNonNull(containerFactory.getRegistryName()).toString());
+        resultData.addProperty("type", Objects.requireNonNull(ModRegistries.CONTAINER_FACTORY.get().getKey(containerFactory)).toString());
         resultData.add("data", containerFactory.serialize(src, ICompoundContainer.class, context));
 
         return resultData;
@@ -168,7 +165,6 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         writeInternally(object, buffer);
     }
 
-    @SuppressWarnings(Suppression.UNCHECKED)
     private <T> void writeInternally(final ICompoundContainer<T> object, final FriendlyByteBuf buffer)
     {
         final ICompoundContainerFactory<T> containerFactory = this.getFactoryFor(object.getContents()).orElseThrow(() -> new JsonParseException("The given container can not be serialized. Its contained type: " + object.getContents().getClass().getCanonicalName() + " has no registered factory."));
@@ -186,31 +182,12 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         return internalRegistry.getValue(buffer.readVarInt()).read(buffer);
     }
 
-    private static class ExactTypedRegistryEntry<T>
-    {
-        @NotNull
-        private final Predicate<Object> canHandlePredicate;
-
-        @NotNull
-        private final ICompoundContainerFactory<T> factory;
-
-        private ExactTypedRegistryEntry(
-          @NotNull final Predicate<Object> canHandlePredicate, @NotNull final ICompoundContainerFactory<T> factory)
-        {
-            this.canHandlePredicate = canHandlePredicate;
-            this.factory = factory;
+    private record ExactTypedRegistryEntry<T>(@NotNull Predicate<Object> canHandlePredicate,
+                                              @NotNull ICompoundContainerFactory<T> factory) {
+            private ExactTypedRegistryEntry(
+                    @NotNull final Predicate<Object> canHandlePredicate, @NotNull final ICompoundContainerFactory<T> factory) {
+                this.canHandlePredicate = canHandlePredicate;
+                this.factory = factory;
+            }
         }
-
-        @NotNull
-        public Predicate<Object> getCanHandlePredicate()
-        {
-            return canHandlePredicate;
-        }
-
-        @NotNull
-        ICompoundContainerFactory<T> getFactory()
-        {
-            return factory;
-        }
-    }
 }

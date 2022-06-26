@@ -14,12 +14,12 @@ import java.util.regex.PatternSyntaxException;
  * Loaded serverside,
 			  synced on connection.
  */
-public class ServerConfiguration extends AbstractAequivaleoConfiguration
+public class CommonConfiguration extends AbstractAequivaleoConfiguration
 {
     public ForgeConfigSpec.ConfigValue<List<? extends String>> itemTagsToRegister;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
 
-    protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
+    protected CommonConfiguration(final ForgeConfigSpec.Builder builder)
     {
 
         createCategory(builder,

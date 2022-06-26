@@ -15,13 +15,12 @@ public class PacketBufferUtils
     }
 
     public static void writeCompoundInstance(@NotNull final CompoundInstance instance, @NotNull final FriendlyByteBuf buffer) {
-        final ForgeRegistry<ICompoundType> registry = RegistryUtils.getFull(ICompoundType.class);
-        buffer.writeVarInt(registry.getID(instance.getType()));
+        buffer.writeVarInt(ModRegistries.COMPOUND_TYPE.get().getSynchronizationIdOf(instance.getType()));
         buffer.writeDouble(instance.getAmount());
     }
 
     public static CompoundInstance readCompoundInstance(@NotNull final FriendlyByteBuf buffer) {
-        final ForgeRegistry<ICompoundType> registry = RegistryUtils.getFull(ICompoundType.class);
+        final ForgeRegistry<ICompoundType> registry = RegistryUtils.getFull(ModRegistries.COMPOUND_TYPE.get().getBackingRegistryKey());
         return new CompoundInstance(
           registry.getValue(buffer.readVarInt()),
           buffer.readDouble()

@@ -11,8 +11,8 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeData;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.data.GenericRecipeDataBuilder;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.HashCache;
 import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
@@ -43,11 +43,11 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
     protected AbstractGenericRecipeDataGen(final DataGenerator dataGenerator) {this.dataGenerator = dataGenerator;}
 
     @Override
-    public void run(@NotNull final HashCache cache) throws IOException
+    public void run(@NotNull final CachedOutput cache) throws IOException
     {
         this.calculateDataToSave();
 
-        final Gson gson = IAequivaleoAPI.getInstance().getGson();
+        final Gson gson = IAequivaleoAPI.getInstance().getGson(ICondition.IContext.EMPTY);
 
         this.writeData(
           cache,
@@ -67,7 +67,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
 
     @VisibleForTesting
     void writeData(
-      final HashCache cache,
+      final CachedOutput cache,
       final Gson gson,
       final WorldData worldData
     ) throws IOException
@@ -78,8 +78,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
 
             final Path itemPath = dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/recipes/%s", name.getNamespace(), worldData.getPath())).resolve(String.format("%s.json", name.getPath()));
 
-            DataProvider.save(
-              gson,
+            DataProvider.saveStable(
               cache,
               gson.toJsonTree(entry.getValue()),
               itemPath

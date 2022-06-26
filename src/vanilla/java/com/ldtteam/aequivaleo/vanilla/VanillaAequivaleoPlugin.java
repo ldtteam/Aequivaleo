@@ -74,7 +74,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         LOGGER.info("Running aequivaleo common setup.");
         LOGGER.debug("Registering tags.");
 
-        configuration.getServer().itemTagsToRegister
+        configuration.getCommon().itemTagsToRegister
           .get()
           .stream()
           .map(ResourceLocation::new)
@@ -147,7 +147,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
 
         final List<Recipe<?>> genericRecipes = Lists.newArrayList();
 
-        final List<Pattern> blackListPatterns = configuration.getServer().recipeTypeNamePatternsToExclude
+        final List<Pattern> blackListPatterns = configuration.getCommon().recipeTypeNamePatternsToExclude
           .get()
           .stream()
           .map(Pattern::compile)

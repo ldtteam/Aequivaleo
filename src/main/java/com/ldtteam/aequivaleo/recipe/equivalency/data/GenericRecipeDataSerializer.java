@@ -11,17 +11,21 @@ import com.ldtteam.aequivaleo.compound.data.serializers.CompoundContainerSetSeri
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
 import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.common.crafting.conditions.TrueCondition;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.function.Function;
 
 public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipeData>, JsonDeserializer<GenericRecipeData>
 {
     public static final Type HANDLED_TYPE = new TypeToken<GenericRecipeData>(){}.getType();
+
+    private final ICondition.IContext context;
+
+    public GenericRecipeDataSerializer(final ICondition.IContext context) {
+        this.context = context;
+    }
 
     @Override
     public GenericRecipeData deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
@@ -38,7 +42,7 @@ public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipe
 
         final GenericRecipeDataBuilder builder = new GenericRecipeDataBuilder();
 
-        if (!CraftingHelper.processConditions(object, "conditions")) {
+        if (!CraftingHelper.processConditions(object, "conditions", this.context)) {
             return GenericRecipeData.DISABLED;
         }
 

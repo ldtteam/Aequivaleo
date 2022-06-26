@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.network.messages;
 
 import com.google.common.collect.Lists;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
+import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.mojang.serialization.Codec;
@@ -36,11 +37,11 @@ public class CompoundTypeSyncedRegistryNetworkPacket implements IMessage
     @Override
     public void toBytes(final FriendlyByteBuf buf)
     {
-        final Codec<List<ICompoundType>> registryCodec = ModRegistries.COMPOUND_TYPE.getCodec();
+        final Codec<List<ICompoundType>> registryCodec = ModRegistries.COMPOUND_TYPE.get().getCodec();
 
-        DataResult<Tag> dataresult = registryCodec.encodeStart(NbtOps.INSTANCE, ModRegistries.COMPOUND_TYPE.getSyncableEntries());
+        DataResult<Tag> dataresult = registryCodec.encodeStart(NbtOps.INSTANCE, ModRegistries.COMPOUND_TYPE.get().getSyncableEntries());
         dataresult.error().ifPresent((p_178349_) -> {
-            throw new EncoderException("Failed to encode: " + p_178349_.message() + " " + ModRegistries.COMPOUND_TYPE.getSyncableEntries());
+            throw new EncoderException("Failed to encode: " + p_178349_.message() + " " + ModRegistries.COMPOUND_TYPE.get().getSyncableEntries());
         });
 
         final CompoundTag dataCarrier = new CompoundTag();
@@ -51,7 +52,7 @@ public class CompoundTypeSyncedRegistryNetworkPacket implements IMessage
 
     public void fromBytes(final FriendlyByteBuf buf)
     {
-        final Codec<List<ICompoundType>> registryCodec = ModRegistries.COMPOUND_TYPE.getCodec();
+        final Codec<List<ICompoundType>> registryCodec = ModRegistries.COMPOUND_TYPE.get().getCodec();
         final CompoundTag dataCarrier = buf.readAnySizeNbt();
         final ListTag listTag = Objects.requireNonNull(dataCarrier).getList("data", 10);
 
@@ -73,10 +74,10 @@ public class CompoundTypeSyncedRegistryNetworkPacket implements IMessage
     @Override
     public void onExecute(final NetworkEvent.Context ctxIn, final boolean isLogicalServer)
     {
-        ModRegistries.COMPOUND_TYPE.forceLoad(payLoad);
+        ModRegistries.COMPOUND_TYPE.get().forceLoad(payLoad);
 
         PluginManger.getInstance().getPlugins().forEach(
-          plugin -> plugin.onCompoundTypeRegistrySync()
+                IAequivaleoPlugin::onCompoundTypeRegistrySync
         );
     }
 }

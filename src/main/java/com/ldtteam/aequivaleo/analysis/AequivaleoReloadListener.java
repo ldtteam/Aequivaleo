@@ -37,6 +37,7 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.Util;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
@@ -65,30 +66,27 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unchecked")
 @Mod.EventBusSubscriber(modid = Constants.MOD_ID)
 public class AequivaleoReloadListener implements PreparableReloadListener
 {
-
-    private static final AequivaleoReloadListener INSTANCE = new AequivaleoReloadListener();
-
     private static final String JSON_EXTENSION        = ".json";
     private static final int    JSON_EXTENSION_LENGTH = JSON_EXTENSION.length();
 
     private static final Logger           LOGGER            = LogManager.getLogger(AequivaleoReloadListener.class);
     private static final ResourceLocation GENERAL_DATA_NAME = new ResourceLocation(Constants.MOD_ID, "general");
 
-    private static final Gson GSON = IAequivaleoAPI.getInstance().getGson();
 
     private static final List<Supplier<ISyncedRegistry<?>>> SYNCED_REGISTRIES = new ArrayList<>();
     static {
-        SYNCED_REGISTRIES.add(() -> ModRegistries.COMPOUND_TYPE);
+        SYNCED_REGISTRIES.add((Supplier<ISyncedRegistry<?>>) (Object) ModRegistries.COMPOUND_TYPE);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onAddReloadListener(final AddReloadListenerEvent reloadListenerEvent)
     {
         LOGGER.info("Registering reload listener for graph rebuilding.");
-        reloadListenerEvent.addListener(INSTANCE);
+        reloadListenerEvent.addListener(new AequivaleoReloadListener(reloadListenerEvent.getServerResources()));
     }
 
     @SubscribeEvent
@@ -96,7 +94,8 @@ public class AequivaleoReloadListener implements PreparableReloadListener
     {
         LOGGER.info("Building initial equivalency graph.");
 
-        INSTANCE.reload(
+        final AequivaleoReloadListener listener = new AequivaleoReloadListener(serverStartedEvent.getServer().getServerResources().managers());
+        listener.reload(
           new PreparationBarrier() {
               @Override
               public <T> @NotNull CompletableFuture<T> wait(final @NotNull T preparedValue)
@@ -114,8 +113,13 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         );
     }
 
-    public AequivaleoReloadListener()
+    private final ReloadableServerResources serverResources;
+    private final Gson gson;
+
+    public AequivaleoReloadListener(final ReloadableServerResources serverResources)
     {
+        this.serverResources = serverResources;
+        this.gson = IAequivaleoAPI.getInstance().getGson(serverResources.getConditionContext());
     }
 
     private static void reloadResources(final DataDrivenData data, final boolean forceReload, final ClassLoader classLoader)
@@ -162,7 +166,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
         }
     }
 
-    private static DataDrivenData parseData(final ResourceManager resourceManager)
+    private DataDrivenData parseData(final ResourceManager resourceManager)
     {
         if (ServerLifecycleHooks.getCurrentServer() == null)
         {
@@ -299,25 +303,22 @@ public class AequivaleoReloadListener implements PreparableReloadListener
     }
 
     @NotNull
-    private static List<CompoundInstanceData> readInstanceData(@NotNull final ResourceManager resourceManager, @NotNull final String targetPath)
+    private List<CompoundInstanceData> readInstanceData(@NotNull final ResourceManager resourceManager, @NotNull final String targetPath)
     {
         final List<CompoundInstanceData> collectedData = Lists.newArrayList();
         final int targetPathLength = targetPath.length() + 1; //Account for the separator.
 
-        final Gson gson = IAequivaleoAPI.getInstance().getGson();
-
-        resourceManager.listResources(targetPath, s -> s.endsWith(JSON_EXTENSION)).forEach(resourceLocation -> {
+        resourceManager.listResources(targetPath, s -> s.getPath().endsWith(JSON_EXTENSION)).forEach((ResourceLocation resourceLocation, Resource resource) -> {
             String locationPath = resourceLocation.getPath();
             ResourceLocation resourceLocationWithoutExtension =
               new ResourceLocation(resourceLocation.getNamespace(), locationPath.substring(targetPathLength, locationPath.length() - JSON_EXTENSION_LENGTH));
 
             try (
-              Resource iresource = resourceManager.getResource(resourceLocation);
-              InputStream inputstream = iresource.getInputStream();
+              InputStream inputstream = resource.open();
               Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8))
             )
             {
-                CompoundInstanceData data = gson.fromJson(reader, CompoundInstanceDataSerializer.HANDLED_TYPE);
+                CompoundInstanceData data = this.gson.fromJson(reader, CompoundInstanceDataSerializer.HANDLED_TYPE);
                 if (data != null)
                 {
                     collectedData.add(data);
@@ -339,14 +340,12 @@ public class AequivaleoReloadListener implements PreparableReloadListener
     }
 
     @NotNull
-    private static List<IEquivalencyRecipe> readAdditionalRecipeData(@NotNull final ResourceManager resourceManager, @NotNull final String targetPath)
+    private List<IEquivalencyRecipe> readAdditionalRecipeData(@NotNull final ResourceManager resourceManager, @NotNull final String targetPath)
     {
         final List<IEquivalencyRecipe> collectedData = Lists.newArrayList();
         final int targetPathLength = targetPath.length() + 1; //Account for the separator.
 
-        final Gson gson = IAequivaleoAPI.getInstance().getGson();
-
-        resourceManager.listResources(targetPath, s -> s.endsWith(JSON_EXTENSION)).forEach(resourceLocation -> {
+        resourceManager.listResources(targetPath, s -> s.getPath().endsWith(JSON_EXTENSION)).forEach((ResourceLocation resourceLocation, Resource resource) -> {
             String locationPath = resourceLocation.getPath();
             ResourceLocation resourceLocationWithoutExtension =
               new ResourceLocation(resourceLocation.getNamespace(), locationPath.substring(targetPathLength, locationPath.length() - JSON_EXTENSION_LENGTH));
@@ -354,15 +353,14 @@ public class AequivaleoReloadListener implements PreparableReloadListener
             final ResourceLocation name = new ResourceLocation(resourceLocationWithoutExtension.getNamespace(), resourceLocationWithoutExtension.getPath().replace(targetPath, ""));
 
             try (
-              Resource iresource = resourceManager.getResource(resourceLocation);
-              InputStream inputstream = iresource.getInputStream();
+              InputStream inputstream = resource.open();
               Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8))
             )
             {
                 GenericRecipeData data = gson.fromJson(reader, GenericRecipeDataSerializer.HANDLED_TYPE);
                 if (data != null)
                 {
-                    if (data.getConditions().size() != 1 || data.getConditions().iterator().next().test())
+                    if (data.getConditions().size() != 1 || data.getConditions().iterator().next().test(this.serverResources.getConditionContext()))
                     {
                         collectedData.add(new GenericRecipeEquivalencyRecipe(name, data.getInputs(), data.getRequiredKnownOutputs(), data.getOutputs()));
                     }
@@ -570,8 +568,8 @@ public class AequivaleoReloadListener implements PreparableReloadListener
             final String targetPath = type.getDirectoryName();
             final int targetPathLength = targetPath.length();
 
-            resourceManager.listResources(type.getDirectoryName(), s -> s.endsWith(JSON_EXTENSION))
-              .forEach(entryLocation -> {
+            resourceManager.listResources(type.getDirectoryName(), s -> s.getPath().endsWith(JSON_EXTENSION))
+              .forEach((ResourceLocation entryLocation, Resource resource) -> {
                   String locationPath = entryLocation.getPath();
                   ResourceLocation resourceLocationWithoutExtension =
                     new ResourceLocation(entryLocation.getNamespace(), locationPath.substring(targetPathLength, locationPath.length() - JSON_EXTENSION_LENGTH));
@@ -579,8 +577,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
                   final ResourceLocation name = new ResourceLocation(resourceLocationWithoutExtension.getNamespace(), resourceLocationWithoutExtension.getPath().replace(targetPath, ""));
 
                   try (
-                    Resource resource = resourceManager.getResource(entryLocation);
-                    InputStream inputstream = resource.getInputStream();
+                    InputStream inputstream = resource.open();
                     Reader reader = new BufferedReader(new InputStreamReader(inputstream, StandardCharsets.UTF_8))
                   )
                   {
@@ -588,7 +585,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener
                           throw new IllegalStateException("Tried to load a registry entry for a type without a codec");
                       }
 
-                      final DataResult<? extends Pair<? extends T, JsonElement>> entry = type.getEntryCodec().decode(JsonOps.INSTANCE, GSON.fromJson(reader, JsonElement.class));
+                      final DataResult<? extends Pair<? extends T, JsonElement>> entry = type.getEntryCodec().decode(JsonOps.INSTANCE, this.gson.fromJson(reader, JsonElement.class));
                       if (entry.error().isPresent()) {
                           LOGGER.error("Failed to load {}: {}", name, entry.error().get());
                       }

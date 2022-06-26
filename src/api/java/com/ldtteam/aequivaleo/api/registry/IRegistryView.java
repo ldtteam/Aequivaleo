@@ -4,6 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -39,13 +40,6 @@ public interface IRegistryView<T extends IRegistryEntry> extends Iterable<T>
      * @return The stream of all entries in this registry.
      */
     Stream<T> stream();
-
-    /**
-     * Invokes the callback for each entry in this registry.
-     *
-     * @param consumer The key and value consumer.
-     */
-    void forEach(BiConsumer<ResourceLocation, T> consumer);
 
     /**
      * Creates a filtered view of this registry.
