@@ -145,10 +145,36 @@ public class JGraphTBasedCompoundAnalyzer
 
             if (node == null)
             {
-                throw new IllegalStateException("Container node for locked information needs to be in the graph node map!");
+                throw new IllegalStateException("Container node for value information needs to be in the graph node map!");
             }
 
             node.forceSetResult(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().get(valueWrapper));
+        }
+
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().keySet())
+        {
+            INode node;
+            if (!recipeGraph.containsVertex(new ContainerNode(valueWrapper)))
+            {
+                compoundNodes.putIfAbsent(valueWrapper, new ContainerNode(valueWrapper));
+
+                final INode inputWrapperGraphNode = compoundNodes.get(valueWrapper);
+                node = inputWrapperGraphNode;
+                recipeGraph.addVertex(inputWrapperGraphNode);
+            }
+            else
+            {
+                final Set<IEdge> incomingEdgesToRemove = new HashSet<>(recipeGraph.incomingEdgesOf(compoundNodes.get(valueWrapper)));
+                recipeGraph.removeAllEdges(incomingEdgesToRemove);
+                node = compoundNodes.get(valueWrapper);
+            }
+
+            if (node == null)
+            {
+                throw new IllegalStateException("Container node for base information needs to be in the graph node map!");
+            }
+
+            node.setBaseResult(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().get(valueWrapper));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get())

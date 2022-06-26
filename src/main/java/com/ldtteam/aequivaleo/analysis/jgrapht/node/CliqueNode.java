@@ -22,54 +22,46 @@ import java.util.*;
 
 @SuppressWarnings("SuspiciousMethodCalls")
 public class CliqueNode
-  implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode, IStartAnalysisNode
-{
+        implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode, IStartAnalysisNode {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private       Set<CompoundInstance> finalResult      = null;
-    private final IGraph                ioGraph          = new AequivaleoGraph();
-    private final Set<IContainerNode>   innerCliqueNodes = Sets.newHashSet();
-    private       int                   hash;
+    private Set<CompoundInstance> finalResult = null;
+    private final IGraph ioGraph = new AequivaleoGraph();
+    private final Set<IContainerNode> innerCliqueNodes = Sets.newHashSet();
+    private int hash;
 
     private final Table<INode, INode, IEdge> disabledIoGraphEdges = HashBasedTable.create();
 
     private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates = ArrayListMultimap.create();
 
     public CliqueNode(
-      final IGraph sourceGraph,
-      final Set<INode> innerVertices
-    )
-    {
+            final IGraph sourceGraph,
+            final Set<INode> innerVertices
+    ) {
         setupGraphs(sourceGraph, innerVertices);
         AnalysisLogHandler.debug(LOGGER, String.format("Created inner graph node: %s", toString()));
     }
 
     @Override
-    public IGraph getIOGraph(final IGraph graph)
-    {
+    public IGraph getIOGraph(final IGraph graph) {
         return ioGraph;
     }
 
     @Override
-    public Optional<ICompoundContainer<?>> getWrapper()
-    {
+    public Optional<ICompoundContainer<?>> getWrapper() {
         return Optional.empty();
     }
 
     @Override
-    public Set<ICompoundContainer<?>> getTargetedWrapper(final INode sourceNeighbor)
-    {
-        if (!ioGraph.containsVertex(sourceNeighbor))
-        {
+    public Set<ICompoundContainer<?>> getTargetedWrapper(final INode sourceNeighbor) {
+        if (!ioGraph.containsVertex(sourceNeighbor)) {
             return Collections.emptySet();
         }
 
         Set<ICompoundContainer<?>> set = new HashSet<>();
-        for (IEdge iEdge : ioGraph.outgoingEdgesOf(sourceNeighbor))
-        {
+        for (IEdge iEdge : ioGraph.outgoingEdgesOf(sourceNeighbor)) {
             INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
-            if (edgeTarget instanceof IContainerNode)
-            {
+            if (edgeTarget instanceof IContainerNode) {
                 IContainerNode cn = (IContainerNode) edgeTarget;
                 set.addAll(cn.getTargetedWrapper(sourceNeighbor));
             }
@@ -78,19 +70,15 @@ public class CliqueNode
     }
 
     @Override
-    public Set<ICompoundContainer<?>> getSourcedWrapper(final INode targetNeighbor)
-    {
-        if (!ioGraph.containsVertex(targetNeighbor))
-        {
+    public Set<ICompoundContainer<?>> getSourcedWrapper(final INode targetNeighbor) {
+        if (!ioGraph.containsVertex(targetNeighbor)) {
             return Collections.emptySet();
         }
 
         Set<ICompoundContainer<?>> set = new HashSet<>();
-        for (IEdge iEdge : ioGraph.incomingEdgesOf(targetNeighbor))
-        {
+        for (IEdge iEdge : ioGraph.incomingEdgesOf(targetNeighbor)) {
             INode edgeSource = ioGraph.getEdgeSource(iEdge);
-            if (edgeSource instanceof IContainerNode)
-            {
+            if (edgeSource instanceof IContainerNode) {
                 IContainerNode cn = (IContainerNode) edgeSource;
                 set.addAll(cn.getSourcedWrapper(targetNeighbor));
             }
@@ -99,22 +87,18 @@ public class CliqueNode
     }
 
     @Override
-    public Set<INode> getInnerNodes()
-    {
+    public Set<INode> getInnerNodes() {
         return ImmutableSet.copyOf(innerCliqueNodes);
     }
 
     @Override
-    public Set<INode> getSourceNeighborOf(final INode neighbor)
-    {
-        if (!ioGraph.containsVertex(neighbor))
-        {
+    public Set<INode> getSourceNeighborOf(final INode neighbor) {
+        if (!ioGraph.containsVertex(neighbor)) {
             return Collections.emptySet();
         }
 
         Set<INode> set = new HashSet<>();
-        for (IEdge iEdge : ioGraph.incomingEdgesOf(neighbor))
-        {
+        for (IEdge iEdge : ioGraph.incomingEdgesOf(neighbor)) {
             INode edgeSource = ioGraph.getEdgeSource(iEdge);
             set.add(edgeSource);
         }
@@ -122,16 +106,13 @@ public class CliqueNode
     }
 
     @Override
-    public Set<INode> getTargetNeighborOf(final INode neighbor)
-    {
-        if (!ioGraph.containsVertex(neighbor))
-        {
+    public Set<INode> getTargetNeighborOf(final INode neighbor) {
+        if (!ioGraph.containsVertex(neighbor)) {
             return Collections.emptySet();
         }
 
         Set<INode> set = new HashSet<>();
-        for (IEdge iEdge : ioGraph.outgoingEdgesOf(neighbor))
-        {
+        for (IEdge iEdge : ioGraph.outgoingEdgesOf(neighbor)) {
             INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
             set.add(edgeTarget);
         }
@@ -140,35 +121,30 @@ public class CliqueNode
 
     @NotNull
     @Override
-    public Optional<Set<CompoundInstance>> getResultingValue()
-    {
+    public Optional<Set<CompoundInstance>> getResultingValue() {
         return Optional.ofNullable(finalResult);
     }
 
     @Override
-    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Optional<Set<CompoundInstance>> instances)
-    {
-        if (!ioGraph.containsVertex(neighbor))
-        {
+    public void addCandidateResult(final INode neighbor, final IEdge sourceEdge, final Optional<Set<CompoundInstance>> instances) {
+        if (!ioGraph.containsVertex(neighbor)) {
             return;
         }
 
         final double totalOutgoingEdgeWeight = sourceEdge.getWeight();
 
-        for (IEdge iEdge : ioGraph.outgoingEdgesOf(neighbor))
-        {
+        for (IEdge iEdge : ioGraph.outgoingEdgesOf(neighbor)) {
             INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
             final Optional<Set<CompoundInstance>> workingSet = instances.map(innerInstances -> {
-                  Set<CompoundInstance> set = new HashSet<>();
-                  for (CompoundInstance ci : innerInstances)
-                  {
-                      CompoundInstance instance = new CompoundInstance(ci.getType(),
-                        ci.getAmount() * (ioGraph.getEdgeWeight(ioGraph.getEdge(neighbor, edgeTarget))
+                        Set<CompoundInstance> set = new HashSet<>();
+                        for (CompoundInstance ci : innerInstances) {
+                            CompoundInstance instance = new CompoundInstance(ci.getType(),
+                                    ci.getAmount() * (ioGraph.getEdgeWeight(ioGraph.getEdge(neighbor, edgeTarget))
                                             / totalOutgoingEdgeWeight));
-                      set.add(instance);
-                  }
-                  return set;
-              }
+                            set.add(instance);
+                        }
+                        return set;
+                    }
             );
             edgeTarget.addCandidateResult(neighbor, sourceEdge, workingSet);
             candidates.put(neighbor, instances);
@@ -178,13 +154,10 @@ public class CliqueNode
 
     @NotNull
     @Override
-    public Set<Set<CompoundInstance>> getCandidates()
-    {
+    public Set<Set<CompoundInstance>> getCandidates() {
         Set<Set<CompoundInstance>> set = new HashSet<>();
-        for (Optional<Set<CompoundInstance>> compoundInstances : candidates.values())
-        {
-            if (compoundInstances.isPresent())
-            {
+        for (Optional<Set<CompoundInstance>> compoundInstances : candidates.values()) {
+            if (compoundInstances.isPresent()) {
                 Set<CompoundInstance> instances = compoundInstances.get();
                 set.add(instances);
             }
@@ -194,18 +167,14 @@ public class CliqueNode
 
     @NotNull
     @Override
-    public Set<INode> getAnalyzedNeighbors()
-    {
+    public Set<INode> getAnalyzedNeighbors() {
         return candidates.keySet();
     }
 
     @Override
-    public void onReached(final IGraph graph)
-    {
-        for (IEdge edge : ioGraph.edgeSet())
-        {
-            if (!innerCliqueNodes.contains(ioGraph.getEdgeTarget(edge)))
-            {
+    public void onReached(final IGraph graph) {
+        for (IEdge edge : ioGraph.edgeSet()) {
+            if (!innerCliqueNodes.contains(ioGraph.getEdgeTarget(edge))) {
                 final INode source = ioGraph.getEdgeSource(edge);
                 final INode target = ioGraph.getEdgeTarget(edge);
 
@@ -215,34 +184,34 @@ public class CliqueNode
     }
 
     @Override
-    public void collectStats(final StatCollector statCollector)
-    {
+    public void collectStats(final StatCollector statCollector) {
         statCollector.onInnerGraphNode();
     }
 
     @Override
-    public void forceSetResult(final Set<CompoundInstance> compoundInstances)
-    {
-        for (IContainerNode node : innerCliqueNodes)
-        {
+    public void forceSetResult(final Set<CompoundInstance> compoundInstances) {
+        for (IContainerNode node : innerCliqueNodes) {
             node.forceSetResult(compoundInstances);
         }
     }
 
     @Override
-    public void determineResult(final IGraph graph)
-    {
+    public void setBaseResult(final Set<CompoundInstance> compoundInstances) {
+        for (IContainerNode node : innerCliqueNodes) {
+            node.setBaseResult(compoundInstances);
+        }
+    }
+
+    @Override
+    public void determineResult(final IGraph graph) {
         final Set<INode> startingNodes = new HashSet<>();
-        for (IContainerNode innerCliqueNode : innerCliqueNodes)
-        {
-            if (!innerCliqueNode.getCandidates().isEmpty())
-            {
+        for (IContainerNode innerCliqueNode : innerCliqueNodes) {
+            if (!innerCliqueNode.getCandidates().isEmpty()) {
                 startingNodes.add(innerCliqueNode);
             }
         }
         final Set<Set<CompoundInstance>> candidates = new HashSet<>();
-        for (INode startingNode : startingNodes)
-        {
+        for (INode startingNode : startingNodes) {
             startingNode.determineResult(graph);
             Set<CompoundInstance> compoundInstanceSet = startingNode.getResultingValue().orElse(Sets.newHashSet());
             candidates.add(compoundInstanceSet);
@@ -251,18 +220,13 @@ public class CliqueNode
         Set<CompoundInstance> result = getResultingValue().orElse(null);
 
         //Short circuit empty result.
-        if (candidates.size() == 0)
-        {
-            if (result != null)
-            {
+        if (candidates.size() == 0) {
+            if (result != null) {
                 AnalysisLogHandler.debug(LOGGER, String.format("  > No candidates available. Using current value: %s", result));
-            }
-            else
-            {
+            } else {
                 AnalysisLogHandler.debug(LOGGER, "  > No candidates available, and result not forced. Setting empty collection!");
                 finalResult = null;
-                for (IContainerNode node : innerCliqueNodes)
-                {
+                for (IContainerNode node : innerCliqueNodes) {
                     node.forceSetResult(finalResult);
                 }
             }
@@ -271,12 +235,10 @@ public class CliqueNode
 
         //If we have only one other data set we have nothing to choose from.
         //So we take that.
-        if (getCandidates().size() == 1)
-        {
+        if (getCandidates().size() == 1) {
             result = candidates.iterator().next();
             finalResult = result;
-            for (IContainerNode node : innerCliqueNodes)
-            {
+            for (IContainerNode node : innerCliqueNodes) {
                 node.forceSetResult(finalResult);
             }
             AnalysisLogHandler.debug(LOGGER, String.format("  > Candidate data contained exactly one entry: %s", result));
@@ -288,8 +250,8 @@ public class CliqueNode
         this.candidates.forEach((node, optionalResult) -> {
             if (optionalResult.isPresent()) {
                 final Map<ICompoundTypeGroup, Collection<CompoundInstance>> groupedInstances = GroupingUtils.groupByUsingSetToMap(
-                  optionalResult.get(),
-                  compoundInstance -> compoundInstance.getType().getGroup()
+                        optionalResult.get(),
+                        compoundInstance -> compoundInstance.getType().getGroup()
                 );
 
                 groupedInstances.forEach((group, candidateValues) -> typeNodeCandidates.put(group, node, new HashSet<>(candidateValues)));
@@ -303,29 +265,27 @@ public class CliqueNode
             final Map<INode, Set<CompoundInstance>> instancesForGroup = typeNodeCandidates.row(compoundTypeGroup);
 
             final Set<IMediationCandidate> mediationCandidates =
-              new HashSet<>();
-            for (INode node : instancesForGroup.keySet())
-            {
+                    new HashSet<>();
+            for (INode node : instancesForGroup.keySet()) {
                 SimpleMediationCandidate simpleMediationCandidate = new SimpleMediationCandidate(instancesForGroup.get(node), () -> node.hasMissingData(graph, compoundTypeGroup));
                 mediationCandidates.add(simpleMediationCandidate);
             }
 
             final IMediationContext context = new SimpleMediationContext(
-              mediationCandidates,
-              () -> !hasUncalculatedChildren
+                    mediationCandidates,
+                    () -> !hasUncalculatedChildren
             );
 
             final Optional<Set<CompoundInstance>> mediatedValue = compoundTypeGroup.getMediationEngine().determineMediationResult(context);
 
             mediatedValue.ifPresent(instances -> mediatedValues.put(
-              compoundTypeGroup,
-              instances
+                    compoundTypeGroup,
+                    instances
             ));
         });
 
         Set<CompoundInstance> workingResult = new HashSet<>();
-        for (Set<CompoundInstance> compoundInstances : mediatedValues.values())
-        {
+        for (Set<CompoundInstance> compoundInstances : mediatedValues.values()) {
             workingResult.addAll(compoundInstances);
         }
         this.finalResult = workingResult;
@@ -334,26 +294,21 @@ public class CliqueNode
             this.finalResult = null;
         }
 
-        for (IContainerNode node : innerCliqueNodes)
-        {
+        for (IContainerNode node : innerCliqueNodes) {
             node.forceSetResult(finalResult);
         }
     }
 
     @Override
-    public void onNeighborReplaced(final INode originalNeighbor, final INode newNeighbor)
-    {
-        if (ioGraph.containsVertex(originalNeighbor))
-        {
+    public void onNeighborReplaced(final INode originalNeighbor, final INode newNeighbor) {
+        if (ioGraph.containsVertex(originalNeighbor)) {
             AnalysisLogHandler.debug(LOGGER, "Updating neighbor data from: " + originalNeighbor + " to: " + newNeighbor);
             ioGraph.addVertex(newNeighbor);
-            for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor))
-            {
+            for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor)) {
                 ioGraph.addEdge(newNeighbor, ioGraph.getEdgeTarget(edge));
                 ioGraph.setEdgeWeight(newNeighbor, ioGraph.getEdgeTarget(edge), ioGraph.getEdgeWeight(edge));
             }
-            for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor))
-            {
+            for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor)) {
                 ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor);
                 ioGraph.setEdgeWeight(ioGraph.getEdgeSource(edge), newNeighbor, ioGraph.getEdgeWeight(edge));
             }
@@ -364,11 +319,9 @@ public class CliqueNode
     }
 
     @Override
-    public void onOutgoingEdgeDisable(final INode target, final IEdge edge)
-    {
+    public void onOutgoingEdgeDisable(final INode target, final IEdge edge) {
         ioGraph.vertexSet().forEach(sourceNode -> {
-            if (ioGraph.containsEdge(sourceNode, target))
-            {
+            if (ioGraph.containsEdge(sourceNode, target)) {
                 disabledIoGraphEdges.put(sourceNode, target, ioGraph.getEdge(sourceNode, target));
                 ioGraph.removeEdge(sourceNode, target);
             }
@@ -376,8 +329,7 @@ public class CliqueNode
     }
 
     @Override
-    public void onOutgoingEdgeEnabled(final INode target, final IEdge edge)
-    {
+    public void onOutgoingEdgeEnabled(final INode target, final IEdge edge) {
         final Set<INode> sourceNodes = new HashSet<>(disabledIoGraphEdges.rowKeySet());
 
         sourceNodes.forEach(sourceNode -> {
@@ -388,45 +340,35 @@ public class CliqueNode
         });
     }
 
-    private void setupGraphs(final IGraph graph, final Set<INode> innerVertices)
-    {
+    private void setupGraphs(final IGraph graph, final Set<INode> innerVertices) {
         setupInnerGraph(innerVertices);
         setupIOGraph(graph, innerVertices);
 
         this.hash = Objects.hash(ioGraph, innerCliqueNodes);
     }
 
-    private void setupInnerGraph(final Set<INode> innerVertices)
-    {
+    private void setupInnerGraph(final Set<INode> innerVertices) {
         Set<IContainerNode> set = new HashSet<>();
-        for (INode innerVertex : innerVertices)
-        {
-            if (innerVertex instanceof IContainerNode)
-            {
+        for (INode innerVertex : innerVertices) {
+            if (innerVertex instanceof IContainerNode) {
                 IContainerNode containerNode = (IContainerNode) innerVertex;
                 set.add(containerNode);
             }
         }
         this.innerCliqueNodes.addAll(
-          set
+                set
         );
     }
 
-    private void setupIOGraph(final IGraph graph, final Set<INode> innerVertices)
-    {
-        for (INode node : innerVertices)
-        {
-            for (IEdge iEdge : graph.incomingEdgesOf(node))
-            {
-                if (!innerVertices.contains(graph.getEdgeSource(iEdge)))
-                {
-                    if (!ioGraph.containsVertex(graph.getEdgeSource(iEdge)))
-                    {
+    private void setupIOGraph(final IGraph graph, final Set<INode> innerVertices) {
+        for (INode node : innerVertices) {
+            for (IEdge iEdge : graph.incomingEdgesOf(node)) {
+                if (!innerVertices.contains(graph.getEdgeSource(iEdge))) {
+                    if (!ioGraph.containsVertex(graph.getEdgeSource(iEdge))) {
                         ioGraph.addVertex(graph.getEdgeSource(iEdge));
                     }
 
-                    if (!ioGraph.containsVertex(graph.getEdgeTarget(iEdge)))
-                    {
+                    if (!ioGraph.containsVertex(graph.getEdgeTarget(iEdge))) {
                         ioGraph.addVertex(graph.getEdgeTarget(iEdge));
                     }
                     ioGraph.addEdge(graph.getEdgeSource(iEdge), node, new Edge());
@@ -434,17 +376,13 @@ public class CliqueNode
                 }
             }
 
-            for (IEdge edge : graph.outgoingEdgesOf(node))
-            {
-                if (!innerVertices.contains(graph.getEdgeTarget(edge)))
-                {
-                    if (!ioGraph.containsVertex(graph.getEdgeSource(edge)))
-                    {
+            for (IEdge edge : graph.outgoingEdgesOf(node)) {
+                if (!innerVertices.contains(graph.getEdgeTarget(edge))) {
+                    if (!ioGraph.containsVertex(graph.getEdgeSource(edge))) {
                         ioGraph.addVertex(graph.getEdgeSource(edge));
                     }
 
-                    if (!ioGraph.containsVertex(graph.getEdgeTarget(edge)))
-                    {
+                    if (!ioGraph.containsVertex(graph.getEdgeTarget(edge))) {
                         ioGraph.addVertex(graph.getEdgeTarget(edge));
                     }
                     ioGraph.addEdge(node, graph.getEdgeTarget(edge), new Edge());
@@ -456,60 +394,49 @@ public class CliqueNode
         validateIOGraph();
     }
 
-    private void validateIOGraph()
-    {
-        for (INode node : ioGraph.vertexSet())
-        {
-            if (innerCliqueNodes.contains(node))
-            {
+    private void validateIOGraph() {
+        for (INode node : ioGraph.vertexSet()) {
+            if (innerCliqueNodes.contains(node)) {
                 Optional<INode> result = Optional.empty();
-                for (IEdge edge : ioGraph.incomingEdgesOf(node))
-                {
+                for (IEdge edge : ioGraph.incomingEdgesOf(node)) {
                     INode edgeSource = ioGraph.getEdgeSource(edge);
-                    if (innerCliqueNodes.contains(edgeSource))
-                    {
+                    if (innerCliqueNodes.contains(edgeSource)) {
                         result = Optional.of(edgeSource);
                         break;
                     }
                 }
                 result
-                  .ifPresent(illegalNode -> {
-                      throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
-                  });
+                        .ifPresent(illegalNode -> {
+                            throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
+                        });
 
                 Optional<INode> found = Optional.empty();
-                for (IEdge iEdge : ioGraph.outgoingEdgesOf(node))
-                {
+                for (IEdge iEdge : ioGraph.outgoingEdgesOf(node)) {
                     INode edgeTarget = ioGraph.getEdgeTarget(iEdge);
-                    if (innerCliqueNodes.contains(edgeTarget))
-                    {
+                    if (innerCliqueNodes.contains(edgeTarget)) {
                         found = Optional.of(edgeTarget);
                         break;
                     }
                 }
                 found
-                  .ifPresent(illegalNode -> {
-                      throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
-                  });
+                        .ifPresent(illegalNode -> {
+                            throw new IllegalStateException("The build IO Graph contains a inner edge, which is illegal. Between: " + node + " and: " + illegalNode);
+                        });
             }
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "CliqueNode@" + Integer.toHexString(hashCode());
     }
 
     @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass())
-        {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final CliqueNode that = (CliqueNode) o;
@@ -517,35 +444,28 @@ public class CliqueNode
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return hash;
     }
 
     @Override
-    public Set<CompoundInstance> getInputInstances(final IRecipeNode recipeNode)
-    {
-        if (!ioGraph.containsVertex(recipeNode))
-        {
+    public Set<CompoundInstance> getInputInstances(final IRecipeNode recipeNode) {
+        if (!ioGraph.containsVertex(recipeNode)) {
             return Collections.emptySet();
         }
 
         final Set<CompoundInstance> result = Sets.newHashSet();
-        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
-        {
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode)) {
             final INode source = ioGraph.getEdgeSource(iEdge);
-            if (source instanceof IRecipeInputNode)
-            {
+            if (source instanceof IRecipeInputNode) {
                 final IRecipeInputNode residueNode = (IRecipeInputNode) source;
                 result.addAll(residueNode.getInputInstances(recipeNode));
             }
         }
 
         Set<CompoundInstance> compoundedResult = new HashSet<>();
-        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType))
-        {
-            if (!sameType.isEmpty())
-            {
+        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType)) {
+            if (!sameType.isEmpty()) {
                 CompoundInstance instance = new CompoundInstance(sameType.iterator().next().getType(), sameType.stream().mapToDouble(CompoundInstance::getAmount).sum());
                 compoundedResult.add(instance);
             }
@@ -554,19 +474,15 @@ public class CliqueNode
     }
 
     @Override
-    public Set<IRecipeInputNode> getInputNodes(final IRecipeNode recipeNode)
-    {
-        if (!ioGraph.containsVertex(recipeNode))
-        {
+    public Set<IRecipeInputNode> getInputNodes(final IRecipeNode recipeNode) {
+        if (!ioGraph.containsVertex(recipeNode)) {
             return Collections.emptySet();
         }
 
         final Set<IRecipeInputNode> result = Sets.newHashSet();
-        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
-        {
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode)) {
             final INode source = ioGraph.getEdgeSource(iEdge);
-            if (source instanceof IRecipeInputNode)
-            {
+            if (source instanceof IRecipeInputNode) {
                 final IRecipeInputNode residueNode = (IRecipeInputNode) source;
                 result.addAll(residueNode.getInputNodes(recipeNode));
             }
@@ -576,29 +492,23 @@ public class CliqueNode
     }
 
     @Override
-    public Set<CompoundInstance> getResidueInstances(final IRecipeNode recipeNode)
-    {
-        if (!ioGraph.containsVertex(recipeNode))
-        {
+    public Set<CompoundInstance> getResidueInstances(final IRecipeNode recipeNode) {
+        if (!ioGraph.containsVertex(recipeNode)) {
             return Collections.emptySet();
         }
 
         final Set<CompoundInstance> result = Sets.newHashSet();
-        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode))
-        {
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode)) {
             final INode source = ioGraph.getEdgeSource(iEdge);
-            if (source instanceof IRecipeResidueNode)
-            {
+            if (source instanceof IRecipeResidueNode) {
                 final IRecipeResidueNode residueNode = (IRecipeResidueNode) source;
                 result.addAll(residueNode.getResidueInstances(recipeNode));
             }
         }
 
         Set<CompoundInstance> compoundedResult = new HashSet<>();
-        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType))
-        {
-            if (!sameType.isEmpty())
-            {
+        for (Collection<CompoundInstance> sameType : GroupingUtils.groupByUsingList(result, CompoundInstance::getType)) {
+            if (!sameType.isEmpty()) {
                 CompoundInstance instance = new CompoundInstance(sameType.iterator().next().getType(), sameType.stream().mapToDouble(CompoundInstance::getAmount).sum());
                 compoundedResult.add(instance);
             }

@@ -56,6 +56,8 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
 
     void forceSetResult(N compoundInstances);
 
+    void setBaseResult(N compoundInstances);
+
     void determineResult(G graph);
 
     boolean hasMissingData(G graph, ICompoundTypeGroup group);

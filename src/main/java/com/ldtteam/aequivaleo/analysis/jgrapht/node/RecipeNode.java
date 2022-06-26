@@ -212,4 +212,9 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
         //Again recipe nodes do not care.
         super.forceSetResult(external ? null : compoundInstances);
     }
+
+    @Override
+    public void setBaseResult(final Set<CompoundInstance> compoundInstances) {
+        //Noop; recipes don't care.
+    }
 }

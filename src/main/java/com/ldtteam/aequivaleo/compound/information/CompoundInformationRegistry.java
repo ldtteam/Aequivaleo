@@ -29,6 +29,7 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
 
     private final Map<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> valueInformation = Maps.newConcurrentMap();
     private final Map<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> lockedInformation = Maps.newConcurrentMap();
+    private final Map<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> baseInformation = Maps.newConcurrentMap();
 
     @Override
     public ICompoundInformationRegistry registerValue(
@@ -74,10 +75,34 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
         );
     }
 
+
+    @Override
+    public ICompoundInformationRegistry registerBase(
+            @NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> instances)
+    {
+        if (wrapper.getContentsCount() != 1)
+            throw new IllegalArgumentException("Can not set locked information with none unit stack.");
+
+        baseInformation.put(wrapper, ImmutableSet.copyOf(instances));
+
+        return this;
+    }
+
+    @Override
+    public <T> ICompoundInformationRegistry registerBase(
+            @NotNull final T tInstance, @NotNull final Set<CompoundInstance> instances)
+    {
+        return registerBase(
+                CompoundContainerFactoryManager.getInstance().wrapInContainer(tInstance, 1d),
+                instances
+        );
+    }
+
     public void reset()
     {
         valueInformation.clear();
         lockedInformation.clear();
+        baseInformation.clear();
     }
 
     public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getValueInformation()
@@ -88,5 +113,10 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
     public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getLockingInformation()
     {
         return ImmutableMap.copyOf(lockedInformation);
+    }
+
+    public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getBaseInformation()
+    {
+        return ImmutableMap.copyOf(baseInformation);
     }
 }

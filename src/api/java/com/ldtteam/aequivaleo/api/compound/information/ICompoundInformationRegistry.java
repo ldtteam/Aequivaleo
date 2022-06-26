@@ -81,6 +81,29 @@ public interface ICompoundInformationRegistry
      */
     <T> ICompoundInformationRegistry registerLocking(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
 
+
+    /**
+     * Registers a given set of compound instances to a given wrapper.
+     * Base values are values which will be added to the calculated results if the objects ever gets visited, but if it is not visited then the values are discarded.
+     *
+     * @param wrapper The wrapper to assign the compound instances to.
+     * @param compounds The instances to assign to the given wrapper.
+     * @return The registry with the locking assigned.
+     */
+    ICompoundInformationRegistry registerBase(@NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds);
+
+    /**
+     * Registers a given set of compound instances to a given game object.
+     * Base values are values which will be added to the calculated results if the objects ever gets visited, but if it is not visited then the values are discarded.
+     * Equivalency will need to know how to turn the game object into a compound container wrapper, so a factory for it will need to be registered.
+     *
+     * @param gameObjectInstanceToLock The game object to assign the compound instances to.
+     * @param compounds The instances to assign to the given game object.
+     * @param <T> The type of the game object to assign the instances to.
+     * @return The registry with the locking assigned.
+     */
+    <T> ICompoundInformationRegistry registerBase(@NotNull final T gameObjectInstanceToLock, @NotNull final Set<CompoundInstance> compounds);
+
     /**
      * Gives access to value data.
      * @return The value data.

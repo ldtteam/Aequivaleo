@@ -189,9 +189,50 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
 
-        System.out.println(result.keySet().size());
-
         assertEquals(s(cz( 1.0)), result.get(cc("A")));
+    }
+
+    @Test
+    public void testSetBaseValueWithoutInputValueShouldNotProduceAnything()
+    {
+        input.registerBase("A", s(cz( 1.0)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(), result.getOrDefault(cc("A"), s()));
+    }
+
+    @Test
+    public void testSetBaseValueWithLockingInputShouldTakeLocking()
+    {
+        input.registerLocking("A", s(cz( 1.0)));
+        input.registerBase("A", s(ci(1.0)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1)), result.getOrDefault(cc("A"), s()));
+    }
+
+    @Test
+    public void testSetBaseValueWithValueShouldCombine()
+    {
+        input.registerValue("A", s(cz( 1.0)));
+        input.registerBase("A", s(ci(1.0)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(1), ci(1)), result.getOrDefault(cc("A"), s()));
+    }
+
+    @Test
+    public void testSetBaseValueWithValueShouldAdd()
+    {
+        input.registerValue("A", s(cz( 1.0)));
+        input.registerBase("A", s(cz(1.0)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals(s(cz(2)), result.getOrDefault(cc("A"), s()));
     }
 
     @Test
