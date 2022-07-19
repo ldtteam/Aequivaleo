@@ -64,9 +64,9 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     @SubscribeEvent
     public static void onPlayerLoggedIn(final PlayerEvent.PlayerLoggedInEvent playerLoggedInEvent)
     {
-        if (playerLoggedInEvent.getPlayer() instanceof ServerPlayer) {
-            LOGGER.info("Sending results data to player: " + playerLoggedInEvent.getPlayer().getScoreboardName());
-            EquivalencyResults.updatePlayer((ServerPlayer) playerLoggedInEvent.getPlayer());
+        if (playerLoggedInEvent.getEntity() instanceof ServerPlayer) {
+            LOGGER.info("Sending results data to player: " + playerLoggedInEvent.getEntity().getScoreboardName());
+            EquivalencyResults.updatePlayer((ServerPlayer) playerLoggedInEvent.getEntity());
         }
     }
 
