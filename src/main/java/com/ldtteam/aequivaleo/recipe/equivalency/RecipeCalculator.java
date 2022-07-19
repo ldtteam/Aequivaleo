@@ -74,9 +74,9 @@ public class RecipeCalculator implements IRecipeCalculator {
                                                     .filter(integerPair -> integerPair.getKey() instanceof ItemStack)
                                                     .map(integerPair -> Pair.of((ItemStack) integerPair.getKey(), integerPair.getValue()))
                                                     .filter(itemStackIntegerPair -> !itemStackIntegerPair.getKey().isEmpty())
-                                                    .filter(itemStackIntegerPair -> itemStackIntegerPair.getKey().hasContainerItem())
+                                                    .filter(itemStackIntegerPair -> itemStackIntegerPair.getKey().hasCraftingRemainingItem())
                                                     .map(itemStackIntegerPair -> {
-                                                        final ItemStack containerStack = itemStackIntegerPair.getKey().getContainerItem();
+                                                        final ItemStack containerStack = itemStackIntegerPair.getKey().getCraftingRemainingItem();
                                                         containerStack.setCount(itemStackIntegerPair.getValue());
                                                         return containerStack;
                                                     })
@@ -155,7 +155,7 @@ public class RecipeCalculator implements IRecipeCalculator {
     public List<IRecipeIngredient> getAllVariantsFromSimpleIngredient(final Ingredient ingredient) {
         final List<ItemStack> stacks = Arrays.asList(ingredient.getItems());
         final Collection<Collection<ItemStack>> groupedByContainer =
-                GroupingUtils.groupByUsingSet(stacks, stack -> new ItemStackEqualityWrapper(stack.hasContainerItem() ? stack.getContainerItem() : ItemStack.EMPTY));
+                GroupingUtils.groupByUsingSet(stacks, stack -> new ItemStackEqualityWrapper(stack.hasCraftingRemainingItem() ? stack.getCraftingRemainingItem() : ItemStack.EMPTY));
 
         return groupedByContainer
                 .stream()
