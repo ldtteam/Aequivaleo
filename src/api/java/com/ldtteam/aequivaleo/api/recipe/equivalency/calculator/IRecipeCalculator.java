@@ -96,7 +96,7 @@ public interface IRecipeCalculator
     /**
      * This methods is for your convenience:
      * It converts the vanilla {@link Ingredient#getItems()} to a list of {@link IRecipeIngredient}
-     * respecting the relevant {@link ItemStack#getContainerItem()} stacks.
+     * respecting the relevant {@link ItemStack#getCraftingRemainingItem()} ()} stacks.
      *
      * @param ingredient The ingredient to handle.
      * @return All of the recipe ingredients which it represents, respecting the container item.
