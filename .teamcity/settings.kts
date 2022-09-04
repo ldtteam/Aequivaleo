@@ -26,7 +26,7 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2021.2"
+version = "2022.04"
 
 project {
     description = "The mediator library for alchemy mods."
@@ -54,14 +54,11 @@ project {
             }
         }
     }
-    subProjectsOrder = arrayListOf(RelativeId("UpgradeBetaRelease"), RelativeId("UpgradeAlphaBeta"), RelativeId("Alpha"), RelativeId("OfficialPublications"), RelativeId("Branches"))
+    subProjectsOrder = arrayListOf(RelativeId("UpgradeBetaRelease"), RelativeId("UpgradeAlphaBeta"), RelativeId("Alpha"), RelativeId("OfficialPublications"))
 
     subProject(OfficialPublications)
     subProject(UpgradeAlphaBeta)
-    subProject(Branches)
-    subProject(Beta)
     subProject(UpgradeBetaRelease)
-    subProject(Release)
     subProject(Alpha)
 }
 
@@ -101,6 +98,7 @@ object Alpha_Release : BuildType({
         gradle {
             name = "Analyze"
             id = "RUNNER_140"
+            enabled = false
             tasks = "sonarqube"
             gradleParams = "-Dsonar.projectKey=ldtteam_Aequivaleo -Dsonar.host.url=https://code-analysis.ldtteam.com -Dsonar.login=%sonarqube.token%"
             dockerImage = "gradle:%env.GRADLE_VERSION%-%env.JDK_VERSION%"
@@ -120,92 +118,6 @@ object Alpha_Release : BuildType({
 })
 
 
-object Beta : Project({
-    name = "Beta"
-    description = "Beta version builds of Aequivaleo"
-
-    buildType(Beta_Release)
-
-    params {
-        password("env.crowdinKey", "credentialsJSON:be67336c-4ed1-464c-b531-92270ba39b53", label = "Crowdin key", description = "The API for getting the crowdin translations")
-        param("Default.Branch", "testing/%Current Minecraft Version%")
-        param("VCS.Branches", "+:refs/heads/testing/(*)")
-        param("env.CURSERELEASETYPE", "beta")
-        param("env.Version.Suffix", "-BETA")
-    }
-})
-
-object Beta_Release : BuildType({
-    templates(AbsoluteId("LetSDevTogether_BuildWithRelease"))
-    name = "Release"
-    description = "Releases the mod as Alpha to CurseForge"
-
-    params {
-        param("env.Version.Patch", "${OfficialPublications_CommonB.depParamRefs.buildNumber}")
-    }
-
-    dependencies {
-        snapshot(OfficialPublications_CommonB) {
-            reuseBuilds = ReuseBuilds.NO
-            onDependencyFailure = FailureAction.FAIL_TO_START
-        }
-    }
-})
-
-
-object Branches : Project({
-    name = "Branches"
-    description = "All none release branches."
-
-    buildType(Branches_Build)
-    buildType(Branches_Common)
-
-    params {
-        text("Default.Branch", "CI/Default", label = "Default branch", description = "The default branch for branch builds", readOnly = true, allowEmpty = true)
-        param("VCS.Branches", """
-            +:refs/heads/(*)
-            -:refs/heads/version/*
-            -:refs/heads/testing/*
-            -:refs/heads/release/*
-            -:refs/pull/*/head
-            -:refs/heads/CI/*
-        """.trimIndent())
-        param("env.Version.Suffix", "-PERSONAL")
-    }
-
-    cleanup {
-        baseRule {
-            all(days = 60)
-        }
-    }
-})
-
-object Branches_Build : BuildType({
-    templates(AbsoluteId("LetSDevTogether_Build"))
-    name = "Build"
-    description = "Builds the branch without testing."
-
-    params {
-        param("env.Version.Patch", "${Branches_Common.depParamRefs.buildNumber}")
-    }
-
-    dependencies {
-        snapshot(Branches_Common) {
-            reuseBuilds = ReuseBuilds.NO
-            onDependencyFailure = FailureAction.FAIL_TO_START
-        }
-    }
-    
-    disableSettings("BUILD_EXT_14")
-})
-
-object Branches_Common : BuildType({
-    templates(AbsoluteId("LetSDevTogether_CommonBuildCounter"))
-    name = "Common Build Counter"
-    description = "Tracks the amount of builds run for branches"
-})
-
-
 object OfficialPublications : Project({
     name = "Official Publications"
     description = "Holds projects and builds related to official publications"
@@ -217,39 +129,6 @@ object OfficialPublications_CommonB : BuildType({
     templates(AbsoluteId("LetSDevTogether_CommonBuildCounter"))
     name = "Common Build Counter"
     description = "Represents the version counter within Minecolonies for official releases."
-})
-
-
-object Release : Project({
-    name = "Release"
-    description = "Release version builds of Aquivaleo"
-
-    buildType(Release_Release)
-
-    params {
-        password("env.crowdinKey", "credentialsJSON:be67336c-4ed1-464c-b531-92270ba39b53", label = "Crowdin key", description = "The API key for getting crowdin translations")
-        param("Default.Branch", "release/%Current Minecraft Version%")
-        param("VCS.Branches", "+:refs/heads/release/(*)")
-        param("env.CURSERELEASETYPE", "release")
-        param("env.Version.Suffix", "-RELEASE")
-    }
-})
-
-object Release_Release : BuildType({
-    templates(AbsoluteId("LetSDevTogether_BuildWithRelease"))
-    name = "Release"
-    description = "Releases the mod as Release to CurseForge"
-
-    params {
-        param("env.Version.Patch", "${OfficialPublications_CommonB.depParamRefs.buildNumber}")
-    }
-
-    dependencies {
-        snapshot(OfficialPublications_CommonB) {
-            reuseBuilds = ReuseBuilds.NO
-            onDependencyFailure = FailureAction.FAIL_TO_START
-        }
-    }
 })
 
 
