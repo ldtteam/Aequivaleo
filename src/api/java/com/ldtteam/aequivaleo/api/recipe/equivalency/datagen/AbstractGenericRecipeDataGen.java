@@ -18,11 +18,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class AbstractGenericRecipeDataGen implements DataProvider
@@ -43,47 +45,55 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
     protected AbstractGenericRecipeDataGen(final DataGenerator dataGenerator) {this.dataGenerator = dataGenerator;}
 
     @Override
-    public void run(@NotNull final CachedOutput cache) throws IOException
+    public CompletableFuture<?> run(@NotNull final CachedOutput cache)
     {
         this.calculateDataToSave();
 
         final Gson gson = IAequivaleoAPI.getInstance().getGson(ICondition.IContext.EMPTY);
 
-        this.writeData(
+        final List<CompletableFuture<?>> futures = new ArrayList<>();
+
+        futures.add(this.writeData(
           cache,
           gson,
           generalData
-        );
+        ));
 
         for (WorldData worldData : worldDataMap.values())
         {
-            this.writeData(
+            futures.add(this.writeData(
               cache,
               gson,
               worldData
-            );
+            ));
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     @VisibleForTesting
-    void writeData(
+    CompletableFuture<?> writeData(
       final CachedOutput cache,
       final Gson gson,
       final WorldData worldData
-    ) throws IOException
+    )
     {
+        final List<CompletableFuture<?>> futures = new ArrayList<>();
+
         for (Map.Entry<ResourceLocation, GenericRecipeData> entry : worldData.getRecipes().entrySet())
         {
             ResourceLocation name = entry.getKey();
 
-            final Path itemPath = dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/recipes/%s", name.getNamespace(), worldData.getPath())).resolve(String.format("%s.json", name.getPath()));
+            final Path itemPath = dataGenerator.getPackOutput().getOutputFolder().resolve(String.format("data/%s/aequivaleo/recipes/%s", name.getNamespace(), worldData.getPath())).resolve(String.format("%s.json", name.getPath()));
 
-            DataProvider.saveStable(
+            futures.add(DataProvider.saveStable(
               cache,
               gson.toJsonTree(entry.getValue()),
               itemPath
-            );
+            ));
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     public abstract void calculateDataToSave();

@@ -26,7 +26,7 @@ public abstract class LockedInformationProvider extends AbstractInformationProvi
     protected Set<Path> getPathsToWrite(String worldPath)
     {
         final Set<Path> pathSet = Sets.newLinkedHashSet();
-        pathSet.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, LOCKED_PATH, worldPath)));
+        pathSet.add(dataGenerator.getPackOutput().getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, LOCKED_PATH, worldPath)));
         return pathSet;
     }
 

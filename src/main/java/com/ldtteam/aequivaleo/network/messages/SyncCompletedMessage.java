@@ -5,7 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -67,7 +67,7 @@ public class SyncCompletedMessage implements IMessage
             PartialSyncResultsMessage::getCompoundData
           );
 
-        final ResourceKey<Level> worldKey = ResourceKey.create(Registry.DIMENSION_REGISTRY, worldKeyName);
+        final ResourceKey<Level> worldKey = ResourceKey.create(Registries.DIMENSION, worldKeyName);
 
         EquivalencyResults.getInstance(
           worldKey

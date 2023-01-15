@@ -25,7 +25,7 @@ public abstract class BaseInformationProvider extends AbstractInformationProvide
     protected Set<Path> getPathsToWrite(String worldPath)
     {
         final Set<Path> pathSet = Sets.newLinkedHashSet();
-        pathSet.add(dataGenerator.getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, BASE_PATH, worldPath)));
+        pathSet.add(dataGenerator.getPackOutput().getOutputFolder().resolve(String.format("data/%s/aequivaleo/%s/%s", modId, BASE_PATH, worldPath)));
         return pathSet;
     }
 

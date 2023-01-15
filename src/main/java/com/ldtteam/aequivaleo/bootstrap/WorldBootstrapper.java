@@ -15,12 +15,12 @@ import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.core.Holder;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.NonNullList;
-import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.stream.StreamSupport;
 
 @SuppressWarnings("rawtypes")
@@ -126,15 +125,7 @@ public final class WorldBootstrapper
               },
               consumer -> {
                   final NonNullList<ItemStack> group = NonNullList.create();
-                  if (item.getItemCategory() == null)
-                      return;
-
-                  item.fillItemCategory(Objects.requireNonNull(item.getItemCategory()), group);
-
-                  if (group.size() == 1)
-                  {
-                      consumer.accept(group.get(0));
-                  }
+                  consumer.accept(item.getDefaultInstance());
               }
             ));
 

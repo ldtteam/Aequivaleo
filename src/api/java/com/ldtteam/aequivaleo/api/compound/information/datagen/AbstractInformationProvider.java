@@ -17,6 +17,7 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraftforge.common.crafting.conditions.ICondition;
+import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public abstract class AbstractInformationProvider implements DataProvider
@@ -47,26 +49,29 @@ public abstract class AbstractInformationProvider implements DataProvider
     }
 
     @Override
-    public void run(@NotNull final CachedOutput cache) throws IOException
-    {
+    public @NotNull CompletableFuture<?> run(@NotNull final CachedOutput cache) {
         this.calculateDataToSave();
 
         final Gson gson = IAequivaleoAPI.getInstance().getGson(ICondition.IContext.EMPTY);
 
-        this.writeData(
+        final List<CompletableFuture<?>> futures = new ArrayList<>();
+
+        futures.add(this.writeData(
           cache,
           gson,
           getGeneralData()
-        );
+        ));
 
         for (WorldData worldData : this.getWorldDataMap().values())
         {
-            this.writeData(
+            futures.add(this.writeData(
               cache,
               gson,
               worldData
-            );
+            ));
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     protected abstract Set<Path> getPathsToWrite(String worldPath);
@@ -84,12 +89,15 @@ public abstract class AbstractInformationProvider implements DataProvider
     }
 
     @VisibleForTesting
-    void writeData(
+    @NotNull
+    CompletableFuture<?> writeData(
       final CachedOutput cache,
       final Gson gson,
       final WorldData worldData
-    ) throws IOException
+    )
     {
+        final List<CompletableFuture<?>> futures = new ArrayList<>();
+
         for (Path dataSavePath : getPathsToWrite(worldData.getPath()))
         {
             for (Map.Entry<Set<ICompoundContainer<?>>, DataSpec> entry : worldData.getDataToWrite().entrySet())
@@ -126,13 +134,15 @@ public abstract class AbstractInformationProvider implements DataProvider
 
                 final Path itemPath = dataSavePath.resolve(String.format("%s.json", fileName));
 
-                DataProvider.saveStable(
+                futures.add(DataProvider.saveStable(
                   cache,
                   gson.toJsonTree(data),
                   itemPath
-                );
+                ));
             }
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
     public abstract void calculateDataToSave();

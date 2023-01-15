@@ -20,9 +20,14 @@ import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.BucketFluidRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.CookingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SimpleEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SmithingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalencyRecipe;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
@@ -41,7 +46,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -78,7 +85,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .get()
           .stream()
           .map(ResourceLocation::new)
-          .map(name -> TagKey.create(Registry.ITEM_REGISTRY, name))
+          .map(name -> TagKey.create(Registries.ITEM, name))
           .forEach(ITagEquivalencyRegistry.getInstance()::addTag);
 
         LOGGER.debug("Registering recipe processing types.");
@@ -154,7 +161,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
           .collect(Collectors.toList());
 
         final Set<RecipeType<?>> knownTypes = IRecipeTypeProcessingRegistry.getInstance().getAllKnownTypes();
-        Registry.RECIPE_TYPE.entrySet().stream()
+        BuiltInRegistries.RECIPE_TYPE.entrySet().stream()
           .filter(entry -> !knownTypes.contains(entry.getValue()))
           .filter(entry -> blackListPatterns.stream().noneMatch(blp -> blp.matcher(entry.getKey().location().toString()).find()))
           .forEach(
