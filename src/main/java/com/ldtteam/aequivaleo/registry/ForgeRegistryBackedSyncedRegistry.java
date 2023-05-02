@@ -46,7 +46,7 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
             name -> {
                 if (backingTypeRegistry.get().containsKey(name))
                     return DataResult.success(backingTypeRegistry.get().getValue(name));
-                return DataResult.error("Object " + name + " not present in the registry");
+                return DataResult.error(() -> "Object " + name + " not present in the registry");
             },
             ISyncedRegistryEntryType::getRegistryName
           );

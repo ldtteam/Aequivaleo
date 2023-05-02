@@ -11,6 +11,7 @@ import net.minecraftforge.registries.*;
 
 import java.util.function.Supplier;
 
+@SuppressWarnings("UnstableApiUsage")
 public final class RegistryUtils
 {
 
@@ -30,7 +31,7 @@ public final class RegistryUtils
                         name -> {
                             if (typeRegistrySupplier.get().containsKey(name))
                                 return DataResult.success(typeRegistrySupplier.get().getValue(name));
-                            return DataResult.error("Object " + name + " not present in the registry");
+                            return DataResult.error(() -> "Object %s not present in the registry".formatted(name));
                         },
                         ISyncedRegistryEntryType::getRegistryName
                 );

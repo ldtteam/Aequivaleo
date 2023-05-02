@@ -12,6 +12,7 @@ import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
@@ -19,6 +20,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
@@ -38,6 +40,7 @@ public class RecipeCalculator implements IRecipeCalculator {
 
     @Override
     public Stream<IEquivalencyRecipe> getAllVariants(
+            @NotNull final ServerLevel serverLevel,
             final Recipe<?> recipe,
             final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
             final Function<Ingredient, List<IRecipeIngredient>> ingredientHandler,
@@ -47,11 +50,11 @@ public class RecipeCalculator implements IRecipeCalculator {
             return Stream.empty();
         }
 
-        if (recipe.getResultItem().isEmpty()) {
+        if (recipe.getResultItem(serverLevel.registryAccess()).isEmpty()) {
             return Stream.empty();
         }
 
-        final ICompoundContainer<?> result = CompoundContainerFactoryManager.getInstance().wrapInContainer(recipe.getResultItem(), recipe.getResultItem().getCount());
+        final ICompoundContainer<?> result = CompoundContainerFactoryManager.getInstance().wrapInContainer(recipe.getResultItem(serverLevel.registryAccess()), recipe.getResultItem(serverLevel.registryAccess()).getCount());
         final SortedSet<ICompoundContainer<?>> resultSet = new TreeSet<>();
         resultSet.add(result);
 

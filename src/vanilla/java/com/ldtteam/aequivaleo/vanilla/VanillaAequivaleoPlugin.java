@@ -35,9 +35,10 @@ import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.LegacyUpgradeRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.UpgradeRecipe;
+import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -136,7 +137,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         StreamUtils.execute(
           () -> smithingRecipe
             .parallelStream()
-            .forEach(recipe -> processSmithingRecipe(world, recipe))
+            .forEach(recipe -> processLegacySmithingRecipe(world, recipe))
         );
 
         final List<Recipe<?>> craftingRecipes = Lists.newArrayList();
@@ -206,20 +207,37 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processSmithingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
+    @SuppressWarnings("removal")
+    private static void processLegacySmithingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
     {
         processIRecipe(world,
           iRecipe,
           smithingRecipe -> {
-              if (!(smithingRecipe instanceof UpgradeRecipe))
+              if (!(smithingRecipe instanceof LegacyUpgradeRecipe))
                   throw new IllegalArgumentException("Recipe is not a smithing recipe.");
 
               final NonNullList<Ingredient> ingredients = NonNullList.create();
-              ingredients.add(((UpgradeRecipe) smithingRecipe).base);
-              ingredients.add(((UpgradeRecipe) smithingRecipe).addition);
+              ingredients.add(((LegacyUpgradeRecipe) smithingRecipe).base);
+              ingredients.add(((LegacyUpgradeRecipe) smithingRecipe).addition);
               return ingredients;
           },
           (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    }
+
+    private static void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe)
+    {
+        processIRecipe(world,
+                iRecipe,
+                smithingRecipe -> {
+                    if (!(smithingRecipe instanceof SmithingTransformRecipe))
+                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
+
+                    final NonNullList<Ingredient> ingredients = NonNullList.create();
+                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).base);
+                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).addition);
+                    return ingredients;
+                },
+                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processIRecipe(
@@ -230,12 +248,13 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin
     )
     {
         try {
-            if (iRecipe.getResultItem().isEmpty())
+            if (iRecipe.getResultItem(world.registryAccess()).isEmpty())
             {
                 return;
             }
 
             final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
+              world,
               iRecipe,
               ingredientExtractor,
               IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
