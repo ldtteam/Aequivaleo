@@ -19,6 +19,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
@@ -102,7 +103,9 @@ public final class WorldBootstrapper
       @NotNull final ServerLevel world
     ) {
         StreamUtils.execute(() -> {
-            StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true).forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+            StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true)
+                    .filter(item -> !item.equals(Items.AIR))
+                    .forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
               item,
               o -> {
                   final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);

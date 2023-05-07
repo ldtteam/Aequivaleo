@@ -111,4 +111,18 @@ public interface IRecipeCalculator
      * @return All the recipe ingredients which it represents, respecting the container item.
      */
     List<IRecipeIngredient> getAllVariantsFromSimpleIngredient(Ingredient ingredient);
+
+    /**
+     * Calculates all perturbations of a given input.
+     * A perturbation is a list of all possible combinations of the input.
+     * For example:
+     * Input: [1, 2, 3]
+     * Output: [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 2, 1], [3, 1, 2]]
+     *
+     * @param input The input to calculate the perturbations for.
+     * @param maxSize The maximum size of the perturbations.
+     * @return A list of all perturbations.
+     * @param <T> The type of the input.
+     */
+    <T> List<List<T>> getAllPerturbations(List<T> input, int maxSize);
 }

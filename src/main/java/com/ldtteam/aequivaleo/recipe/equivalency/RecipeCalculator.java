@@ -10,6 +10,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.utils.Permutations;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -165,6 +166,13 @@ public class RecipeCalculator implements IRecipeCalculator {
                 .map(this::mapStacks)
                 .map(wrappedStacks -> new SimpleIngredientBuilder().from(wrappedStacks).withCount(1d).createIngredient())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> List<List<T>> getAllPerturbations(List<T> input, int maxPermutations) {
+        final Permutations<T> permutations = new Permutations<>();
+
+        return permutations.getPermutations(input, maxPermutations);
     }
 
     private SortedSet<ICompoundContainer<?>> mapStacks(final Collection<ItemStack> stacks) {
