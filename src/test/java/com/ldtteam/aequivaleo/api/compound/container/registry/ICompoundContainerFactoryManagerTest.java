@@ -1,31 +1,36 @@
 package com.ldtteam.aequivaleo.api.compound.container.registry;
 
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
-@PrepareForTest({IAequivaleoAPI.class})
 public class ICompoundContainerFactoryManagerTest
 {
 
     private ICompoundContainerFactoryManager manager = mock(ICompoundContainerFactoryManager.class);
+    private MockedStatic<IAequivaleoAPI> apiMock;
 
     @Before
     public void setUp() throws Exception
     {
-        mockStatic(IAequivaleoAPI.class);
+        apiMock = mockStatic(IAequivaleoAPI.class);
         final IAequivaleoAPI api = mock(IAequivaleoAPI.class);
         when(IAequivaleoAPI.getInstance()).thenReturn(api);
         when(api.getCompoundContainerFactoryManager()).thenReturn(manager);
+    }
+
+    @After
+    public void tearDown() throws Exception
+    {
+        apiMock.close();
     }
 
     @Test

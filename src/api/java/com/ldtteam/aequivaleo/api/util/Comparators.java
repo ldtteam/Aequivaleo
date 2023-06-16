@@ -36,7 +36,7 @@ public final class Comparators
                             if (itemStack1.hasTag() && itemStack2.hasTag())
                             {
                                 // Then sort on stack size
-                                if (ItemStack.tagMatches(itemStack1, itemStack2))
+                                if (ItemStack.isSameItemSameTags(itemStack1, itemStack2))
                                 {
                                     return (itemStack1.getCount() - itemStack2.getCount());
                                 }

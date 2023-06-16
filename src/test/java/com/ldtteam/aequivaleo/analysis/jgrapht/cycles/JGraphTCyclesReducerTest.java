@@ -7,31 +7,30 @@ import com.ldtteam.aequivaleo.config.CommonConfiguration;
 import com.ldtteam.aequivaleo.config.Configuration;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.jgrapht.Graph;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor({"net.minecraft.world.World"})
-@PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*"})
-@PrepareForTest({Aequivaleo.class})
 public class JGraphTCyclesReducerTest
 {
 
     JGraphTCyclesReducer<Graph<String, Edge>, String, Edge> reducer;
+
+    MockedStatic<Aequivaleo> aequivaleoMock;
+
     @Before
     public void setUp()
     {
-        mockStatic(Aequivaleo.class);
+        aequivaleoMock = mockStatic(Aequivaleo.class);
         Aequivaleo mod = mock(Aequivaleo.class);
         when(Aequivaleo.getInstance()).thenReturn(mod);
 
@@ -58,6 +57,11 @@ public class JGraphTCyclesReducerTest
           (s, s2, s3) -> {
               //Do not care.
           });
+    }
+
+    @After
+    public void cleanup() {
+        aequivaleoMock.close();
     }
 
     @Test

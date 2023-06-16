@@ -71,6 +71,8 @@ public abstract class AbstractInformationProvider implements DataProvider
             ));
         }
 
+        futures.removeIf(Objects::isNull);
+
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 

@@ -71,7 +71,7 @@ public class ItemStackUtils
             if (itemStack1.hasTag() && itemStack2.hasTag())
             {
                 // Then sort on stack size
-                return ItemStack.tagMatches(itemStack1, itemStack2) || !matchNBT;
+                return ItemStack.isSameItemSameTags(itemStack1, itemStack2) || !matchNBT;
             }
             else
             {

@@ -36,26 +36,27 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
-@SuppressStaticInitializationFor({"net.minecraft.world.level.Level"})
-@PowerMockIgnore({"jdk.internal.reflect.*", "org.apache.log4j.*", "org.apache.commons.logging.*", "javax.management.*", "org.apache.logging.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
-@PrepareForTest({Aequivaleo.class, ModList.class})
 public class JGraphTBasedCompoundAnalyzerTest
 {
     ResourceKey<Level>           key;
@@ -70,6 +71,10 @@ public class JGraphTBasedCompoundAnalyzerTest
 
     ICompoundInformationRegistry input;
 
+    MockedStatic<Aequivaleo> aequivaleoMock;
+    MockedStatic<ModList> modListMock;
+
+
     @Rule
     public TestName currentTestName = new TestName();
 
@@ -83,7 +88,8 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         input = CompoundInformationRegistry.getInstance(key);
 
-        mockStatic(Aequivaleo.class, ModList.class);
+        aequivaleoMock = mockStatic(Aequivaleo.class);
+        modListMock = mockStatic(ModList.class);
         Aequivaleo mod = mock(Aequivaleo.class);
         when(Aequivaleo.getInstance()).thenReturn(mod);
 
@@ -180,6 +186,9 @@ public class JGraphTBasedCompoundAnalyzerTest
     {
         CompoundInformationRegistry.getInstance(key).reset();
         EquivalencyRecipeRegistry.getInstance(key).reset();
+
+        aequivaleoMock.close();
+        modListMock.close();
     }
 
     @Test

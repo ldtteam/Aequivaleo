@@ -38,12 +38,12 @@ import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.LegacyUpgradeRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
 import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -100,22 +100,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    @SuppressWarnings("removal")
-    private static void processLegacySmithingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world,
-                iRecipe,
-                smithingRecipe -> {
-                    if (!(smithingRecipe instanceof LegacyUpgradeRecipe))
-                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
-
-                    final NonNullList<Ingredient> ingredients = NonNullList.create();
-                    ingredients.add(((LegacyUpgradeRecipe) smithingRecipe).base);
-                    ingredients.add(((LegacyUpgradeRecipe) smithingRecipe).addition);
-                    return ingredients;
-                },
-                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
-    }
-
     private static void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processIRecipe(world,
                 iRecipe,
@@ -155,7 +139,10 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                     final List<Item> sherds = holder.stream().map(Holder::get).toList();
                     final List<List<Item>> permutedSherds = IRecipeCalculator.getInstance().getAllPerturbations(sherds, 4);
                     final List<DecoratedPotEquivalencyRecipe> recipes = permutedSherds.stream()
-                            .map(sherdList -> new DecoratedPotEquivalencyRecipe(world, sherdList.toArray(Item[]::new)))
+                            .map(sherdList -> {
+                                final DecoratedPotBlockEntity.Decorations decorations = new DecoratedPotBlockEntity.Decorations(sherdList.get(0), sherdList.get(1), sherdList.get(2), sherdList.get(3));
+                                return new DecoratedPotEquivalencyRecipe(world, decorations);
+                            })
                             .toList();
 
                     recipes.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
@@ -263,7 +250,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 .registerAs(Constants.SIMPLE_RECIPE_TYPE, RecipeType.CRAFTING)
                 .registerAs(Constants.COOKING_RECIPE_TYPE, RecipeType.SMELTING, RecipeType.BLASTING, RecipeType.CAMPFIRE_COOKING, RecipeType.SMOKING)
                 .registerAs(Constants.STONE_CUTTING_RECIPE_TYPE, RecipeType.STONECUTTING)
-                .registerAs(Constants.SMITHING_RECIPE_TYPE, RecipeType.SMITHING)
                 .registerAs(Constants.SMITHING_TRANSFORM_RECIPE_TYPE, RecipeType.SMITHING)
                 .registerAs(Constants.SMITHING_TRIM_RECIPE_TYPE, RecipeType.SMITHING)
                 .registerAs(Constants.DECORATED_POT_RECIPE_TYPE, RecipeType.CRAFTING);
@@ -297,19 +283,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 () -> stoneCuttingsRecipe
                         .parallelStream()
                         .forEach(recipe -> processStoneCuttingRecipe(world, recipe))
-        );
-
-        final List<Recipe<?>> legacySmithingRecipes = Lists.newArrayList();
-
-        IRecipeTypeProcessingRegistry
-                .getInstance()
-                .getRecipeTypesToBeProcessedAs(Constants.SMITHING_RECIPE_TYPE)
-                .forEach(type -> legacySmithingRecipes.addAll(getRecipes(type, Constants.SMITHING_RECIPE_TYPE, world)));
-
-        StreamUtils.execute(
-                () -> legacySmithingRecipes
-                        .parallelStream()
-                        .forEach(recipe -> processLegacySmithingRecipe(world, recipe))
         );
 
         final List<Recipe<?>> smithingTransformRecipes = Lists.newArrayList();

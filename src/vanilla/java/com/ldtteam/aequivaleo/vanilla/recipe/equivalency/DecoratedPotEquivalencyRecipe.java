@@ -14,6 +14,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.DecoratedPotRecipe;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 
@@ -27,12 +28,12 @@ public class DecoratedPotEquivalencyRecipe extends GenericRecipeEquivalencyRecip
 
     private static final String RECIPE_NAME_TEMPLATE = "decorated_pot_%s";
 
-    public DecoratedPotEquivalencyRecipe(final ServerLevel world, final Item... inputs) {
-        super(toRecipeName(world, inputs), toIngredients(inputs), Set.of(), toOutput(inputs));
+    public DecoratedPotEquivalencyRecipe(final ServerLevel world, final DecoratedPotBlockEntity.Decorations decorations) {
+        super(toRecipeName(world, decorations), toIngredients(decorations), Set.of(), toOutput(decorations));
     }
 
-    private static ResourceLocation toRecipeName(final ServerLevel world, final Item... inputs) {
-        return new ResourceLocation(String.format(RECIPE_NAME_TEMPLATE, Arrays.stream(inputs)
+    private static ResourceLocation toRecipeName(final ServerLevel world, final DecoratedPotBlockEntity.Decorations decorations) {
+        return new ResourceLocation(String.format(RECIPE_NAME_TEMPLATE, decorations.m_284195_()
                 .map(item -> world.registryAccess().registryOrThrow(Registries.ITEM).getKey(item))
                 .filter(Objects::nonNull)
                 .map(ResourceLocation::toString)
@@ -40,22 +41,15 @@ public class DecoratedPotEquivalencyRecipe extends GenericRecipeEquivalencyRecip
                 .collect(Collectors.joining("_"))));
     }
 
-    private static Set<IRecipeIngredient> toIngredients(Item... inputs) {
-        return Arrays.stream(inputs)
+    private static Set<IRecipeIngredient> toIngredients(DecoratedPotBlockEntity.Decorations decorations) {
+        return decorations.m_284195_()
                 .map(item -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(item.getDefaultInstance(), 1d))
                 .map(container -> new SimpleIngredientBuilder().from(container).createIngredient())
                 .collect(Collectors.toSet());
     }
 
-    private static Set<ICompoundContainer<?>> toOutput(Item... inputs) {
-        if (inputs.length != 4)
-            throw new IllegalArgumentException("DecoratedPotEquivalencyRecipe must have 4 inputs");
-
-        ItemStack itemstack = Items.DECORATED_POT.getDefaultInstance();
-        CompoundTag compoundtag = new CompoundTag();
-        DecoratedPotBlockEntity.saveShards(List.of(inputs), compoundtag);
-        BlockItem.setBlockEntityData(itemstack, BlockEntityType.DECORATED_POT, compoundtag);
-
+    private static Set<ICompoundContainer<?>> toOutput(DecoratedPotBlockEntity.Decorations decorations) {
+        ItemStack itemstack = DecoratedPotRecipe.m_284234_(decorations);
         return Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(itemstack, 1d));
     }
 }
