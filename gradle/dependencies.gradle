@@ -6,7 +6,16 @@ dependencies {
     testRuntimeOnly "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${project.jacksonDataFormatYamlVersion}"
     testRuntimeOnly "com.fasterxml.jackson.core:jackson-databind:${project.jacksonDatabindVersion}"
 
-    contained "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
-    contained "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
-    contained "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+    contained("org.jgrapht:jgrapht-core:${project.jgraphtVersion}") {
+        jarJar.pin(it, project.jgraphtVersion)
+        jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+    }
+    contained("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}") {
+        jarJar.pin(it, project.jgraphtVersion)
+        jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+    }
+    contained("org.jgrapht:jgrapht-io:${project.jgraphtVersion}") {
+        jarJar.pin(it, project.jgraphtVersion)
+        jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+    }
 }

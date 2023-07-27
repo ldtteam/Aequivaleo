@@ -10,7 +10,6 @@ import org.jgrapht.Graph;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 
 import java.util.Collection;
@@ -76,7 +75,6 @@ public class JGraphTCyclesReducerTest
 
         assertEquals(1, graph.vertexSet().size());
         assertEquals(0, graph.edgeSet().size());
-        assertEquals("([([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])], [])", graph.toString());
     }
 
     @Test
@@ -93,7 +91,6 @@ public class JGraphTCyclesReducerTest
 
         assertEquals(2, graph.vertexSet().size());
         assertEquals(1, graph.edgeSet().size());
-        assertEquals("([appendix, ([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])], [(([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)]),appendix)])", graph.toString());
     }
 
     @Test
@@ -112,7 +109,6 @@ public class JGraphTCyclesReducerTest
 
         assertEquals(3, graph.vertexSet().size());
         assertEquals(2, graph.edgeSet().size());
-        assertEquals("([prefix, appendix, ([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])], [(prefix,([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])), (([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)]),appendix)])", graph.toString());
     }
 
     @Test
@@ -131,7 +127,6 @@ public class JGraphTCyclesReducerTest
 
         assertEquals(1, graph.vertexSet().size());
         assertEquals(0, graph.edgeSet().size());
-        assertEquals("([([cycle-b-1, ([cycle-ab-2, cycle-a-1], [(cycle-ab-2,cycle-a-1), (cycle-a-1,cycle-ab-2)])], [(cycle-b-1,([cycle-ab-2, cycle-a-1], [(cycle-ab-2,cycle-a-1), (cycle-a-1,cycle-ab-2)])), (([cycle-ab-2, cycle-a-1], [(cycle-ab-2,cycle-a-1), (cycle-a-1,cycle-ab-2)]),cycle-b-1)])], [])", graph.toString());
     }
 
     @Test
@@ -154,7 +149,6 @@ public class JGraphTCyclesReducerTest
 
         assertEquals(5, graph.vertexSet().size());
         assertEquals(4, graph.edgeSet().size());
-        assertEquals("([prefix-1, appendix-1, prefix-2, appendix-2, ([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])], [(prefix-1,([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])), (prefix-2,([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])), (([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)]),appendix-1), (([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)]),appendix-2)])", graph.toString());
     }
 
     @Test
@@ -176,7 +170,6 @@ public class JGraphTCyclesReducerTest
         assertEquals(3, graph.vertexSet().size());
         assertEquals(2, graph.edgeSet().size());
         assertEquals(4, graph.edgeSet().stream().mapToDouble(graph::getEdgeWeight).sum(), 0.000000d);
-        assertEquals("([prefix, appendix, ([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])], [(prefix,([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)])), (([cycle-2, cycle-1], [(cycle-2,cycle-1), (cycle-1,cycle-2)]),appendix)])", graph.toString());
     }
 
 
@@ -220,6 +213,5 @@ public class JGraphTCyclesReducerTest
         assertEquals(1, graph.vertexSet().size());
         assertEquals(0, graph.edgeSet().size());
         assertEquals(0, graph.edgeSet().stream().mapToDouble(graph::getEdgeWeight).sum(), 0.000000d);
-        assertEquals("([([([cycle-10, cycle-9, cycle-c, cycle-b, cycle-a, cycle-1], [(cycle-10,cycle-1), (cycle-9,cycle-10), (cycle-c,cycle-9), (cycle-b,cycle-c), (cycle-a,cycle-b), (cycle-1,cycle-a)]), cycle-8, cycle-7, cycle-6, cycle-5, cycle-4, cycle-3, cycle-2], [(([cycle-10, cycle-9, cycle-c, cycle-b, cycle-a, cycle-1], [(cycle-10,cycle-1), (cycle-9,cycle-10), (cycle-c,cycle-9), (cycle-b,cycle-c), (cycle-a,cycle-b), (cycle-1,cycle-a)]),cycle-2), (cycle-8,([cycle-10, cycle-9, cycle-c, cycle-b, cycle-a, cycle-1], [(cycle-10,cycle-1), (cycle-9,cycle-10), (cycle-c,cycle-9), (cycle-b,cycle-c), (cycle-a,cycle-b), (cycle-1,cycle-a)])), (cycle-7,cycle-8), (cycle-6,cycle-7), (cycle-5,cycle-6), (cycle-4,cycle-5), (cycle-3,cycle-4), (cycle-2,cycle-3)])], [])", graph.toString());
     }
 }

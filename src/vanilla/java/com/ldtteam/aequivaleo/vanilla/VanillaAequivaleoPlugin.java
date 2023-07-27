@@ -259,6 +259,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     @SuppressWarnings("deprecation")
     @Override
     public void onReloadStartedFor(final ServerLevel world) {
+/*
         final List<Recipe<?>> smeltingRecipe = Lists.newArrayList();
 
         IRecipeTypeProcessingRegistry
@@ -309,9 +310,9 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 () -> smithingTrimRecipes
                         .parallelStream()
                         .forEach(recipe -> processSmithingTrimRecipe(world, recipe))
-        );
+        );*/
 
-        processDecoratedPotRecipe(world);
+        //processDecoratedPotRecipe(world);
 
         final List<Recipe<?>> craftingRecipes = Lists.newArrayList();
 

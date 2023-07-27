@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
+import org.jgrapht.alg.cycle.TarjanSimpleCycles;
 
 import java.util.*;
 import java.util.function.BiFunction;
