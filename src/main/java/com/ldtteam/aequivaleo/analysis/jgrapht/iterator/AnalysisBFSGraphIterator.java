@@ -34,12 +34,8 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     {
         super(iteratingGraph, sourceGraphNode);
 
-        final DepthMapBFSIterator depthMapBFSIterator = new DepthMapBFSIterator(iteratingGraph, sourceGraphNode);
-        while(depthMapBFSIterator.hasNext())
-        {
-            depthMapBFSIterator.next();
-        }
-        this.depthMap.putAll(depthMapBFSIterator.getDepthMap());
+        final IDepthMapBuilder depthMapBuilder = new BFSDepthMapBuilder(iteratingGraph, sourceGraphNode);
+        this.depthMap.putAll(depthMapBuilder.calculateDepthMap());
         this.startNode = sourceGraphNode;
         this.analysisGraph = analysisGraph;
 

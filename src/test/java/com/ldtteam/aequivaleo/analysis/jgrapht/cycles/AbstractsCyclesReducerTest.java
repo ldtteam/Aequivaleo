@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles;
 
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.SimpleAnalysisGraph;
 import com.ldtteam.aequivaleo.config.CommonConfiguration;
@@ -15,16 +16,16 @@ import org.mockito.MockedStatic;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-public class JGraphTCyclesReducerTest
+public abstract class AbstractsCyclesReducerTest<R extends ICyclesReducer<Graph<String, Edge>, String, Edge>>
 {
 
-    JGraphTCyclesReducer<Graph<String, Edge>, String, Edge> reducer;
+    R reducer;
 
     MockedStatic<Aequivaleo> aequivaleoMock;
+
+    protected abstract R createReducer();
 
     @Before
     public void setUp()
@@ -41,21 +42,7 @@ public class JGraphTCyclesReducerTest
         when(config.getCommon()).thenReturn(commonConfiguration);
         when(mod.getConfiguration()).thenReturn(config);
 
-        reducer = new JGraphTCyclesReducer<>(
-          (graph, vertices) -> {
-              final Graph<String, Edge> innerGraph = new SimpleAnalysisGraph<>(Edge::new);
-              vertices.forEach(innerGraph::addVertex);
-              vertices.stream()
-                .map(graph::outgoingEdgesOf)
-                .flatMap(Collection::stream)
-                .filter(e -> vertices.contains(graph.getEdgeTarget(e)))
-                .forEach(e -> innerGraph.addEdge(graph.getEdgeSource(e), graph.getEdgeTarget(e), e));
-
-              return innerGraph.toString();
-          },
-          (s, s2, s3) -> {
-              //Do not care.
-          });
+        reducer = createReducer();
     }
 
     @After
@@ -201,12 +188,10 @@ public class JGraphTCyclesReducerTest
         graph.addEdge("cycle-9", "cycle-10");
         graph.addEdge("cycle-10", "cycle-1");
 
-
         graph.addEdge("cycle-1", "cycle-a");
         graph.addEdge("cycle-a", "cycle-b");
         graph.addEdge("cycle-b", "cycle-c");
         graph.addEdge("cycle-c", "cycle-9");
-
 
         reducer.reduceOnce(graph);
 

@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.analysis.jgrapht.node;
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analysis.StatCollector;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.JGraphTCyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.HawickJamesCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.iterator.AnalysisBFSGraphIterator;
@@ -345,7 +345,7 @@ public class InnerNode
             }
         }
 
-        final JGraphTCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new JGraphTCyclesReducer<>(
+        final HawickJamesCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new HawickJamesCyclesReducer<>(
                 InnerNode::new,
                 INode::onNeighborReplaced,
                 false);

@@ -13,13 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
-import org.jgrapht.alg.cycle.TarjanSimpleCycles;
 
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisEdge>
-{
+@Deprecated(forRemoval = true)
+public class HawickJamesCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisEdge> implements ICyclesReducer<G, V, E> {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -27,13 +26,13 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
     private final TriConsumer<V, V, V> onNeighborNodeReplacedCallback;
     private final boolean reduceSingularCycle;
 
-    public JGraphTCyclesReducer(
+    public HawickJamesCyclesReducer(
       final BiFunction<G, List<V>, V> vertexReplacerFunction,
       final TriConsumer<V, V, V> onNeighborNodeReplacedCallback) {
         this(vertexReplacerFunction, onNeighborNodeReplacedCallback, true);
     }
 
-    public JGraphTCyclesReducer(
+    public HawickJamesCyclesReducer(
       final BiFunction<G, List<V>, V> vertexReplacerFunction,
       final TriConsumer<V, V, V> onNeighborNodeReplacedCallback,
       final boolean reduceSingularCycle) {
@@ -42,6 +41,7 @@ public class JGraphTCyclesReducer<G extends Graph<V, E>, V, E extends IAnalysisE
         this.reduceSingularCycle = reduceSingularCycle;
     }
 
+    @Override
     public void reduce(final G graph) {
         //Unit testing has shown that this is enough
         //Saves a recompilation of the cycle detection graph.

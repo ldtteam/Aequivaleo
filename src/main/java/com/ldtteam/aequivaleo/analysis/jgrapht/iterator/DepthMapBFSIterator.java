@@ -9,8 +9,8 @@ import org.jgrapht.traverse.CrossComponentIterator;
 
 import java.util.*;
 
-public class DepthMapBFSIterator extends CrossComponentIterator<INode, IEdge, DepthMapBFSIterator.SearchNodeData>
-{
+@Deprecated(forRemoval = true)
+public class DepthMapBFSIterator extends CrossComponentIterator<INode, IEdge, DepthMapBFSIterator.SearchNodeData> implements IDepthMapBuilder {
     private final Queue<INode>      completeQueue   = new ArrayDeque<>();
     private final LinkedList<INode> incompleteQueue = new LinkedList<>();
 
@@ -105,6 +105,16 @@ public class DepthMapBFSIterator extends CrossComponentIterator<INode, IEdge, De
     public Map<INode, Integer> getDepthMap()
     {
         return depthMap;
+    }
+
+    @Override
+    public Map<INode, Integer> calculateDepthMap() {
+        while(hasNext())
+        {
+            next();
+        }
+
+        return getDepthMap();
     }
 
     static class SearchNodeData

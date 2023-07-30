@@ -7,7 +7,9 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cache.CacheKey;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.JGraphTCliqueReducer;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.JGraphTCyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.BFSCyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.HawickJamesCyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analysis.jgrapht.node.*;
@@ -260,7 +262,7 @@ public class JGraphTBasedCompoundAnalyzer
 
         LOGGER.warn("Starting cycle reduction.");
 
-        final JGraphTCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new JGraphTCyclesReducer<>(
+        final ICyclesReducer<IGraph, INode, IEdge> cyclesReducer = new BFSCyclesReducer<>(
           InnerNode::new,
           INode::onNeighborReplaced);
 
