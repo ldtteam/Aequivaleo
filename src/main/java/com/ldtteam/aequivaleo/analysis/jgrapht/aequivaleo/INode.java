@@ -61,4 +61,8 @@ public interface INode extends IAnalysisGraphNode<IGraph, Set<CompoundInstance>,
         }
         return false;
     }
+
+    default int getInertImportance() {
+        return 0;
+    }
 }

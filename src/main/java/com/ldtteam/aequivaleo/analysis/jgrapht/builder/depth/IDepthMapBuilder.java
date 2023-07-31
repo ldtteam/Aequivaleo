@@ -1,4 +1,4 @@
-package com.ldtteam.aequivaleo.analysis.jgrapht.iterator;
+package com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth;
 
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;

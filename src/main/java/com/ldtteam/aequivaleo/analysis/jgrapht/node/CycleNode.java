@@ -3,10 +3,12 @@ package com.ldtteam.aequivaleo.analysis.jgrapht.node;
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analysis.StatCollector;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.HawickJamesCyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.BFSAnalysisBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.IAnalysisBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.SzwarcfiterLauerCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.edge.Edge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
-import com.ldtteam.aequivaleo.analysis.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class InnerNode
+public class CycleNode
         implements IInnerNode, IContainerNode, IIOAwareNode, IRecipeInputNode, IRecipeResidueNode, IRecipeOutputNode, INodeWithoutResult, IStartAnalysisNode {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -30,7 +32,7 @@ public class InnerNode
     private final Multimap<INode, Optional<Set<CompoundInstance>>> candidates = ArrayListMultimap.create();
     private final Table<INode, INode, IEdge> disabledIoGraphEdges = HashBasedTable.create();
 
-    public InnerNode(
+    public CycleNode(
             final IGraph sourceGraph,
             final List<INode> innerVertices
     ) {
@@ -240,7 +242,7 @@ public class InnerNode
             }
 
             //Run inner analysis
-            final AnalysisBFSGraphIterator iterator = new AnalysisBFSGraphIterator(innerGraph, startNode, workingGraph);
+            final IAnalysisBuilder iterator = new BFSAnalysisBuilder(innerGraph, startNode, workingGraph);
             final StatCollector innerStatCollector = new StatCollector("Inner node analysis.", innerGraph.vertexSet().size()) {
 
                 @Override
@@ -248,9 +250,7 @@ public class InnerNode
                     //Noop
                 }
             };
-            while (iterator.hasNext()) {
-                iterator.next().collectStats(innerStatCollector);
-            }
+            iterator.analyse(innerStatCollector);
 
             //Re-add the original edges that where removed.
             for (Map.Entry<IEdge, INode> entry : workingGraphSourceMap.entrySet()) {
@@ -345,8 +345,8 @@ public class InnerNode
             }
         }
 
-        final HawickJamesCyclesReducer<IGraph, INode, IEdge> cyclesReducer = new HawickJamesCyclesReducer<>(
-                InnerNode::new,
+        final ICyclesReducer cyclesReducer = new SzwarcfiterLauerCyclesReducer(
+                CycleNode::new,
                 INode::onNeighborReplaced,
                 false);
 
@@ -432,7 +432,7 @@ public class InnerNode
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final InnerNode that = (InnerNode) o;
+        final CycleNode that = (CycleNode) o;
         return hash == that.hash;
     }
 

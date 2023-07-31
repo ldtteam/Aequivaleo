@@ -5,6 +5,8 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INodeWithoutResult;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.CrossComponentDepthMapBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.IDepthMapBuilder;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +16,7 @@ import org.jgrapht.traverse.CrossComponentIterator;
 
 import java.util.*;
 
+@Deprecated(forRemoval = true)
 public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdge, AnalysisBFSGraphIterator.SearchNodeData>
 {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -34,7 +37,7 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     {
         super(iteratingGraph, sourceGraphNode);
 
-        final IDepthMapBuilder depthMapBuilder = new BFSDepthMapBuilder(iteratingGraph, sourceGraphNode);
+        final IDepthMapBuilder depthMapBuilder = new CrossComponentDepthMapBuilder(iteratingGraph, sourceGraphNode);
         this.depthMap.putAll(depthMapBuilder.calculateDepthMap());
         this.startNode = sourceGraphNode;
         this.analysisGraph = analysisGraph;

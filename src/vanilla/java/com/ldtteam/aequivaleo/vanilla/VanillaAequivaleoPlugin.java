@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.api.tags.Tags;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
@@ -37,11 +38,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SmithingTransformRecipe;
-import net.minecraft.world.item.crafting.SmithingTrimRecipe;
+import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.material.Fluid;
@@ -85,23 +82,23 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private static void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
     private static void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world,
+        processRecipe(world,
                 iRecipe,
                 smithingRecipe -> {
                     if (!(smithingRecipe instanceof SmithingTransformRecipe))
@@ -117,7 +114,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private static void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processIRecipe(world,
+        processRecipe(world,
                 iRecipe,
                 smithingRecipe -> {
                     if (!(smithingRecipe instanceof SmithingTrimRecipe))
@@ -149,32 +146,36 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 });
     }
 
-    private static void processIRecipe(
+    private static void processRecipe(
             @NotNull final ServerLevel world,
-            final Recipe<?> iRecipe,
+            final Recipe<?> recipe,
             final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
             final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
     ) {
         try {
-            if (iRecipe.getResultItem(world.registryAccess()).isEmpty()) {
+            if (recipe.getResultItem(world.registryAccess()).isEmpty()) {
+                return;
+            }
+
+            if (isNotCompatibleRecipe(world, recipe)) {
                 return;
             }
 
             final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
                     world,
-                    iRecipe,
+                    recipe,
                     ingredientExtractor,
                     IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
                     recipeFactory
             ).toList();
 
-            if (variants.isEmpty() && !iRecipe.getId().getNamespace().equals("minecraft")) {
-                LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", iRecipe.getId()));
+            if (variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
+                LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
             }
 
-            variants.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
+            variants.forEach(variant -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(variant));
         } catch (Exception ex) {
-            LOGGER.error("A recipe has throw an exception while processing: " + iRecipe.getId(), ex);
+            LOGGER.error("A recipe has throw an exception while processing: " + recipe.getId(), ex);
         }
     }
 
@@ -220,6 +221,19 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         );
     }
 
+    private static boolean isNotCompatibleRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
+        return isDyeingRecipe(world, recipe);
+    }
+
+    private static boolean isDyeingRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
+        return recipe.getSerializer() == RecipeSerializer.SHAPELESS_RECIPE &&
+                recipe.getResultItem(world.registryAccess()).is(Tags.Items.BLOCKED_COLOR_CYCLE) &&
+                recipe.getIngredients().size() == 2 &&
+                recipe.getIngredients().get(0).getItems().length == 1 &&
+                recipe.getIngredients().get(0).getItems()[0].is(net.minecraftforge.common.Tags.Items.DYES) &&
+                recipe.getIngredients().get(1).getItems().length == 15;
+    }
+
     @Override
     public String getId() {
         return "Vanilla";
@@ -259,7 +273,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     @SuppressWarnings("deprecation")
     @Override
     public void onReloadStartedFor(final ServerLevel world) {
-/*
+
         final List<Recipe<?>> smeltingRecipe = Lists.newArrayList();
 
         IRecipeTypeProcessingRegistry
@@ -310,7 +324,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 () -> smithingTrimRecipes
                         .parallelStream()
                         .forEach(recipe -> processSmithingTrimRecipe(world, recipe))
-        );*/
+        );
 
         //processDecoratedPotRecipe(world);
 
@@ -329,7 +343,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
         final List<Recipe<?>> genericRecipes = Lists.newArrayList();
 
-        final List<Pattern> blackListPatterns = configuration.getCommon().recipeTypeNamePatternsToExclude
+        final List<Pattern> blackListTypePatterns = configuration.getCommon().recipeTypeNamePatternsToExclude
                 .get()
                 .stream()
                 .map(Pattern::compile)
@@ -338,7 +352,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         final Set<RecipeType<?>> knownTypes = IRecipeTypeProcessingRegistry.getInstance().getAllKnownTypes();
         BuiltInRegistries.RECIPE_TYPE.entrySet().stream()
                 .filter(entry -> !knownTypes.contains(entry.getValue()))
-                .filter(entry -> blackListPatterns.stream().noneMatch(blp -> blp.matcher(entry.getKey().location().toString()).find()))
+                .filter(entry -> blackListTypePatterns.stream().noneMatch(blp -> blp.matcher(entry.getKey().location().toString()).find()))
                 .forEach(
                         entry -> genericRecipes.addAll(getRecipes(entry.getValue(), world))
                 );

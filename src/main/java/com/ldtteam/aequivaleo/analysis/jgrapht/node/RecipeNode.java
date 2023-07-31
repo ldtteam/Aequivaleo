@@ -217,4 +217,9 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
     public void setBaseResult(final Set<CompoundInstance> compoundInstances) {
         //Noop; recipes don't care.
     }
+
+    @Override
+    public int getInertImportance() {
+        return -1;
+    }
 }

@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo;
 
+import com.ldtteam.aequivaleo.api.tags.Tags;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
 import com.ldtteam.aequivaleo.apiimpl.AequivaleoAPI;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
@@ -51,6 +52,8 @@ public class Aequivaleo
         PluginManger.getInstance().run(IAequivaleoPlugin::onConstruction);
 
         Mod.EventBusSubscriber.Bus.MOD.bus().get().addListener(AnalysisLogHandler::onConfigurationReloaded);
+
+        Tags.init();
     }
 
     public static Aequivaleo getInstance()

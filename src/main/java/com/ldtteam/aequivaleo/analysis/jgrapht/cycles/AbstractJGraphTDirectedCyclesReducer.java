@@ -1,6 +1,6 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles;
 
-import com.google.common.collect.ArrayListMultimap;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -12,124 +12,47 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
-import org.jgrapht.Graphs;
-import org.jgrapht.alg.cycle.CycleDetector;
-import org.jgrapht.traverse.BreadthFirstIterator;
+import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class BFSCyclesReducer implements ICyclesReducer {
+public abstract class AbstractJGraphTDirectedCyclesReducer implements ICyclesReducer {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction;
     private final TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback;
     private final boolean reduceSingularCycle;
 
-    public BFSCyclesReducer(BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction, TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback, boolean reduceSingularCycle) {
-        this.vertexReplacerFunction = vertexReplacerFunction;
-        this.onNeighborNodeReplacedCallback = onNeighborNodeReplacedCallback;
-        this.reduceSingularCycle = reduceSingularCycle;
-    }
-
-    public BFSCyclesReducer(
+    public AbstractJGraphTDirectedCyclesReducer(
             final BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction,
             final TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback) {
         this(vertexReplacerFunction, onNeighborNodeReplacedCallback, true);
     }
 
-    @Override
-    public void reduce(IGraph graph) {
-        if (!reduceOnce(graph) && !reduceSingularCycle) {
-            return;
-        }
-
-        int count = 10;
-        final CycleDetector<INode, IEdge> cycleDetector = new CycleDetector<>(graph);
-        while(cycleDetector.detectCycles() && count > 0) {
-            if (!reduceOnce(graph) && !reduceSingularCycle) {
-                return;
-            }
-            count--;
-        }
-
-        if (cycleDetector.detectCycles()) {
-            throw new IllegalStateException("Failed to reduce all cycles!");
-        }
+    public AbstractJGraphTDirectedCyclesReducer(
+            final BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction,
+            final TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback,
+            final boolean reduceSingularCycle) {
+        this.vertexReplacerFunction = vertexReplacerFunction;
+        this.onNeighborNodeReplacedCallback = onNeighborNodeReplacedCallback;
+        this.reduceSingularCycle = reduceSingularCycle;
     }
 
+    @Override
+    public void reduce(final IGraph graph) {
+        //Unit testing has shown that this is enough
+        //Saves a recompilation of the cycle detection graph.
+        reduceOnce(graph);
+    }
+
+    @SuppressWarnings("DuplicatedCode")
     @VisibleForTesting
-    public boolean reduceOnce(IGraph graph) {
-        final Multimap<INode, IEdge> pathTaken = ArrayListMultimap.create();
-        final List<List<INode>> cycles = new ArrayList<>();
-        final BreadthFirstIterator<INode, IEdge> iterator = new BreadthFirstIterator<>(graph) {
-            @Override
-            protected void encounterVertex(INode vertex, IEdge edge) {
-                super.encounterVertex(vertex, edge);
+    public boolean reduceOnce(final IGraph graph) {
+        AnalysisLogHandler.debug(LOGGER, "Reducing the graph");
 
-                boolean isRoot = edge == null;
-                if (!isRoot) {
-                    final INode input = Graphs.getOppositeVertex(graph, edge, vertex);
-                    final Collection<IEdge> upUntil = List.copyOf(pathTaken.get(input));
-                    pathTaken.putAll(vertex, upUntil);
-                    pathTaken.put(vertex, edge);
-                } else if (graph.incomingEdgesOf(vertex).size() != 0) {
-                    for (IEdge e : graph.incomingEdgesOf(vertex)) {
-                        pathTaken.put(vertex, e);
-                    }
-                }
-            }
-
-            @Override
-            protected void encounterVertexAgain(INode vertex, IEdge edge) {
-                super.encounterVertexAgain(vertex, edge);
-                final INode input = Graphs.getOppositeVertex(graph, edge, vertex);
-                final List<IEdge> path = new ArrayList<>(pathTaken.get(input));
-                Collections.reverse(path);
-
-                final List<INode> cycle = new ArrayList<>();
-                cycle.add(vertex);
-                INode workingVertex = input;
-                while(!workingVertex.equals(vertex)) {
-                    if (path.size() == 0) {
-                        INode finalWorkingVertex = workingVertex;
-                        final Optional<List<INode>> containedCycle = cycles.stream()
-                                .filter(c -> c.contains(finalWorkingVertex) && c.contains(vertex))
-                                .findFirst();
-
-                        if (containedCycle.isEmpty())
-                            return;
-
-                        final int workingVertexIndex = containedCycle.get().indexOf(finalWorkingVertex);
-                        final int targetVertexIndex = containedCycle.get().indexOf(vertex);
-
-                        final int startIndex = Math.min(workingVertexIndex, targetVertexIndex);
-                        final int endIndex = Math.max(workingVertexIndex, targetVertexIndex);
-                        final int length = endIndex - startIndex;
-
-                        final List<INode> subCycle = containedCycle.get().subList(startIndex, endIndex);
-                        cycle.addAll(subCycle);
-                        break;
-                    }
-
-                    final IEdge workingEdge = path.remove(0);
-                    cycle.add(workingVertex);
-
-                    if (graph.getEdgeSource(workingEdge) != workingVertex && graph.getEdgeTarget(workingEdge) != workingVertex)
-                        return;
-
-                    workingVertex = Graphs.getOppositeVertex(graph, workingEdge, workingVertex);
-                }
-
-                cycles.add(cycle);
-            }
-        };
-
-        while(iterator.hasNext()) { iterator.next(); }
-
-        List<List<INode>> sortedCycles = new ArrayList<>(cycles);
-        sortedCycles.sort(Comparator.comparing(List::size));
+        final DirectedSimpleCycles<INode, IEdge> cycleFinder = createCycleDetector(graph);
+        List<List<INode>> sortedCycles = cycleFinder.findSimpleCycles();
 
         List<List<INode>> list = new ArrayList<>();
         Set<List<INode>> uniqueValues = new HashSet<>();
@@ -238,6 +161,8 @@ public class BFSCyclesReducer implements ICyclesReducer {
 
         return true;
     }
+
+    protected abstract DirectedSimpleCycles<INode, IEdge> createCycleDetector(IGraph graph);
 
     private List<List<INode>> updateRemainingCyclesAfterReplacement(final List<List<INode>> cycles, final List<INode> replacedCycle, final INode replacementNode) {
         cycles.remove(replacedCycle);

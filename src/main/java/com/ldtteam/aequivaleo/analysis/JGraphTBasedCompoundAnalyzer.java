@@ -5,13 +5,15 @@ import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analysis.debug.GraphIOHandler;
 import com.ldtteam.aequivaleo.analysis.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.BFSAnalysisBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.IAnalysisBuilder;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cache.CacheKey;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.JGraphTCliqueReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.BFSCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.HawickJamesCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.SzwarcfiterLauerCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
-import com.ldtteam.aequivaleo.analysis.jgrapht.iterator.AnalysisBFSGraphIterator;
 import com.ldtteam.aequivaleo.analysis.jgrapht.node.*;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
@@ -29,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
+import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -262,8 +265,8 @@ public class JGraphTBasedCompoundAnalyzer
 
         LOGGER.warn("Starting cycle reduction.");
 
-        final ICyclesReducer<IGraph, INode, IEdge> cyclesReducer = new BFSCyclesReducer<>(
-          InnerNode::new,
+        final ICyclesReducer cyclesReducer = new SzwarcfiterLauerCyclesReducer(
+          CycleNode::new,
           INode::onNeighborReplaced);
 
         cyclesReducer.reduce(recipeGraph);
@@ -317,13 +320,8 @@ public class JGraphTBasedCompoundAnalyzer
         final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
 
         final StatCollector statCollector = new StatCollector(WorldUtils.formatWorldNames(getOwners()), recipeGraph.vertexSet().size());
-        final AnalysisBFSGraphIterator analysisBFSGraphIterator = new AnalysisBFSGraphIterator(recipeGraph, source);
-
-        while (analysisBFSGraphIterator.hasNext())
-        {
-            analysisBFSGraphIterator.next().collectStats(statCollector);
-        }
-
+        final IAnalysisBuilder analysisBuilder = new BFSAnalysisBuilder(recipeGraph, source);
+        analysisBuilder.analyse(statCollector);
         statCollector.onCalculationComplete();
 
         for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getLockingInformation().keySet())

@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.IDepthMapBuilder;
 import org.jgrapht.Graphs;
 import org.jgrapht.traverse.CrossComponentIterator;
 
