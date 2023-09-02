@@ -101,6 +101,15 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
                  .orElseThrow(() -> new IllegalArgumentException("Unknown wrapping type: " + gameObject.getClass()));
     }
 
+    @Override
+    public @NotNull <T> ICompoundContainer<T> wrapInContainer(@NotNull T gameObject) throws IllegalArgumentException {
+        notNull(gameObject);
+
+        return getFactoryFor(gameObject)
+                .map(factory -> factory.create(gameObject, factory.getInnateCount(gameObject)))
+                .orElseThrow(() -> new IllegalArgumentException("Unknown wrapping type: " + gameObject.getClass()));
+    }
+
 
     /**
      * Internal method to get a factory of a given type.

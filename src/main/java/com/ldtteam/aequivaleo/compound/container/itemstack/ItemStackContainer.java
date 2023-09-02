@@ -39,8 +39,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         @Override
         public @NotNull ICompoundContainer<ItemStack> create(@NotNull final ItemStack instance, @NotNull final double count)
         {
-            final ItemStack stack = instance.copy();
-            stack.setCount(1);
+            final ItemStack stack = instance.copyWithCount(1);
             return new ItemStackContainer(stack, count);
         }
 
@@ -82,6 +81,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
               buffer.readItem(),
               buffer.readDouble()
             );
+        }
+
+        @Override
+        public double getInnateCount(@NotNull ItemStack inputInstance) {
+            return inputInstance.getCount();
         }
     }
 

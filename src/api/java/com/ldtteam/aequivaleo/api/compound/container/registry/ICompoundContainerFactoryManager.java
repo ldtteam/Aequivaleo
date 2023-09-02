@@ -49,7 +49,6 @@ public interface ICompoundContainerFactoryManager extends JsonDeserializer<IComp
      */
     <T> boolean canBeWrapped(@NotNull T gameObject);
 
-
     /**
      * Wraps the given compound container.
      *
@@ -61,4 +60,16 @@ public interface ICompoundContainerFactoryManager extends JsonDeserializer<IComp
      */
     @NotNull
     <T> ICompoundContainer<T> wrapInContainer(@NotNull T gameObject, @NotNull double count) throws IllegalArgumentException;
+
+    /**
+     * Wraps the given compound container.
+     * Can only be used if the relevant game object represents a count.
+     *
+     * @param gameObject The instance of T to wrap. Will be brought to unit length by the factory (ItemStacks will be copied and have stack size 1).
+     * @param <T>       The type of the compound container to create.
+     * @return The wrapped instance.
+     * @throws IllegalArgumentException When T can not be wrapped properly {@code canBeWrapped(tInstance) == false;}
+     */
+    @NotNull
+    <T> ICompoundContainer<T> wrapInContainer(@NotNull T gameObject) throws IllegalArgumentException;
 }

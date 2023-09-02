@@ -82,6 +82,11 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
               buffer.readDouble()
             );
         }
+
+        @Override
+        public double getInnateCount(@NotNull FluidStack inputInstance) {
+            return inputInstance.getAmount();
+        }
     }
 
     private final FluidStack stack;

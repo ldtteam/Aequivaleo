@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.IBucketFluidEquivalencyRecipe;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -11,11 +12,13 @@ import java.util.TreeSet;
 public class BucketFluidRecipe implements IBucketFluidEquivalencyRecipe
 {
     private final SortedSet<IRecipeIngredient>     inputs;
+    private final SortedSet<ICompoundContainer<?>> containers;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
-    public BucketFluidRecipe(final Set<IRecipeIngredient> inputs, final Set<ICompoundContainer<?>> outputs)
+    public BucketFluidRecipe(final Set<IRecipeIngredient> inputs, final Set<ICompoundContainer<?>> containers, final Set<ICompoundContainer<?>> outputs)
     {
         this.inputs = new TreeSet<>(inputs);
+        this.containers = new TreeSet<>(containers);
         this.outputs = new TreeSet<>(outputs);
     }
 
@@ -28,7 +31,7 @@ public class BucketFluidRecipe implements IBucketFluidEquivalencyRecipe
     @Override
     public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
     {
-        return new TreeSet<>();
+        return containers;
     }
 
     @Override
@@ -38,40 +41,24 @@ public class BucketFluidRecipe implements IBucketFluidEquivalencyRecipe
     }
 
     @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (!(o instanceof BucketFluidRecipe))
-        {
-            return false;
-        }
-
-        final BucketFluidRecipe that = (BucketFluidRecipe) o;
-
-        if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
-        {
-            return false;
-        }
-        return getOutputs() != null ? getOutputs().equals(that.getOutputs()) : that.getOutputs() == null;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BucketFluidRecipe that = (BucketFluidRecipe) o;
+        return Objects.equals(inputs, that.inputs) && Objects.equals(containers, that.containers) && Objects.equals(outputs, that.outputs);
     }
 
     @Override
-    public int hashCode()
-    {
-        int result = getInputs() != null ? getInputs().hashCode() : 0;
-        result = 31 * result + (getOutputs() != null ? getOutputs().hashCode() : 0);
-        return result;
+    public int hashCode() {
+        return Objects.hash(inputs, containers, outputs);
     }
 
     @Override
-    public String toString()
-    {
-        return "Equivalent via Bucket and Fluid{" +
-                 "inputs=" + inputs +
-                 ", outputs=" + outputs +
-                 '}';
+    public String toString() {
+        return "BucketFluidRecipe{" +
+                "inputs=" + inputs +
+                ", containers=" + containers +
+                ", outputs=" + outputs +
+                '}';
     }
 }

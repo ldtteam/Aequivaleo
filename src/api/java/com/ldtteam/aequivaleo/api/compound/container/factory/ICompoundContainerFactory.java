@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Predicate;
 
 /**
- * Represents a object that converts a certain game object into a wrapped counter part which can
+ * Represents a object that converts a certain game object into a wrapped counterpart which can
  * then carry compound information.
  */
 public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundContainer<T>>,
@@ -47,4 +47,13 @@ public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundCo
     @NotNull
     ICompoundContainer<T> create(@NotNull final T inputInstance, final double count);
 
+    /**
+     * Method used to get the innate count of an input instance that can be wrapped in a container by this factory.
+     *
+     * @param inputInstance The input instance to get the innate count from.
+     * @return The innate count within the instance.
+     */
+    default double getInnateCount(@NotNull final T inputInstance) {
+        throw new IllegalStateException("The type: " + inputInstance.getClass().getSimpleName() + " has no innate count.");
+    }
 }

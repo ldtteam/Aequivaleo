@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.util.SortedSetComparator;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,55 @@ import java.util.SortedSet;
  */
 public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
 {
+
+    /**
+     * Creates a new ingredient from a single source object.
+     * This object needs to have an innate count that its container factory is aware of.
+     *
+     * @param source The source to create a recipe ingredient of.
+     * @return The ingredient which represents the given source object.
+     */
+    static IRecipeIngredient from(Object source) {
+        return new SimpleIngredientBuilder().from(
+                ICompoundContainerFactoryManager.getInstance().wrapInContainer(source)
+        ).createIngredient();
+    }
+
+    /**
+     * Creates a new ingredient from a single source container.
+     *
+     * @param source The source to create a recipe ingredient of.
+     * @return The ingredient which represents the given source object.
+     */
+    static IRecipeIngredient from(ICompoundContainer<?> source) {
+        return new SimpleIngredientBuilder().from(
+                source
+        ).createIngredient();
+    }
+
+    /**
+     * Creates a new ingredient from a single source object.
+     *
+     * @param source The source to create a recipe ingredient of.
+     * @param count The number of source instances that this ingredient represents.
+     * @return The ingredient which represents the given source object.
+     */
+    static IRecipeIngredient from(Object source, int count) {
+        return from(source, (double) count);
+    }
+
+    /**
+     * Creates a new ingredient from a single source object.
+     *
+     * @param source The source to create a recipe ingredient of.
+     * @param count The number of source instances that this ingredient represents.
+     * @return The ingredient which represents the given source object.
+     */
+    static IRecipeIngredient from(Object source, double count) {
+        return new SimpleIngredientBuilder().from(
+                ICompoundContainerFactoryManager.getInstance().wrapInContainer(source, count)
+        ).createIngredient();
+    }
 
     /**
      * Indicates if this ingredient is valid.

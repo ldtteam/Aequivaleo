@@ -30,4 +30,20 @@ public interface IEquivalencyRecipeRegistry
      */
     @NotNull
     IEquivalencyRecipeRegistry register(@NotNull final IEquivalencyRecipe recipe);
+
+
+    /**
+     * Adds multiple new recipe to the registry.
+     *
+     * @param recipes The recipes to add.
+     * @return The registry with the recipe added.
+     */
+    @NotNull
+    default IEquivalencyRecipeRegistry register(@NotNull final IEquivalencyRecipe... recipes) {
+        for (IEquivalencyRecipe recipe : recipes) {
+            this.register(recipe);
+        }
+
+        return this;
+    }
 }
