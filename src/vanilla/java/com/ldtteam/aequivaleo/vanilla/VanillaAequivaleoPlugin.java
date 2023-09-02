@@ -21,12 +21,7 @@ import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.BucketFluidRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.CookingEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.DecoratedPotEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SimpleEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.SmithingEquivalencyRecipe;
-import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.StoneCuttingEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -81,23 +76,23 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 .toList();
     }
 
-    private static void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world,
                 iRecipe,
                 smithingRecipe -> {
@@ -113,7 +108,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
     }
 
-    private static void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world,
                 iRecipe,
                 smithingRecipe -> {
@@ -146,7 +141,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 });
     }
 
-    private static void processRecipe(
+    private void processRecipe(
             @NotNull final ServerLevel world,
             final Recipe<?> recipe,
             final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
@@ -169,7 +164,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                     recipeFactory
             ).toList();
 
-            if (variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
+            if (configuration.getCommon().logEmptyVariantsWarning.get() && variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
                 LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
             }
 

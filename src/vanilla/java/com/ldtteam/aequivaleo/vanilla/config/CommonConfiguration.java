@@ -17,6 +17,7 @@ import java.util.regex.PatternSyntaxException;
 public class CommonConfiguration extends AbstractAequivaleoConfiguration {
     public ForgeConfigSpec.ConfigValue<List<? extends String>> itemTagsToRegister;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
+    public ForgeConfigSpec.ConfigValue<Boolean> logEmptyVariantsWarning;
 
     protected CommonConfiguration(final ForgeConfigSpec.Builder builder) {
 
@@ -217,6 +218,10 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration {
                     }
                 }
         );
+        finishCategory(builder);
+        createCategory(builder, "analysis");
+        logEmptyVariantsWarning = defineBoolean(builder, "recipes.analysis.logEmptyVariantsWarning", false);
+        finishCategory(builder);
         finishCategory(builder);
     }
 }
