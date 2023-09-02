@@ -32,6 +32,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
@@ -43,9 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -221,12 +220,62 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private static boolean isDyeingRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
+        return isShapelessColoringRecipe(world, recipe) || isShapedCountedColorRecipe(world, recipe);
+    }
+
+    private static boolean isShapelessColoringRecipe(@NotNull ServerLevel world, Recipe<?> recipe) {
         return recipe.getSerializer() == RecipeSerializer.SHAPELESS_RECIPE &&
                 recipe.getResultItem(world.registryAccess()).is(Tags.Items.BLOCKED_COLOR_CYCLE) &&
                 recipe.getIngredients().size() == 2 &&
                 recipe.getIngredients().get(0).getItems().length == 1 &&
                 recipe.getIngredients().get(0).getItems()[0].is(net.minecraftforge.common.Tags.Items.DYES) &&
                 recipe.getIngredients().get(1).getItems().length == 15;
+    }
+
+    private static boolean isShapedCountedColorRecipe(@NotNull ServerLevel world, Recipe<?> recipe) {
+        if (recipe.getSerializer() != RecipeSerializer.SHAPED_RECIPE)
+            return false;
+
+        if (recipe.getIngredients().size() != 9)
+            return false;
+
+        final Ingredient colorIngredient = recipe.getIngredients().get(4);
+        if (colorIngredient.getItems().length != 1)
+            return false;
+
+        if (!colorIngredient.getItems()[0].is(net.minecraftforge.common.Tags.Items.DYES))
+            return false;
+
+        final List<ItemStack[]> noneAirNoneColorIngredients = new ArrayList<>();
+        for (int i = 0; i < recipe.getIngredients().size(); i++) {
+            if (i == 4)
+                continue;
+
+            final Ingredient candidate = recipe.getIngredients().get(i);
+            if (candidate.isEmpty())
+                continue;
+
+            noneAirNoneColorIngredients.add(candidate.getItems());
+        }
+
+        if (!areAllTheSameItemType(noneAirNoneColorIngredients, recipe.getResultItem(world.registryAccess())))
+            return false;
+
+        return noneAirNoneColorIngredients.size() == recipe.getResultItem(world.registryAccess()).getCount();
+    }
+
+    private static boolean areAllTheSameItemType(List<ItemStack[]> items, ItemStack... others) {
+        if (items.isEmpty())
+            return true;
+
+        if (items.size() == 1 && items.get(0).length <= 1)
+            return true;
+
+        final List<ItemStack[]> workingList = new ArrayList<>(items);
+        workingList.add(others);
+
+        ItemStack item = workingList.get(0)[0];
+        return workingList.stream().flatMap(Arrays::stream).allMatch(stack -> stack.getItem().getClass().equals(item.getItem().getClass()));
     }
 
     @Override
