@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.clique.graph;
 
-import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IRecipeNode;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -10,14 +10,11 @@ import java.util.Set;
 
 public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
 {
-    private final Set<IRecipeNode> recipeNodes;
 
-    public CliqueDetectionEdge(final IRecipeNode recipeNodes) {
-        this.recipeNodes = Sets.newHashSet(recipeNodes);
-    }
+    private final Set<INode> intermediaryNodes;
 
-    public CliqueDetectionEdge(final Set<IRecipeNode> recipeNodes) {
-        this.recipeNodes = Sets.newHashSet(recipeNodes);
+    public CliqueDetectionEdge(Set<INode> intermediaryNodes) {
+        this.intermediaryNodes = intermediaryNodes;
     }
 
     @Override
@@ -26,25 +23,28 @@ public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
         return 1;
     }
 
-    public Set<IRecipeNode> getRecipeNodes()
+    public Set<INode> getIntermediaryNodes()
     {
-        return recipeNodes;
+        return intermediaryNodes;
     }
 
     @Override
-    public int hashCode()
-    {
-        return Objects.hash(getSource(), getTarget());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CliqueDetectionEdge that = (CliqueDetectionEdge) o;
+        return Objects.equals(intermediaryNodes, that.intermediaryNodes);
     }
 
     @Override
-    public boolean equals(final Object obj)
-    {
-        if (!(obj instanceof CliqueDetectionEdge))
-            return false;
-        final CliqueDetectionEdge other = (CliqueDetectionEdge) obj;
+    public int hashCode() {
+        return Objects.hash(intermediaryNodes);
+    }
 
-        return Objects.equals(getSource(), other.getSource()) &&
-                 Objects.equals(getTarget(), other.getTarget());
+    @Override
+    public String toString() {
+        return "CliqueDetectionEdge{" +
+                "intermediaryNodes=" + intermediaryNodes +
+                '}';
     }
 }

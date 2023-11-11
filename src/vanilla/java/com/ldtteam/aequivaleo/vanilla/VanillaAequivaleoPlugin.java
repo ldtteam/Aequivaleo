@@ -261,6 +261,9 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private static boolean isDyeingRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
+        if (true)
+            return false;
+
         return isShapelessColoringRecipe(world, recipe) || isShapedCountedColorRecipe(world, recipe);
     }
 
@@ -492,7 +495,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private void processWaterBottleFillRecipe(ServerLevel world) {
         final BucketFluidRecipe fillBottleRecipe = new BucketFluidRecipe(
-            Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE), IRecipeIngredient.from(Fluids.WATER, 250)),
+            Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE, 1), IRecipeIngredient.from(Fluids.WATER, 250)),
                 Set.of(),
                 Set.of(ICompoundContainer.from(PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER)))
         );

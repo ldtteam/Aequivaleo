@@ -26,7 +26,7 @@ public interface INode extends IAnalysisGraphNode<IGraph, Set<CompoundInstance>,
         for (IEdge iEdge : graph.incomingEdgesOf(this))
         {
             INode node = graph.getEdgeSource(iEdge);
-            if (!node.getResultingValue().isPresent() || node.getResultingValue().get().isEmpty())
+            if (node.getResultingValue().isEmpty() || node.getResultingValue().get().isEmpty())
             {
                 return true;
             }
@@ -36,7 +36,7 @@ public interface INode extends IAnalysisGraphNode<IGraph, Set<CompoundInstance>,
 
     @Override
     default boolean hasMissingData(IGraph graph, ICompoundTypeGroup group) {
-        if (!getResultingValue().isPresent() || getResultingValue().get().isEmpty())
+        if (getResultingValue().isEmpty() || getResultingValue().get().isEmpty())
         {
             return true;
         }

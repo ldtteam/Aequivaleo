@@ -23,10 +23,12 @@ import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.config.CommonConfiguration;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
+import com.ldtteam.aequivaleo.testing.Color;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
 import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecipe;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
@@ -689,7 +691,47 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals(s(ci(466944)), result.get(cc(rMatterBlock)));
     }
 
+    @Test
+    public void testGenerateComplexClique() {
+        final String string = "string";
+        final String woolPattern = "%sWool";
+        final String dyePattern = "%sDye";
 
+        for (Color outer : Color.values()) {
+            final String outerName = outer.getSerializedName();
+            final String outerDye = String.format(dyePattern, outerName);
+            final String outerWool = String.format(woolPattern, outerName);
+
+            for (Color inner : Color.values()) {
+                if (inner.equals(outer))
+                    continue;
+
+                final String innerName = inner.getSerializedName();
+                final String innerWool = String.format(woolPattern, innerName);
+
+                addConversion(1, outerWool, List.of(innerWool, outerDye));
+            }
+
+            input.registerValue(outerDye, s(ci(128)));
+        }
+
+        final String whiteWool = String.format(woolPattern, Color.WHITE.getSerializedName());
+
+        addConversion(1, whiteWool, List.of(string, string, string, string));
+
+        input.registerValue(string, s(ci(10)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        for (Color value : Color.values()) {
+            final String dyeName = value.getSerializedName();
+            final String wool = woolPattern.formatted(dyeName);
+            final String dye = dyePattern.formatted(dyeName);
+
+            assertEquals("Dye: %s changed from pre-determined value!".formatted(dyeName), s(ci(128)), result.get(cc(dye)));
+            assertEquals("Wool: %s did not get the lowest calculable value of the clique.".formatted(dyeName), s(ci(40)), result.get(cc(wool)));
+        }
+    }
 
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {

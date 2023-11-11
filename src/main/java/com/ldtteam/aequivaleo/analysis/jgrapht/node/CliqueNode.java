@@ -27,7 +27,8 @@ public class CliqueNode
 
     private Set<CompoundInstance> finalResult = null;
     private final IGraph ioGraph = new AequivaleoGraph();
-    private final Set<IContainerNode> innerCliqueNodes = Sets.newHashSet();
+    private final Set<INode> innerCliqueNodes = Sets.newHashSet();
+    private final Set<IContainerNode> innerContainerNodes = Sets.newHashSet();
     private int hash;
 
     private final Table<INode, INode, IEdge> disabledIoGraphEdges = HashBasedTable.create();
@@ -190,14 +191,14 @@ public class CliqueNode
 
     @Override
     public void forceSetResult(final Set<CompoundInstance> compoundInstances) {
-        for (IContainerNode node : innerCliqueNodes) {
+        for (INode node : innerCliqueNodes) {
             node.forceSetResult(compoundInstances);
         }
     }
 
     @Override
     public void setBaseResult(final Set<CompoundInstance> compoundInstances) {
-        for (IContainerNode node : innerCliqueNodes) {
+        for (INode node : innerCliqueNodes) {
             node.setBaseResult(compoundInstances);
         }
     }
@@ -205,7 +206,7 @@ public class CliqueNode
     @Override
     public void determineResult(final IGraph graph) {
         final Set<INode> startingNodes = new HashSet<>();
-        for (IContainerNode innerCliqueNode : innerCliqueNodes) {
+        for (IContainerNode innerCliqueNode : innerContainerNodes) {
             if (!innerCliqueNode.getCandidates().isEmpty()) {
                 startingNodes.add(innerCliqueNode);
             }
@@ -226,7 +227,7 @@ public class CliqueNode
             } else {
                 AnalysisLogHandler.debug(LOGGER, "  > No candidates available, and result not forced. Setting empty collection!");
                 finalResult = null;
-                for (IContainerNode node : innerCliqueNodes) {
+                for (INode node : innerCliqueNodes) {
                     node.forceSetResult(finalResult);
                 }
             }
@@ -238,7 +239,7 @@ public class CliqueNode
         if (getCandidates().size() == 1) {
             result = candidates.iterator().next();
             finalResult = result;
-            for (IContainerNode node : innerCliqueNodes) {
+            for (INode node : innerCliqueNodes) {
                 node.forceSetResult(finalResult);
             }
             AnalysisLogHandler.debug(LOGGER, String.format("  > Candidate data contained exactly one entry: %s", result));
@@ -294,7 +295,7 @@ public class CliqueNode
             this.finalResult = null;
         }
 
-        for (IContainerNode node : innerCliqueNodes) {
+        for (INode node : innerCliqueNodes) {
             node.forceSetResult(finalResult);
         }
     }
@@ -348,15 +349,24 @@ public class CliqueNode
     }
 
     private void setupInnerGraph(final Set<INode> innerVertices) {
-        Set<IContainerNode> set = new HashSet<>();
+        Set<INode> innerNodesCollector = new HashSet<>();
+        Set<IContainerNode> innerContainerNodesCollector = new HashSet<>();
         for (INode innerVertex : innerVertices) {
-            if (innerVertex instanceof IContainerNode) {
-                IContainerNode containerNode = (IContainerNode) innerVertex;
-                set.add(containerNode);
+            if (innerVertex instanceof IRecipeInputNode ) {
+                innerNodesCollector.add(innerVertex);
+            }
+            if (innerVertex instanceof IRecipeOutputNode) {
+                innerNodesCollector.add(innerVertex);
+            }
+            if (innerVertex instanceof IContainerNode container) {
+                innerContainerNodesCollector.add(container);
             }
         }
         this.innerCliqueNodes.addAll(
-                set
+                innerNodesCollector
+        );
+        this.innerContainerNodes.addAll(
+                innerContainerNodesCollector
         );
     }
 

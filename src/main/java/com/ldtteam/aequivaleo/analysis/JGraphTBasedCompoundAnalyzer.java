@@ -9,8 +9,6 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.BFSAnalysisBuild
 import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.IAnalysisBuilder;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cache.CacheKey;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.JGraphTCliqueReducer;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.BFSCyclesReducer;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.HawickJamesCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.SzwarcfiterLauerCyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
@@ -31,10 +29,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class JGraphTBasedCompoundAnalyzer
 {
@@ -224,40 +220,8 @@ public class JGraphTBasedCompoundAnalyzer
         LOGGER.warn("Starting clique reduction.");
 
         final JGraphTCliqueReducer<IGraph> cliqueReducer = new JGraphTCliqueReducer<>(
-          (graph, iNodes, iRecipeNodes, iRecipeInputNodes) -> new CliqueNode(graph, iNodes),
-          sets -> {
-              if (sets.size() == 1)
-              {
-                  return Sets.newHashSet(); //Cover a weird etch case where a clique exists out of a single node........
-              }
-
-              //Short circuit if all of them have only one node.
-              if (sets.stream().allMatch(s -> s.size() == 1))
-              {
-                  return sets.stream().flatMap(Set::stream).collect(Collectors.toSet());
-              }
-
-              final Set<Class<?>> recipeTypes = sets.get(0).stream().map(IRecipeNode::getRecipe).map(Object::getClass).collect(Collectors.toSet());
-              final Optional<Class<?>> targetRecipeType =
-                recipeTypes.stream()
-                  .filter(type -> sets.stream().allMatch(nodes -> nodes.stream().anyMatch(node -> node.getRecipe().getClass().equals(type))))
-                  .findAny();
-
-              return targetRecipeType.map(type -> sets.stream()
-                  .map(nodes -> {
-                      for (IRecipeNode node : nodes)
-                      {
-                          if (node.getRecipe().getClass().equals(type))
-                          {
-                              return Optional.of(node).get();
-                          }
-                      }
-                      return null;
-                  })
-                  .filter(Objects::nonNull)
-                  .collect(Collectors.toSet()))
-                .orElseGet(Sets::newHashSet);
-          }, INode::onNeighborReplaced);
+                CliqueNode::new,
+                INode::onNeighborReplaced);
 
         cliqueReducer.reduce(recipeGraph);
 

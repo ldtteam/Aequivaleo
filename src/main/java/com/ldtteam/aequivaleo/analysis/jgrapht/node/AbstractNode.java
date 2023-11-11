@@ -4,6 +4,7 @@ import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IRecipeInputNode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;

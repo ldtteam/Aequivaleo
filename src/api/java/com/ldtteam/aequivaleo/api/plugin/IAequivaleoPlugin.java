@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.data.event.GatherDataEvent;
 
 import java.util.List;
 
@@ -62,5 +63,12 @@ public interface IAequivaleoPlugin
     /**
      * Invoked when the compound type synced registry has been synced to the client.
      */
-    default void onCompoundTypeRegistrySync() {};
+    default void onCompoundTypeRegistrySync() {}
+    
+    /**
+     * Callback made when the data generators are being gathered.
+     *
+     * @param event The event.
+     */
+    default void onGatherData(GatherDataEvent event) {}
 }

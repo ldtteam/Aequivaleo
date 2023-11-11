@@ -56,23 +56,17 @@ public class RecipeNode extends AbstractNode implements IRecipeNode
     public void determineResult(final IGraph graph)
     {
         final Set<IRecipeResidueNode> requiredKnownOutputs = new HashSet<>();
-        for (IEdge iEdge : graph.incomingEdgesOf(this))
-        {
-            INode edgeSource = graph.getEdgeSource(iEdge);
-            if (edgeSource instanceof IRecipeResidueNode)
-            {
-                IRecipeResidueNode iRecipeResidueNode = (IRecipeResidueNode) edgeSource;
-                requiredKnownOutputs.add(iRecipeResidueNode);
-            }
-        }
         final Set<IRecipeInputNode> inputNeighbors = new HashSet<>();
         for (IEdge iEdge : graph.incomingEdgesOf(this))
         {
             INode edgeSource = graph.getEdgeSource(iEdge);
-            if (edgeSource instanceof IRecipeInputNode)
+            if (edgeSource instanceof IRecipeResidueNode recipeResidueNode)
             {
-                IRecipeInputNode iRecipeInputNode = (IRecipeInputNode) edgeSource;
-                inputNeighbors.add(iRecipeInputNode);
+                requiredKnownOutputs.add(recipeResidueNode);
+            }
+            if (edgeSource instanceof IRecipeInputNode recipeInputNode)
+            {
+                inputNeighbors.add(recipeInputNode);
             }
         }
 
