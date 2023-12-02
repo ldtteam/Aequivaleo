@@ -49,9 +49,10 @@ public abstract class AbstractInformationProvider implements DataProvider
     @VisibleForTesting
     final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
-    private final CompletableFuture<HolderLookup.Provider> holderLookupProvider = new CompletableFuture<>();
+    private final CompletableFuture<HolderLookup.Provider> holderLookupProvider;
     
-    protected AbstractInformationProvider() {
+    protected AbstractInformationProvider(CompletableFuture<HolderLookup.Provider> holderLookupProvider) {
+        this.holderLookupProvider = holderLookupProvider;
     }
 
     @Override

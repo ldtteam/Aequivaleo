@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.ForcedInformationProvider;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.Registry;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -11,6 +12,7 @@ import net.minecraft.world.item.Items;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.concurrent.CompletableFuture;
 
 public class AequivaleoInformationProvider extends ForcedInformationProvider
 {
@@ -27,9 +29,9 @@ public class AequivaleoInformationProvider extends ForcedInformationProvider
     private final int  coralWater = 1;
     private final int  coralBlockMultiplier = 4;
     
-    public AequivaleoInformationProvider(final DataGenerator dataGenerator)
+    public AequivaleoInformationProvider(final DataGenerator dataGenerator, CompletableFuture<HolderLookup.Provider> holderLookupProvider)
     {
-        super(Constants.MOD_ID, dataGenerator);
+        super(Constants.MOD_ID, dataGenerator, holderLookupProvider);
     }
     
     @Override

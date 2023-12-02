@@ -20,6 +20,6 @@ public class ValidationAequivaleoPlugin implements IAequivaleoPlugin {
     
     @Override
     public void onGatherData(GatherDataEvent event) {
-        event.getGenerator().addProvider(event.includeServer(), new AequivaleoInformationProvider(event.getGenerator()));
+        event.getGenerator().addProvider(event.includeServer(), new AequivaleoInformationProvider(event.getGenerator(), event.getLookupProvider()));
     }
 }
