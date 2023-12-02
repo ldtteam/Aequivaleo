@@ -2,7 +2,7 @@ package com.ldtteam.aequivaleo.config;
 
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import com.ldtteam.aequivaleo.utils.IngredientLogLevel;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Mod server configuration.
@@ -10,13 +10,13 @@ import net.minecraftforge.common.ForgeConfigSpec;
  */
 public class ServerConfiguration extends AbstractAequivaleoConfiguration
 {
-    public ForgeConfigSpec.BooleanValue exportGraph;
-    public ForgeConfigSpec.BooleanValue writeResultsToLog;
-    public ForgeConfigSpec.BooleanValue allowNoneSimpleIngredients;
-    public ForgeConfigSpec.EnumValue<IngredientLogLevel> ingredientLogLevelEnumValue;
-    public ForgeConfigSpec.IntValue maxCacheFilesToKeep;
+    public ModConfigSpec.BooleanValue exportGraph;
+    public ModConfigSpec.BooleanValue writeResultsToLog;
+    public ModConfigSpec.BooleanValue allowNoneSimpleIngredients;
+    public ModConfigSpec.EnumValue<IngredientLogLevel> ingredientLogLevelEnumValue;
+    public ModConfigSpec.IntValue maxCacheFilesToKeep;
 
-    protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
+    protected ServerConfiguration(final ModConfigSpec.Builder builder)
     {
         createCategory(builder, "debugging");
         exportGraph = defineBoolean(builder, "debugging.export.graph", false);

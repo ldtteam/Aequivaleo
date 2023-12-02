@@ -1,28 +1,30 @@
 package com.ldtteam.aequivaleo.compound.container.fluid;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.RegistryUtils;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.ldtteam.aequivaleo.bootstrap.ModContainerTypes;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 public class FluidContainer implements ICompoundContainer<Fluid>
 {
 
-    public static final class Factory implements ICompoundContainerFactory<Fluid>
+    public static final Codec<FluidContainer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            BuiltInRegistries.FLUID.byNameCodec().fieldOf("fluid").forGetter(FluidContainer::contents),
+            Codec.DOUBLE.fieldOf("count").forGetter(FluidContainer::contentsCount)
+    ).apply(instance, FluidContainer::new));
+    
+    public static final class Type implements ICompoundContainerType<Fluid>
     {
 
-        public Factory()
+        public Type()
         {
         }
 
@@ -38,36 +40,10 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         {
             return new FluidContainer(instance, count);
         }
-
+        
         @Override
-        public ICompoundContainer<Fluid> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
-        {
-            return new FluidContainer(Objects.requireNonNull(ForgeRegistries.FLUIDS.getValue(new ResourceLocation(json.getAsJsonObject().get("fluid").getAsString()))), json.getAsJsonObject().get("count").getAsDouble());
-        }
-
-        @Override
-        public JsonElement serialize(final ICompoundContainer<Fluid> src, final Type typeOfSrc, final JsonSerializationContext context)
-        {
-            final JsonObject object = new JsonObject();
-            object.addProperty("count", src.getContentsCount());
-            object.addProperty("fluid", Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(src.getContents())).toString());
-            return object;
-        }
-
-        @Override
-        public void write(final ICompoundContainer<Fluid> object, final FriendlyByteBuf buffer)
-        {
-            buffer.writeVarInt(RegistryUtils.getFull(ForgeRegistries.FLUIDS.getRegistryKey()).getID(object.getContents()));
-            buffer.writeDouble(object.getContentsCount());
-        }
-
-        @Override
-        public ICompoundContainer<Fluid> read(final FriendlyByteBuf buffer)
-        {
-            return new FluidContainer(
-              RegistryUtils.getFull(ForgeRegistries.FLUIDS.getRegistryKey()).getValue(buffer.readVarInt()),
-              buffer.readDouble()
-            );
+        public Codec<? extends ICompoundContainer<Fluid>> codec() {
+            return CODEC;
         }
     }
 
@@ -78,7 +54,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     public FluidContainer(final Fluid fluid, final double count) {
         this.fluid = fluid;
         this.count = count;
-        this.hashCode = Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluid)).hashCode();
+        this.hashCode = Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(fluid)).hashCode();
     }
 
     @Override
@@ -88,13 +64,13 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     }
 
     @Override
-    public Fluid getContents()
+    public Fluid contents()
     {
         return fluid;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -109,11 +85,16 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     public String getContentAsFileName()
     {
         return "fluid_%s_%s".formatted(
-                Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())).getNamespace(),
-                Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())).getPath()
+                Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents())).getNamespace(),
+                Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents())).getPath()
         );
     }
-
+    
+    @Override
+    public ICompoundContainerType<Fluid> type() {
+        return ModContainerTypes.FLUID.get();
+    }
+    
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
@@ -121,13 +102,13 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         if (o instanceof Dummy)
             return -1;
 
-        final Object contents = Validate.notNull(o.getContents());
+        final Object contents = Objects.requireNonNull(o.contents());
         if (!(contents instanceof final Fluid otherFluid))
         {
             return Fluid.class.getName().compareTo(contents.getClass().getName());
         }
 
-        return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(otherFluid)).compareTo(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluid)));
+        return Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(otherFluid)).compareTo(Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(fluid)));
     }
 
     @Override
@@ -146,7 +127,7 @@ public class FluidContainer implements ICompoundContainer<Fluid>
         {
             return false;
         }
-        return Objects.equals(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())), Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(that.getContents())));
+        return Objects.equals(Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents())), Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(that.contents())));
     }
 
     @Override
@@ -158,6 +139,6 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     @Override
     public String toString()
     {
-        return String.format("%s x Fluid: %s", count, Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(getContents())));
+        return String.format("%s x Fluid: %s", count, Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents())));
     }
 }

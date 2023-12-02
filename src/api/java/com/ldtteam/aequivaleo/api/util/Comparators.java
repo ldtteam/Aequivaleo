@@ -1,11 +1,12 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.ForgeRegistry;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Comparator;
 import java.util.Objects;
@@ -109,7 +110,7 @@ public final class Comparators
         if (fluidStack1 != null && fluidStack2 != null)
         {
             // Sort on id
-            if (((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid()) - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid()) == 0)
+            if (BuiltInRegistries.FLUID.getId(fluidStack1.getFluid()) - BuiltInRegistries.FLUID.getId(fluidStack2.getFluid()) == 0)
             {
                 // Sort on fluid
                 if (fluidStack1.getFluid() == fluidStack2.getFluid())
@@ -143,13 +144,13 @@ public final class Comparators
                 }
                 else
                 {
-                    return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluidStack1.getFluid())).compareTo(Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluidStack2.getFluid())));
+                    return Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(fluidStack1.getFluid())).compareTo(Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(fluidStack2.getFluid())));
                 }
             }
             else
             {
-                return ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack1.getFluid())
-                         - ((ForgeRegistry<Fluid>) ForgeRegistries.FLUIDS).getID(fluidStack2.getFluid());
+                return (BuiltInRegistries.FLUID).getId(fluidStack1.getFluid())
+                         - (BuiltInRegistries.FLUID).getId(fluidStack2.getFluid());
             }
         }
         else if (fluidStack1 != null)

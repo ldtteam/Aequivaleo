@@ -6,6 +6,7 @@ import com.ldtteam.aequivaleo.api.util.FluidStackUtils;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
 import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -13,8 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,45 +38,45 @@ public final class CommonBootstrapper {
         //Handle itemstack equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof ItemStack,
-                        (ICompoundContainer<ItemStack> left, ICompoundContainer<ItemStack> right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.getContents(), right.getContents())));
+                        (container) -> container.contents() instanceof ItemStack,
+                        (ICompoundContainer<ItemStack> left, ICompoundContainer<ItemStack> right) -> Optional.of(ItemStackUtils.compareItemStacksIgnoreStackSize(left.contents(), right.contents())));
 
         //Handle item equivalency:
-        final Function<Item, ResourceLocation> itemNameGetter = (item) -> Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(item));
+        final Function<Item, ResourceLocation> itemNameGetter = (item) -> Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(item));
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof Item,
-                        (ICompoundContainer<Item> left, ICompoundContainer<Item> right) -> Optional.of(itemNameGetter.apply(left.getContents()).toString().equals(itemNameGetter.apply(right.getContents()).toString())));
+                        (container) -> container.contents() instanceof Item,
+                        (ICompoundContainer<Item> left, ICompoundContainer<Item> right) -> Optional.of(itemNameGetter.apply(left.contents()).toString().equals(itemNameGetter.apply(right.contents()).toString())));
 
         //Handle fluidstack equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof FluidStack,
-                        (ICompoundContainer<FluidStack> left, ICompoundContainer<FluidStack> right) -> Optional.of(FluidStackUtils.compareFluidStacksIgnoreStackSize(left.getContents(), right.getContents())));
+                        (container) -> container.contents() instanceof FluidStack,
+                        (ICompoundContainer<FluidStack> left, ICompoundContainer<FluidStack> right) -> Optional.of(FluidStackUtils.compareFluidStacksIgnoreStackSize(left.contents(), right.contents())));
 
         //Handle fluid equivalency:
-        final Function<Fluid, ResourceLocation> fluidNameGetter = (item) -> Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(item));
+        final Function<Fluid, ResourceLocation> fluidNameGetter = (item) -> Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(item));
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof Fluid,
-                        (ICompoundContainer<Fluid> left, ICompoundContainer<Fluid> right) -> Optional.of(fluidNameGetter.apply(left.getContents()).toString().equals(fluidNameGetter.apply(right.getContents()).toString())));
+                        (container) -> container.contents() instanceof Fluid,
+                        (ICompoundContainer<Fluid> left, ICompoundContainer<Fluid> right) -> Optional.of(fluidNameGetter.apply(left.contents()).toString().equals(fluidNameGetter.apply(right.contents()).toString())));
 
         //Handle enchantments equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof Enchantment,
-                        (ICompoundContainer<Enchantment> left, ICompoundContainer<Enchantment> right) -> Optional.of(Objects.requireNonNull(ForgeRegistries.ENCHANTMENTS.getKey(left.getContents())).equals(ForgeRegistries.ENCHANTMENTS.getKey(right.getContents()))));
+                        (container) -> container.contents() instanceof Enchantment,
+                        (ICompoundContainer<Enchantment> left, ICompoundContainer<Enchantment> right) -> Optional.of(Objects.requireNonNull(BuiltInRegistries.ENCHANTMENT.getKey(left.contents())).equals(BuiltInRegistries.ENCHANTMENT.getKey(right.contents()))));
 
         //Handle entity types equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
-                .registerNewHandler((container) -> container.getContents() instanceof EntityType,
-                        (ICompoundContainer<EntityType<?>> left, ICompoundContainer<EntityType<?>> right) -> Optional.of(Objects.requireNonNull(ForgeRegistries.ENTITY_TYPES.getKey(left.getContents())).equals(ForgeRegistries.ENTITY_TYPES.getKey(right.getContents()))));
+                .registerNewHandler((container) -> container.contents() instanceof EntityType,
+                        (ICompoundContainer<EntityType<?>> left, ICompoundContainer<EntityType<?>> right) -> Optional.of(Objects.requireNonNull(BuiltInRegistries.ENTITY_TYPE.getKey(left.contents())).equals(BuiltInRegistries.ENTITY_TYPE.getKey(right.contents()))));
 
         //Handle blocks equivalency:
         GameObjectEquivalencyHandlerRegistry.getInstance()
                 .registerNewHandler(
-                        (container) -> container.getContents() instanceof Block,
-                        (ICompoundContainer<Block> left, ICompoundContainer<Block> right) -> Optional.of(ForgeRegistries.BLOCKS.getKey(left.getContents()).equals(ForgeRegistries.BLOCKS.getKey(right.getContents()))));
+                        (container) -> container.contents() instanceof Block,
+                        (ICompoundContainer<Block> left, ICompoundContainer<Block> right) -> Optional.of(BuiltInRegistries.BLOCK.getKey(left.contents()).equals(BuiltInRegistries.BLOCK.getKey(right.contents()))));
     }
 
     private static void doHandlePluginLoad() {

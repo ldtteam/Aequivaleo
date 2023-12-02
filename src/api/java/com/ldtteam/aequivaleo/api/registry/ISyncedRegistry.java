@@ -1,6 +1,8 @@
 package com.ldtteam.aequivaleo.api.registry;
 
+import com.google.common.collect.BiMap;
 import com.mojang.serialization.Codec;
+import net.minecraft.core.IdMap;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -16,37 +18,31 @@ import java.util.function.Function;
  *
  * @param <T> The type of the entry in the registry.
  */
-public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IRegistryView<T>
+public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T, G>, G extends ISyncedRegistryEntryType<T, G>> extends IRegistryView<T>, IdMap<T>
 {
+    
+    /**
+     * Gets the codec for the entry.
+     *
+     * @return The codec which is used to synchronize and read and write the entry.
+     */
+    Codec<T> getEntryCodec();
 
     /**
      * Gets the codec for the registry.
      *
      * @return The code which is used synchronize and read and write the registry.
      */
-    Codec<List<T>> getCodec();
-
+    Codec<BiMap<ResourceLocation, T>> getCodec();
+    
     /**
-     * Gets the given entries' registry name.
+     * Gets the name of the given registry entry.
      *
-     * @param entry The entry to get the registry name of.
-     * @return The registry name of the entry.
+     * @param entry The entry to get the name from.
+     * @return The name of the entry.
      */
-    @Override
-    default ResourceLocation getRegistryNameOf(final T entry) {
-        return entry.getRegistryName();
-    }
-
-    /**
-     * Gets the synchronization id of the entry in this registry.
-     * This id is unique to the entry in the registry, in the current running instance.
-     * This means that the id can not be used to save the entry to disk, but can only be used during network synchronization.
-     *
-     * @param entry The entry to get the id from.
-     * @return The id of the entry.
-     */
-    int getSynchronizationIdOf(final T entry);
-
+    ResourceLocation getKey(T entry);
+    
     /**
      * Gets the entry with the given synchronization id.
      *
@@ -58,10 +54,11 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
     /**
      * Adds a new entry to the registry.
      *
+     * @param key The location of the entry.
      * @param entry The entry to add.
      * @return The registry invoked after the entry was added.
      */
-    ISyncedRegistry<T> add(final T entry);
+    ISyncedRegistry<T, G> add(final ResourceLocation key, final T entry);
 
     /**
      * Gives access to all known registry names of entries in this registry.
@@ -75,7 +72,7 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
      *
      * @return The type name to type producer. Useful for serialization handling.
      */
-    Function<ResourceLocation, ISyncedRegistryEntryType<T>> getTypeProducer();
+    Function<ResourceLocation, ISyncedRegistryEntryType<T, G>> getTypeProducer();
 
     /**
      * Returns all types which are known to this synced registry.
@@ -83,7 +80,7 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
      *
      * @return A set of all known types.
      */
-    Set<ISyncedRegistryEntryType<T>> getTypes();
+    Set<ISyncedRegistryEntryType<T, G>> getTypes();
 
     /**
      * Returns a list of all syncable entries in this registry.
@@ -114,7 +111,7 @@ public interface ISyncedRegistry<T extends ISyncedRegistryEntry<T>> extends IReg
      *
      * @param entries The entries that should make up the registry.
      */
-    void forceLoad(List<T> entries);
+    void forceLoad(BiMap<ResourceLocation, T> entries);
 
     /**
      * The registry key of the backing static registry.

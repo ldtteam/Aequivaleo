@@ -1,25 +1,33 @@
 package com.ldtteam.aequivaleo.compound.container.tag;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import net.minecraft.network.FriendlyByteBuf;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.ldtteam.aequivaleo.bootstrap.ModContainerTypes;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
-
 @SuppressWarnings("rawtypes")
 public class TagContainer implements ICompoundContainer<TagKey<?>>
 {
+    public static final Codec<TagContainer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            ResourceLocation.CODEC.fieldOf("tagType").forGetter(container -> container.contents().registry().location()),
+            ResourceLocation.CODEC.fieldOf("tagName").forGetter(container -> container.contents().location()),
+            Codec.DOUBLE.fieldOf("count").forGetter(TagContainer::contentsCount)
+    ).apply(instance, (type, name, count) -> {
+        TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(type), name);
+        return new TagContainer(key, count);
+    }));
+    
 
     @SuppressWarnings("unchecked")
-    public static final class Factory implements ICompoundContainerFactory<TagKey<?>>
+    public static final class Type implements ICompoundContainerType<TagKey<?>>
     {
 
-        public Factory()
+        public Type()
         {
         }
 
@@ -36,52 +44,10 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
         {
             return new TagContainer(instance, count);
         }
-
+        
         @Override
-        public ICompoundContainer<TagKey<?>> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
-        {
-            if (!json.isJsonObject())
-                throw new JsonParseException("JSON for tag container needs to be an object.");
-
-            final ResourceLocation tagType = new ResourceLocation(json.getAsJsonObject().get("tagType").getAsString());
-            final ResourceLocation tagName = new ResourceLocation(json.getAsJsonObject().get("tagName").getAsString());
-            final double amount = json.getAsJsonObject().get("count").getAsDouble();
-
-            TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(tagType), tagName);
-            return new TagContainer(key, amount);
-        }
-
-        @Override
-        public JsonElement serialize(final ICompoundContainer<TagKey<?>> src, final Type typeOfSrc, final JsonSerializationContext context)
-        {
-            if (!src.isValid())
-                throw new IllegalArgumentException("Can not serialize a container which is invalid.");
-
-            final JsonObject result = new JsonObject();
-            result.addProperty("tagType", src.getContents().registry().location().toString());
-            result.addProperty("tagName", src.getContents().location().toString());
-            result.addProperty("count", src.getContentsCount());
-
-            return result;
-        }
-
-        @Override
-        public void write(final ICompoundContainer<TagKey<?>> object, final FriendlyByteBuf buffer)
-        {
-            buffer.writeUtf(object.getContents().registry().location().toString());
-            buffer.writeUtf(object.getContents().location().toString());
-            buffer.writeDouble(object.getContentsCount());
-        }
-
-        @Override
-        public ICompoundContainer<TagKey<?>> read(final FriendlyByteBuf buffer)
-        {
-            final ResourceLocation tagType = new ResourceLocation(buffer.readUtf(32767));
-            final ResourceLocation tagName = new ResourceLocation(buffer.readUtf(32767));
-            final double amount = buffer.readDouble();
-
-            TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(tagType), tagName);
-            return new TagContainer(key, amount);
+        public Codec<? extends ICompoundContainer<TagKey<?>>> codec() {
+            return CODEC;
         }
     }
 
@@ -101,13 +67,13 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
     }
 
     @Override
-    public TagKey<?> getContents()
+    public TagKey<?> contents()
     {
         return tag;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -123,7 +89,12 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
     {
         return tag.registry().location().toString().replace(":", "_") + "_" + tag.location().toString().replace(":", "_");
     }
-
+    
+    @Override
+    public ICompoundContainerType<TagKey<?>> type() {
+        return ModContainerTypes.TAG.get();
+    }
+    
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
@@ -134,11 +105,11 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
         if (tagTypeResult != 0)
             return tagTypeResult;
 
-        final int tagNameResult = getContents().location().compareTo(other.getContents().location());
+        final int tagNameResult = contents().location().compareTo(other.contents().location());
         if (tagNameResult != 0)
             return tagNameResult;
 
-        return (int) (getContentsCount() - other.getContentsCount());
+        return (int) (contentsCount() - other.contentsCount());
     }
 
     @Override
@@ -157,7 +128,7 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
 
         final ResourceLocation otherCollection = other.tag.registry().location();
 
-        if (!other.getContentsCount().equals(this.getContentsCount()))
+        if (!other.contentsCount().equals(this.contentsCount()))
             return false;
 
         if (!otherCollection.equals(tag.registry().location()))
@@ -169,6 +140,6 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
     @Override
     public String toString()
     {
-        return String.format("%s x %s", count, isValid() ? "[" + getContents().registry().location() + "]" + getContents().location() : "<UNKNOWN>");
+        return String.format("%s x %s", count, isValid() ? "[" + contents().registry().location() + "]" + contents().location() : "<UNKNOWN>");
     }
 }

@@ -1,19 +1,12 @@
 package com.ldtteam.aequivaleo.testing.compound.container.testing;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import net.minecraft.network.FriendlyByteBuf;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Type;
 
 public class StringCompoundContainer implements ICompoundContainer<String>
 {
-
     String content;
     double count;
 
@@ -30,17 +23,22 @@ public class StringCompoundContainer implements ICompoundContainer<String>
     }
 
     @Override
-    public String getContents()
+    public String contents()
     {
         return content;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
-
+    
+    @Override
+    public ICompoundContainerType<String> type() {
+        return new Type();
+    }
+    
     @Override
     public int compareTo(@NotNull ICompoundContainer<?> o)
     {
@@ -76,7 +74,7 @@ public class StringCompoundContainer implements ICompoundContainer<String>
         return false;
     }
 
-    public static class Factory implements ICompoundContainerFactory<String>
+    public static class Type implements ICompoundContainerType<String>
     {
 
         @NotNull
@@ -90,26 +88,12 @@ public class StringCompoundContainer implements ICompoundContainer<String>
         public ICompoundContainer<String> create(@NotNull String inputInstance, double count) {
             return new StringCompoundContainer(inputInstance, count);
         }
-
+        
         @Override
-        public ICompoundContainer<String> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
-        {
-            return null;
-        }
-
-        @Override
-        public JsonElement serialize(ICompoundContainer<String> src, Type typeOfSrc, JsonSerializationContext context) {
-            return null;
-        }
-
-        @Override
-        public void write(ICompoundContainer<String> object, FriendlyByteBuf buffer) {
-
-        }
-
-        @Override
-        public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
-            return null;
+        public Codec<? extends ICompoundContainer<String>> codec() {
+            return Codec.unit(() -> {
+                throw new IllegalArgumentException("Cannot deserialize a StringCompoundContainer");
+            });
         }
     }
 }

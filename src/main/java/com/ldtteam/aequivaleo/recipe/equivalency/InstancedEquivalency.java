@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IInstancedEquivalency;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import org.apache.commons.lang3.Validate;
 
 import java.util.*;
@@ -76,6 +76,6 @@ public class InstancedEquivalency implements IInstancedEquivalency
     @Override
     public String toString()
     {
-        return String.format("Equivalency via Instance: %s to: %s", getSource().getContents(), getTarget().getContents());
+        return String.format("Equivalency via Instance: %s to: %s", getSource().contents(), getTarget().contents());
     }
 }

@@ -27,7 +27,7 @@ public class GameObjectEquivalencyHandlerRegistry implements IGameObjectEquivale
     public boolean areGameObjectsEquivalent(
       @NotNull final ICompoundContainer<?> left, @NotNull final ICompoundContainer<?> right)
     {
-        if (left.getContents().getClass() != right.getContents().getClass())
+        if (left.contents().getClass() != right.contents().getClass())
             return false;
 
         for (Iterator<EquivalencyHandler<?, ?>> iterator = handlers.descendingIterator(); iterator.hasNext(); )

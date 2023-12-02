@@ -1,9 +1,14 @@
-package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
+package com.ldtteam.aequivaleo.recipe.equivalency.ingredient;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IRecipeIngredientType;
+import com.ldtteam.aequivaleo.api.util.AequivaleoExtraCodecs;
+import com.ldtteam.aequivaleo.bootstrap.ModRecipeIngredientTypes;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,6 +18,11 @@ import java.util.stream.Collectors;
  */
 public class SimpleIngredient implements IRecipeIngredient
 {
+    public static final Codec<SimpleIngredient> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        AequivaleoExtraCodecs.setOf(ICompoundContainer.CODEC).fieldOf("candidates").forGetter(SimpleIngredient::getCandidates),
+        Codec.DOUBLE.fieldOf("count").forGetter(SimpleIngredient::getRequiredCount)
+    ).apply(instance, SimpleIngredient::new));
+    
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final SortedSet<ICompoundContainer<?>> candidates;
@@ -37,7 +47,12 @@ public class SimpleIngredient implements IRecipeIngredient
     {
         return count;
     }
-
+    
+    @Override
+    public IRecipeIngredientType getType() {
+        return ModRecipeIngredientTypes.SIMPLE.get();
+    }
+    
     @Override
     public boolean equals(final Object o)
     {
@@ -64,5 +79,13 @@ public class SimpleIngredient implements IRecipeIngredient
     public String toString()
     {
         return candidates.stream().map(Object::toString).collect(Collectors.joining(", "));
+    }
+    
+    public static final class Type implements IRecipeIngredientType {
+        
+        @Override
+        public Codec<? extends IRecipeIngredient> codec() {
+            return CODEC;
+        }
     }
 }

@@ -1,7 +1,14 @@
 dependencies {
-    library "org.jgrapht:jgrapht-core:${project.jgraphtVersion}"
-    library "org.jgrapht:jgrapht-ext:${project.jgraphtVersion}"
-    library "org.jgrapht:jgrapht-io:${project.jgraphtVersion}"
+
+    library ("org.jgrapht:jgrapht-core:${project.jgraphtVersion}") {
+        exclude group: "org.antlr"
+    }
+    library ("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}") {
+        exclude group: "org.antlr"
+    }
+    library ("org.jgrapht:jgrapht-io:${project.jgraphtVersion}") {
+        exclude group: "org.antlr"
+    }
 
     testRuntimeOnly "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${project.jacksonDataFormatYamlVersion}"
     testRuntimeOnly "com.fasterxml.jackson.core:jackson-databind:${project.jacksonDatabindVersion}"
@@ -9,13 +16,16 @@ dependencies {
     contained("org.jgrapht:jgrapht-core:${project.jgraphtVersion}") {
         jarJar.pin(it, project.jgraphtVersion)
         jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+        exclude group: "org.antlr"
     }
     contained("org.jgrapht:jgrapht-ext:${project.jgraphtVersion}") {
         jarJar.pin(it, project.jgraphtVersion)
         jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+        exclude group: "org.antlr"
     }
     contained("org.jgrapht:jgrapht-io:${project.jgraphtVersion}") {
         jarJar.pin(it, project.jgraphtVersion)
         jarJar.ranged(it, project.opc.buildSupportedVersionRange(project.jgraphtVersion))
+        exclude group: "org.antlr"
     }
 }

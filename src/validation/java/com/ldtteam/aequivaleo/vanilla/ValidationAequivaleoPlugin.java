@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.vanilla;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
 import com.ldtteam.aequivaleo.vanilla.data.AequivaleoInformationProvider;
-import net.minecraftforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 @AequivaleoPlugin
 public class ValidationAequivaleoPlugin implements IAequivaleoPlugin {

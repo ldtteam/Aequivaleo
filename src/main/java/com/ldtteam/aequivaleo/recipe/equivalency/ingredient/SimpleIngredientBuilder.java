@@ -1,13 +1,14 @@
-package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
+package com.ldtteam.aequivaleo.recipe.equivalency.ingredient;
 
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Set;
 import java.util.SortedSet;
 
-public class SimpleIngredientBuilder {
+public class SimpleIngredientBuilder implements com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.ISimpleRecipeIngredientBuilder {
     private SortedSet<ICompoundContainer<?>> candidates = Sets.newTreeSet();
     private Double                           count;
 
@@ -16,7 +17,7 @@ public class SimpleIngredientBuilder {
     }
 
     public SimpleIngredientBuilder from(final ICompoundContainer<?> container) {
-        return withCandidate(container).withCount(container.getContentsCount());
+        return withCandidate(container).withCount(container.contentsCount());
     }
 
     public SimpleIngredientBuilder from(final SortedSet<ICompoundContainer<?>> containers) {
@@ -24,12 +25,14 @@ public class SimpleIngredientBuilder {
         return this;
     }
 
+    @Override
     public SimpleIngredientBuilder withCandidate(final ICompoundContainer<?> container) {
         this.candidates.clear();
         this.candidates.add(container);
         return this;
     }
 
+    @Override
     public SimpleIngredientBuilder withCandidates(final Set<ICompoundContainer<?>> candidates)
     {
         this.candidates.clear();
@@ -37,6 +40,7 @@ public class SimpleIngredientBuilder {
         return this;
     }
 
+    @Override
     public SimpleIngredientBuilder withCount(final double count)
     {
         this.count = count;

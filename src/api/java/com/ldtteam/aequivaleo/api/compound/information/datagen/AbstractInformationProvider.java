@@ -3,35 +3,40 @@ package com.ldtteam.aequivaleo.api.compound.information.datagen;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.gson.Gson;
-import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
+import com.google.gson.JsonElement;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceData;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.CachedOutput;
-import net.minecraft.data.HashCache;
 import net.minecraft.data.DataProvider;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import org.apache.commons.lang3.Validate;
+import net.neoforged.neoforge.common.conditions.ConditionalOps;
+import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.common.conditions.WithConditions;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 public abstract class AbstractInformationProvider implements DataProvider
 {
-
     private static final Logger LOGGER = LogManager.getLogger();
+    private static final Codec<Optional<WithConditions<CompoundInstanceData>>> INSTANCE_CODEC =
+        ConditionalOps.createConditionalCodecWithConditions(CompoundInstanceData.CODEC).codec();
 
     @VisibleForTesting
     final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
@@ -44,21 +49,33 @@ public abstract class AbstractInformationProvider implements DataProvider
     @VisibleForTesting
     final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
-
+    private final CompletableFuture<HolderLookup.Provider> holderLookupProvider = new CompletableFuture<>();
+    
     protected AbstractInformationProvider() {
     }
 
     @Override
     public @NotNull CompletableFuture<?> run(@NotNull final CachedOutput cache) {
+        return holderLookupProvider.thenCompose(holderLookup -> runInternal(cache, holderLookup));
+    }
+    
+    
+    public @NotNull CompletableFuture<?> runInternal(@NotNull final CachedOutput cache, HolderLookup.Provider holderLookupProvider) {
         this.calculateDataToSave();
 
-        final Gson gson = IAequivaleoAPI.getInstance().getGson(ICondition.IContext.EMPTY);
-
         final List<CompletableFuture<?>> futures = new ArrayList<>();
-
+        
+        final ConditionalOps<JsonElement> ops = ConditionalOps.create(
+                RegistryOps.create(
+                        JsonOps.INSTANCE,
+                        holderLookupProvider
+                ),
+                ICondition.IContext.EMPTY
+        );
+        
         futures.add(this.writeData(
           cache,
-          gson,
+          ops,
           getGeneralData()
         ));
 
@@ -66,12 +83,10 @@ public abstract class AbstractInformationProvider implements DataProvider
         {
             futures.add(this.writeData(
               cache,
-              gson,
+              ops,
               worldData
             ));
         }
-
-        futures.removeIf(Objects::isNull);
 
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
@@ -94,7 +109,7 @@ public abstract class AbstractInformationProvider implements DataProvider
     @NotNull
     CompletableFuture<?> writeData(
       final CachedOutput cache,
-      final Gson gson,
+      final ConditionalOps<JsonElement> gson,
       final WorldData worldData
     )
     {
@@ -102,45 +117,19 @@ public abstract class AbstractInformationProvider implements DataProvider
 
         for (Path dataSavePath : getPathsToWrite(worldData.getPath()))
         {
-            for (Map.Entry<Set<ICompoundContainer<?>>, DataSpec> entry : worldData.getDataToWrite().entrySet())
-            {
-                Set<ICompoundContainer<?>> containers = entry.getKey();
-                if (containers.isEmpty())
-                {
-                    LOGGER.error("Can not write data if containers is empty!");
-                    continue;
-                }
-
-                if (containers.stream().noneMatch(ICompoundContainer::canBeLoadedFromDisk))
-                {
-                    LOGGER.error("Can not write data if no containers can be loaded from disk!");
-                    continue;
-                }
-
-                DataSpec spec = entry.getValue();
-                final CompoundInstanceData data =
-                  new CompoundInstanceData(
-                    spec.mode,
-                    containers,
-                    spec.instanceRefs,
-                    spec.conditions
-                    );
-
-                final String fileName = data.getContainers()
-                                          .stream()
-                                          .filter(ICompoundContainer::canBeLoadedFromDisk)
-                                          .sorted(Comparator.comparing(ICompoundContainer::getContentAsFileName))
-                                          .map(ICompoundContainer::getContentAsFileName)
-                                          .findFirst()
-                                          .orElseThrow(() -> new IllegalStateException("Could not find disk loadable container, even though previous check passed!"));
-
+            for (WithConditions<CompoundInstanceData> dataToWrite : worldData.getDataToWrite()) {
+                final String fileName = dataToWrite.carrier().containers()
+                                                .stream()
+                                                .filter(ICompoundContainer::canBeLoadedFromDisk)
+                                                .sorted(Comparator.comparing(ICompoundContainer::getContentAsFileName))
+                                                .map(ICompoundContainer::getContentAsFileName)
+                                                .findFirst()
+                                                .orElseThrow(() -> new IllegalStateException("Could not find disk loadable container, even though previous check passed!"));
+                
                 final Path itemPath = dataSavePath.resolve(String.format("%s.json", fileName));
-
-                futures.add(DataProvider.saveStable(
-                  cache,
-                  gson.toJsonTree(data),
-                  itemPath
-                ));
+                
+                futures.add(CompletableFuture.supplyAsync(() -> INSTANCE_CODEC.encodeStart(gson, Optional.of(dataToWrite)).getOrThrow(false, msg -> LOGGER.error("Failed to encode some components for {}: {}", itemPath.toFile().getAbsolutePath(), msg)))
+                                    .thenCompose(json -> DataProvider.saveStable(cache, json, itemPath)));
             }
         }
 
@@ -148,27 +137,27 @@ public abstract class AbstractInformationProvider implements DataProvider
     }
 
     public abstract void calculateDataToSave();
-
-    public SpecBuilder specFor(final TagKey<?> tag) {
+    
+    protected SpecBuilder specFor(final TagKey<?> tag) {
         return new SpecBuilder(tag);
     }
-
-    public SpecBuilder specFor(final Object... targets)
+    
+    protected SpecBuilder specFor(final Object... targets)
     {
         return new SpecBuilder(targets);
     }
-
-    public SpecBuilder specFor(final Iterable<Object> targets) {
+    
+    protected SpecBuilder specFor(final Iterable<Object> targets) {
         return new SpecBuilder(targets);
     }
 
-    public final void save(
+    protected final void save(
       final SpecBuilder specBuilder
     ) {
         specBuilder.process(this.getGeneralData().getDataToWrite());
     }
 
-    public final void save(
+    protected final void save(
       final ResourceLocation worldId,
       final SpecBuilder specBuilder
     ) {
@@ -180,7 +169,7 @@ public abstract class AbstractInformationProvider implements DataProvider
     @VisibleForTesting
     static class WorldData {
         private final ResourceLocation worldId;
-        private final Map<Set<ICompoundContainer<?>>, DataSpec> dataToWrite = Maps.newHashMap();
+        private final List<WithConditions<CompoundInstanceData>> dataToWrite = Lists.newArrayList();
 
         private WorldData(final ResourceLocation worldId) {
             this.worldId = worldId;
@@ -191,7 +180,7 @@ public abstract class AbstractInformationProvider implements DataProvider
             return worldId;
         }
 
-        public Map<Set<ICompoundContainer<?>>, DataSpec> getDataToWrite()
+        public List<WithConditions<CompoundInstanceData>> getDataToWrite()
         {
             return dataToWrite;
         }
@@ -202,27 +191,11 @@ public abstract class AbstractInformationProvider implements DataProvider
     }
 
     @VisibleForTesting
-    static class DataSpec {
-        private final CompoundInstanceData.Mode mode;
-        private final Set<CompoundInstanceRef> instanceRefs;
-        private final Set<ICondition> conditions;
-
-        DataSpec(
-          final CompoundInstanceData.Mode mode,
-          final Set<CompoundInstanceRef> instanceRefs,
-          final Set<ICondition> conditions) {
-            this.mode = mode;
-            this.instanceRefs = instanceRefs;
-            this.conditions = conditions;
-        }
-    }
-
-    @VisibleForTesting
     protected static class SpecBuilder {
         private final Set<Object> targets = Sets.newLinkedHashSet();
         private CompoundInstanceData.Mode mode = CompoundInstanceData.Mode.ADDITIVE;
         private final Set<CompoundInstanceRef> instanceRefs = Sets.newLinkedHashSet();
-        private final Set<ICondition> conditions = Sets.newLinkedHashSet();
+        private final List<ICondition> conditions = Lists.newArrayList();
 
         private SpecBuilder(final TagKey<?> tag) {
             this.targets.add(tag);
@@ -296,7 +269,7 @@ public abstract class AbstractInformationProvider implements DataProvider
             return this;
         }
 
-        private void process(Map<Set<ICompoundContainer<?>>, DataSpec> specs) {
+        private void process(List<WithConditions<CompoundInstanceData>> specs) {
             final Set<ICompoundContainer<?>> containers = this.targets.stream().map(gameObject -> ICompoundContainerFactoryManager
                                                                                                    .getInstance()
                                                                                                    .wrapInContainer(
@@ -304,13 +277,13 @@ public abstract class AbstractInformationProvider implements DataProvider
                                                                                                      1d
                                                                                                    )).collect(Collectors.toCollection(LinkedHashSet::new));
 
-            final DataSpec dataSpec = new DataSpec(
+            final CompoundInstanceData dataSpec = new CompoundInstanceData(
               this.mode,
-              this.instanceRefs,
-              this.conditions
+              containers,
+              this.instanceRefs
             );
 
-            specs.put(containers, dataSpec);
+            specs.add(new WithConditions<>(this.conditions, dataSpec));
         }
     }
 }

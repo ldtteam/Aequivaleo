@@ -2,30 +2,29 @@ package com.ldtteam.aequivaleo.registry;
 
 import com.google.common.collect.*;
 import com.ldtteam.aequivaleo.Aequivaleo;
-import com.ldtteam.aequivaleo.api.registry.*;
-import com.ldtteam.aequivaleo.api.util.RegistryUtils;
+import com.ldtteam.aequivaleo.api.registry.IRegistryView;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistry;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntry;
+import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntryType;
+import com.ldtteam.aequivaleo.api.util.AequivaleoExtraCodecs;
 import com.ldtteam.aequivaleo.network.messages.CompoundTypeSyncedRegistryNetworkPacket;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.registries.ForgeRegistry;
-import net.minecraftforge.registries.IForgeRegistry;
-import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>, G extends ISyncedRegistryEntryType<T>> implements ISyncedRegistry<T>
+public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T, G>, G extends ISyncedRegistryEntryType<T, G>> implements ISyncedRegistry<T, G>
 {
     private final ResourceKey<? extends Registry<T>> backingInternalRegistryKey;
-    private final Supplier<IForgeRegistry<T>> backingInternalRegistry;
-    private final Supplier<IForgeRegistry<G>> backingTypeRegistry;
+    private final Registry<T> backingInternalRegistry;
+    private final Registry<G> backingTypeRegistry;
 
     private final Codec<T> entryCodec;
 
@@ -34,59 +33,48 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
 
     public ForgeRegistryBackedSyncedRegistry(
             final ResourceKey<? extends Registry<T>> backingInternalRegistryKey,
-            final Supplier<IForgeRegistry<T>> backingInternalRegistry,
-            final Supplier<IForgeRegistry<G>> backingTypeRegistry
+            final Registry<T> backingInternalRegistry,
+            final Registry<G> backingTypeRegistry
     ) {
         this.backingInternalRegistryKey = backingInternalRegistryKey;
         this.backingInternalRegistry = backingInternalRegistry;
         this.backingTypeRegistry = backingTypeRegistry;
-
-        Codec<ISyncedRegistryEntryType<T>> serializerCodec = ResourceLocation.CODEC
-          .comapFlatMap(
-            name -> {
-                if (backingTypeRegistry.get().containsKey(name))
-                    return DataResult.success(backingTypeRegistry.get().getValue(name));
-                return DataResult.error(() -> "Object " + name + " not present in the registry");
-            },
-            ISyncedRegistryEntryType::getRegistryName
-          );
-        this.entryCodec  = serializerCodec.dispatch(
-          ISyncedRegistryEntry::getType,
-          ISyncedRegistryEntryType::getEntryCodec
+        this.entryCodec  = this.backingTypeRegistry.byNameCodec().dispatch(
+                ISyncedRegistryEntry::getType,
+                ISyncedRegistryEntryType::getEntryCodec
         );
     }
-
+    
     @Override
-    public Codec<List<T>> getCodec()
-    {
-        return this.entryCodec.listOf();
+    public Codec<T> getEntryCodec() {
+        return this.entryCodec;
     }
-
+    
     @Override
-    public int getSynchronizationIdOf(final T entry)
+    public Codec<BiMap<ResourceLocation, T>> getCodec()
     {
-        if (backingInternalRegistry.get().containsKey(entry.getRegistryName())) {
-            return ((ForgeRegistry<T>) backingInternalRegistry.get()).getID(entry);
-        }
-
-        return backingInternalRegistry.get().getValues().size() + this.syncedEntriesList.indexOf(entry);
+        return AequivaleoExtraCodecs.bimapOf(
+            ResourceLocation.CODEC,
+            getEntryCodec()
+            );
     }
 
     @Override
     public T get(final int synchronizationId) {
-        if (backingInternalRegistry.get().getValues().size() < synchronizationId) {
-            return syncedEntriesList.get(synchronizationId - backingInternalRegistry.get().getValues().size());
+        if (backingInternalRegistry.size() <= synchronizationId) {
+            return syncedEntriesList.get(synchronizationId - backingInternalRegistry.size());
         }
 
-        return RegistryUtils.getFull(getBackingRegistryKey()).getValue(synchronizationId);
+        return backingInternalRegistry.getHolder(synchronizationId).orElseThrow(() -> new IllegalArgumentException("No entry with the synchronization id: " + synchronizationId + " exists in the registry."))
+                       .value();
     }
 
     @Override
     public Optional<T> get(final ResourceLocation key)
     {
-        if (backingInternalRegistry.get().containsKey(key))
+        if (backingInternalRegistry.containsKey(key))
         {
-            return Optional.ofNullable(backingInternalRegistry.get().getValue(key));
+            return Optional.ofNullable(backingInternalRegistry.get(key));
         }
 
         if (syncedEntriesMap.containsKey(key))
@@ -96,19 +84,27 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
 
         return Optional.empty();
     }
-
+    
     @Override
-    public ISyncedRegistry<T> add(final T entry)
+    public ResourceLocation getKey(T entry) {
+        final ResourceLocation registryName = backingInternalRegistry.getKey(entry);
+        if (registryName != null) {
+            return registryName;
+        }
+        
+        return syncedEntriesMap.inverse().get(entry);
+    }
+    
+    @Override
+    public ForgeRegistryBackedSyncedRegistry<T, G> add(final ResourceLocation key, final T entry)
     {
-        Validate.notNull(entry);
+        Objects.requireNonNull(entry);
 
-        final ResourceLocation name = entry.getRegistryName();
-        Validate.notNull(name);
+        final ResourceLocation name = getKey(entry);
+        if (name != null)
+            throw new IllegalArgumentException("The given entry with the key: %s already exists in the registry.".formatted(name));
 
-        if (get(name).isPresent())
-            throw new IllegalArgumentException("The given entry with the key: " + entry.getRegistryName() + " already exists in the registry.");
-
-        syncedEntriesMap.put(name, entry);
+        syncedEntriesMap.put(key, entry);
         syncedEntriesList.add(entry);
 
         return this;
@@ -117,34 +113,33 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
     @Override
     public Set<ResourceLocation> getAllKnownRegistryNames()
     {
-        return ImmutableSet.<ResourceLocation>builder().addAll(backingInternalRegistry.get().getKeys()).addAll(syncedEntriesMap.keySet()).build();
+        return ImmutableSet.<ResourceLocation>builder().addAll(backingInternalRegistry.keySet()).addAll(syncedEntriesMap.keySet()).build();
     }
 
     @Override
-    public Function<ResourceLocation, ISyncedRegistryEntryType<T>> getTypeProducer()
+    public Function<ResourceLocation, ISyncedRegistryEntryType<T, G>> getTypeProducer()
     {
-        return backingTypeRegistry.get()::getValue;
+        return backingTypeRegistry::get;
     }
 
     @Override
     public Stream<T> stream()
     {
         return Stream.concat(
-          backingInternalRegistry.get().getValues().stream(),
+          backingInternalRegistry.stream(),
           syncedEntriesList.stream()
         );
     }
-
+    
     @Override
-    public <E extends IRegistryEntry> IRegistryView<E> createView(Function<T, Optional<E>> viewFilter)
-    {
+    public <E> IRegistryView<E> createView(Function<T, Optional<E>> viewFilter) {
         return new ShadowRegistry<>(this, viewFilter);
     }
-
+    
     @Override
-    public Set<ISyncedRegistryEntryType<T>> getTypes()
+    public Set<ISyncedRegistryEntryType<T, G>> getTypes()
     {
-        return Sets.newHashSet(backingTypeRegistry.get().getValues());
+        return Sets.newHashSet(backingTypeRegistry);
     }
 
     @Override
@@ -178,11 +173,11 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
     }
 
     @Override
-    public void forceLoad(final List<T> entries)
+    public void forceLoad(final BiMap<ResourceLocation, T> entries)
     {
         clear();
-        this.syncedEntriesList.addAll(entries);
-        this.syncedEntriesList.forEach(entry -> this.syncedEntriesMap.put(entry.getRegistryName(), entry));
+        this.syncedEntriesList.addAll(entries.values());
+        this.syncedEntriesMap.putAll(entries);
     }
 
     @Override
@@ -195,9 +190,38 @@ public class ForgeRegistryBackedSyncedRegistry<T extends ISyncedRegistryEntry<T>
     public Iterator<T> iterator()
     {
         final List<T> values = ImmutableList.<T>builder()
-                                 .addAll(backingInternalRegistry.get().getValues())
+                                 .addAll(backingInternalRegistry)
                                  .addAll(syncedEntriesList)
                                  .build();
         return values.iterator();
+    }
+    
+    @Override
+    public int getId(@NotNull T entry) {
+        final int id = this.backingInternalRegistry.getId(entry);
+        if (id != -1) {
+            return id;
+        }
+        
+        if (!this.syncedEntriesList.contains(entry)) {
+            return -1;
+        }
+        
+        return this.backingInternalRegistry.size() + this.syncedEntriesList.indexOf(entry);
+    }
+    
+    @Nullable
+    @Override
+    public T byId(int p_122651_) {
+        if (p_122651_ < this.backingInternalRegistry.size()) {
+            return this.backingInternalRegistry.byId(p_122651_);
+        }
+        
+        return this.syncedEntriesList.get(p_122651_ - this.backingInternalRegistry.size());
+    }
+    
+    @Override
+    public int size() {
+        return this.backingInternalRegistry.size() + this.syncedEntriesList.size();
     }
 }

@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param <T> The type of the registry entry.
  */
-public interface ISyncedRegistryEntryType<T extends ISyncedRegistryEntry<T>>
+public interface ISyncedRegistryEntryType<T extends ISyncedRegistryEntry<T, G>, G extends ISyncedRegistryEntryType<T, G>>
 {
 
     /**
@@ -25,9 +25,7 @@ public interface ISyncedRegistryEntryType<T extends ISyncedRegistryEntry<T>>
      *
      * @return The codec used during synchronization of the entries with this type. Return null if not supported!
      */
-    default Codec<? extends T> getEntryCodec() {
-        return null;
-    }
+    Codec<? extends T> getEntryCodec();
 
     /**
      * Returns the directory name of the registry entries of this type.

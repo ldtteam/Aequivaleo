@@ -4,11 +4,11 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.InterModComms;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.InterModComms;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.InterModProcessEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,16 +30,17 @@ public final class FMLInitHandler
         CommonBootstrapper.doBootstrap();
     }
 
+    @SuppressWarnings("unchecked")
     @SubscribeEvent
-    public void onInterModProcess(final InterModProcessEvent event)
+    public static void onInterModProcess(final InterModProcessEvent event)
     {
         LOGGER.info("Processing IMC messages.");
-        final List<InterModComms.IMCMessage> imcMessages = event.getIMCStream().collect(Collectors.toList());
+        final List<InterModComms.IMCMessage> imcMessages = event.getIMCStream().toList();
         imcMessages
           .stream()
-          .filter(imcMessage -> imcMessage.getMethod().equals("registerRecipeTypeCallback"))
+          .filter(imcMessage -> imcMessage.method().equals("registerRecipeTypeCallback"))
           .forEach(imcMessage -> {
-              final Supplier<Consumer<BiConsumer<ResourceLocation, RecipeType<?>[]>>> message = imcMessage.getMessageSupplier();
+              final Supplier<Consumer<BiConsumer<ResourceLocation, RecipeType<?>[]>>> message = (Supplier<Consumer<BiConsumer<ResourceLocation, RecipeType<?>[]>>>) imcMessage.messageSupplier();
               message.get().accept((location, iRecipeTypes) -> IRecipeTypeProcessingRegistry.getInstance()
                 .registerAs(location, iRecipeTypes));
           });

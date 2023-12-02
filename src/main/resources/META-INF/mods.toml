@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[1,)"
 license="GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
 
 [[mods]] #mandatory
@@ -14,5 +14,11 @@ license="GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
     modId="minecraft"
     mandatory=true
     versionRange="${mcVersion}"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.aequivaleo]]
+    modId="neoforge" #mandatory
+    mandatory=true #mandatory
+    versionRange="${forgeVersion}" #mandatory
     ordering="NONE"
     side="BOTH"

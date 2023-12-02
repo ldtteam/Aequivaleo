@@ -16,14 +16,14 @@ import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +103,7 @@ public final class WorldBootstrapper
       @NotNull final ServerLevel world
     ) {
         StreamUtils.execute(() -> {
-            StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true)
+            StreamSupport.stream(BuiltInRegistries.ITEM.spliterator(), true)
                     .filter(item -> !item.equals(Items.AIR))
                     .forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
               item,
@@ -121,7 +121,7 @@ public final class WorldBootstrapper
                         ));
                   } catch (Exception ex) {
                       LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                        ForgeRegistries.ITEMS.getKey(item),
+                        BuiltInRegistries.ITEM.getKey(item),
                         o), ex);
 
                   }
@@ -132,7 +132,7 @@ public final class WorldBootstrapper
               }
             ));
 
-            StreamSupport.stream(ForgeRegistries.FLUIDS.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
+            StreamSupport.stream(BuiltInRegistries.FLUID.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
               fluid,
               o -> {
                   final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(fluid, 1);
@@ -148,7 +148,7 @@ public final class WorldBootstrapper
                         ));
                   } catch (Exception ex) {
                       LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                        ForgeRegistries.FLUIDS.getKey(fluid),
+                        BuiltInRegistries.FLUID.getKey(fluid),
                         o), ex);
                   }
               },
@@ -165,7 +165,7 @@ public final class WorldBootstrapper
     private static void doHandleCompoundTypeWrappers(
       @NotNull final ServerLevel world) {
         LOGGER.info(String.format("Setting up compound type instantiations: %s", world.dimension().location()));
-        ModRegistries.COMPOUND_TYPE.get().forEach(type -> ICompoundInformationRegistry.getInstance(world.dimension())
+        ModRegistries.COMPOUND_TYPE.forEach(type -> ICompoundInformationRegistry.getInstance(world.dimension())
           .registerLocking(type, Sets.newHashSet(new CompoundInstance(type, 1))));
     }
 

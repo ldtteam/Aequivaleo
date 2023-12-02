@@ -3,6 +3,7 @@ package com.ldtteam.aequivaleo.api.compound;
 import com.ldtteam.aequivaleo.api.compound.information.datagen.data.CompoundInstanceRef;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompoundInstance implements Comparable<CompoundInstance>
@@ -69,13 +70,11 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
         {
             return true;
         }
-        if (!(o instanceof CompoundInstance))
+        if (!(o instanceof CompoundInstance that))
         {
             return false;
         }
-
-        final CompoundInstance that = (CompoundInstance) o;
-
+        
         if (!getType().equals(that.getType()))
         {
             return false;
@@ -102,7 +101,7 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
 
     public CompoundInstanceRef asRef() {
         return new CompoundInstanceRef(
-          getType().getRegistryName(),
+          ModRegistries.COMPOUND_TYPE.getKey(getType()),
           getAmount()
         );
     }

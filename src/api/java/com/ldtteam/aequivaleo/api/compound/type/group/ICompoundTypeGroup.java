@@ -22,7 +22,7 @@ import java.util.Set;
  *   * Equivalencies aspects
  *   * EMC.
  */
-public interface ICompoundTypeGroup extends Comparable<ICompoundTypeGroup>, ISyncedRegistryEntryType<ICompoundType>
+public interface ICompoundTypeGroup extends Comparable<ICompoundTypeGroup>, ISyncedRegistryEntryType<ICompoundType, ICompoundTypeGroup>
 {
 
     /**

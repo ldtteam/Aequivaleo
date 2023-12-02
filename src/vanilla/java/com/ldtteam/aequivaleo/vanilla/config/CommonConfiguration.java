@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.vanilla.config;
 import com.google.common.collect.ImmutableList;
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -15,11 +15,11 @@ import java.util.regex.PatternSyntaxException;
  * synced on connection.
  */
 public class CommonConfiguration extends AbstractAequivaleoConfiguration {
-    public ForgeConfigSpec.ConfigValue<List<? extends String>> itemTagsToRegister;
-    public ForgeConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
-    public ForgeConfigSpec.ConfigValue<Boolean> logEmptyVariantsWarning;
+    public ModConfigSpec.ConfigValue<List<? extends String>> itemTagsToRegister;
+    public ModConfigSpec.ConfigValue<List<? extends String>> recipeTypeNamePatternsToExclude;
+    public ModConfigSpec.ConfigValue<Boolean> logEmptyVariantsWarning;
 
-    protected CommonConfiguration(final ForgeConfigSpec.Builder builder) {
+    protected CommonConfiguration(final ModConfigSpec.Builder builder) {
 
         createCategory(builder,
                 "recipes");

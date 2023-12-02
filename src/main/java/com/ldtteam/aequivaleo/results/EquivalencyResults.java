@@ -20,9 +20,9 @@ import com.ldtteam.aequivaleo.network.splitting.NetworkSplittingManager;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -73,11 +73,11 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     @NotNull
     @Override
     public Set<CompoundInstance> dataFor(@NotNull final ICompoundContainer<?> container){
-        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
-                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
+        final ICompoundContainer<?> unitContainer = container.contentsCount() == 1d ? container :
+                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.contents(), 1d);
 
         if (!rawData.containsKey(unitContainer)) {
-            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
+            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.contents());
             for (final Object alternative : alternatives)
             {
                 final Set<CompoundInstance> result = this.dataFor(alternative);
@@ -98,11 +98,11 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     @Override
     public <R> Optional<R> mappedDataFor(@NotNull final ICompoundTypeGroup group, @NotNull final ICompoundContainer<?> container)
     {
-        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
-                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
+        final ICompoundContainer<?> unitContainer = container.contentsCount() == 1d ? container :
+                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.contents(), 1d);
 
         if (!processedData.contains(unitContainer, group)) {
-            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
+            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.contents());
             for (final Object alternative : alternatives)
             {
                 final Optional<R> result = this.mappedDataFor(group, alternative);

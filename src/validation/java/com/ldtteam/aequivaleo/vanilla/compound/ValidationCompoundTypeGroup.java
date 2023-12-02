@@ -2,15 +2,18 @@ package com.ldtteam.aequivaleo.vanilla.compound;
 
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
 import com.ldtteam.aequivaleo.api.mediation.IMediationEngine;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
+import com.ldtteam.aequivaleo.vanilla.Registry;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ITagEquivalencyRecipe;
+import com.mojang.serialization.Codec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
 public class ValidationCompoundTypeGroup implements ICompoundTypeGroup {
@@ -48,6 +51,11 @@ public class ValidationCompoundTypeGroup implements ICompoundTypeGroup {
     }
     
     @Override
+    public Codec<? extends ICompoundType> getEntryCodec() {
+        return Codec.unit(Registry.VALIDATION.get());
+    }
+    
+    @Override
     public String getDirectoryName() {
         return "aequivaleo/validation";
     }
@@ -70,11 +78,11 @@ public class ValidationCompoundTypeGroup implements ICompoundTypeGroup {
     
     public boolean isValidFor(final ICompoundContainer<?> iCompoundContainer, final CompoundInstance compoundInstance)
     {
-        Object contents = iCompoundContainer.getContents();
+        Object contents = iCompoundContainer.contents();
         return contents instanceof ItemStack || contents instanceof Item || contents instanceof FluidStack;
     }
     
     private boolean isValidForGooRecipe(ICompoundContainer<?> container) {
-        return container.getContents() instanceof ItemStack;
+        return container.contents() instanceof ItemStack;
     }
 }

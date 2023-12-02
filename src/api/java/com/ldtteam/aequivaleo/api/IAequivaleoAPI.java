@@ -12,19 +12,18 @@ import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
-import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IDefaultRecipeIngredients;
 import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
 import com.ldtteam.aequivaleo.api.util.Constants;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -106,38 +105,7 @@ public interface IAequivaleoAPI {
      * @return The recipe calculator.
      */
     IRecipeCalculator getRecipeCalculator();
-
-    /**
-     * Sets up a new Gson instance and create the serialization handler.
-     *
-     * @param context The server context to use for deserialization.
-     * @return The Gson serialization handler.
-     */
-    default Gson getGson(final ICondition.IContext context) {
-        return setupGson(context)
-                .setPrettyPrinting()
-                .create();
-    }
-
-    /**
-     * Setups a new {@link GsonBuilder} to use with Aequivaleos serializers.
-     *
-     * @param context The server context to use for deserialization.
-     * @return The new {@link GsonBuilder} setup to be used with Aequivaleo.
-     */
-    default GsonBuilder setupGson(final ICondition.IContext context) {
-        return setupGson(new GsonBuilder(), context);
-    }
-
-    /**
-     * Allows for Aequivaleo to inject its serialization handlers into the given {@link GsonBuilder}.
-     *
-     * @param builder The builder to inject serializers into.
-     * @param context The server context to use for deserialization.
-     * @return The builder with the serializers setup as type adapters.
-     */
-    GsonBuilder setupGson(GsonBuilder builder, final ICondition.IContext context);
-
+    
     /**
      * Gives access to the recipe type processing registry.
      *
@@ -158,13 +126,6 @@ public interface IAequivaleoAPI {
      * @return The results adapter handler registry.
      */
     IResultsAdapterHandlerRegistry getResultsAdapterHandlerRegistry();
-
-    /**
-     * The registry which managers serializers for ingredients.
-     *
-     * @return The ingredient serializer registry.
-     */
-    IIngredientSerializerRegistry getIngredientSerializerRegistry();
 
     /**
      * Returns the aequivaleo mod container.
@@ -200,8 +161,17 @@ public interface IAequivaleoAPI {
      * @param <T> The type of the source registry.
      * @param <E> The type of the view entries.
      */
-    <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter);
-
+    <T, E> IRegistryView<E> createView(final Registry<T> registry, final Function<T, Optional<E>> viewFilter);
+    
+    /**
+     * Gives access to the default recipe ingredients, which aequivaleo provides.
+     *
+     * @return The default recipe ingredients.
+     */
+    @NotNull
+    IDefaultRecipeIngredients getDefaultRecipeIngredients();
+    
+    
     class Holder {
         private static IAequivaleoAPI apiInstance;
 

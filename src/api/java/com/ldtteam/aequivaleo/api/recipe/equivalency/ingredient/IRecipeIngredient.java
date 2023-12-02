@@ -2,7 +2,12 @@ package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IRecipeIngredientType;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.api.util.ModRegistryKeys;
 import com.ldtteam.aequivaleo.api.util.SortedSetComparator;
+import com.mojang.serialization.Codec;
+import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -16,6 +21,13 @@ import java.util.SortedSet;
 public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
 {
 
+    Codec<IRecipeIngredient> CODEC = ModRegistries.RECIPE_INGREDIENT_TYPE
+                                             .byNameCodec()
+                                                .dispatch(
+                                                        IRecipeIngredient::getType,
+                                                        IRecipeIngredientType::codec
+                                                );
+    
     /**
      * Creates a new ingredient from a single source object.
      * This object needs to have an innate count that its container factory is aware of.
@@ -24,9 +36,7 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      * @return The ingredient which represents the given source object.
      */
     static IRecipeIngredient from(Object source) {
-        return new SimpleIngredientBuilder().from(
-                ICompoundContainerFactoryManager.getInstance().wrapInContainer(source)
-        ).createIngredient();
+        return IDefaultRecipeIngredients.getInstance().from(source);
     }
 
     /**
@@ -36,9 +46,7 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      * @return The ingredient which represents the given source object.
      */
     static IRecipeIngredient from(ICompoundContainer<?> source) {
-        return new SimpleIngredientBuilder().from(
-                source
-        ).createIngredient();
+        return IDefaultRecipeIngredients.getInstance().from(source);
     }
 
     /**
@@ -49,7 +57,7 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      * @return The ingredient which represents the given source object.
      */
     static IRecipeIngredient from(Object source, int count) {
-        return from(source, (double) count);
+        return IDefaultRecipeIngredients.getInstance().from(source, count);
     }
 
     /**
@@ -60,9 +68,28 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      * @return The ingredient which represents the given source object.
      */
     static IRecipeIngredient from(Object source, double count) {
-        return new SimpleIngredientBuilder().from(
-                ICompoundContainerFactoryManager.getInstance().wrapInContainer(source, count)
-        ).createIngredient();
+        return IDefaultRecipeIngredients.getInstance().from(source, count);
+    }
+    
+    /**
+     * Creates a new ingredient from the given tag.
+     *
+     * @param key The key of the tag to create an ingredient of.
+     * @return The ingredient which represents the given tag.
+     */
+    static IRecipeIngredient tagged(TagKey<?> key) {
+        return IDefaultRecipeIngredients.getInstance().tagged(key);
+    }
+    
+    /**
+     * Creates a new ingredient from the given tag with the given count.
+     *
+     * @param key The key of the tag to create an ingredient of.
+     * @param count The number of source instances that this ingredient represents.
+     * @return The ingredient which represents the given tag.
+     */
+    static IRecipeIngredient tagged(TagKey<?> key, int count) {
+        return IDefaultRecipeIngredients.getInstance().tagged(key, count);
     }
 
     /**
@@ -88,6 +115,12 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
      */
     Double getRequiredCount();
 
+    /**
+     * The type of this ingredient.
+     *
+     * @return The type.
+     */
+    IRecipeIngredientType getType();
 
     @Override
     default int compareTo(@NotNull final IRecipeIngredient iRecipeIngredient)

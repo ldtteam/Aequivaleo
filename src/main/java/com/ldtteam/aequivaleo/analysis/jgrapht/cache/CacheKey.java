@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cache;
 
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-import net.minecraftforge.forgespi.language.IModInfo;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.IModInfo;
 import org.apache.commons.lang3.Validate;
 
 import java.util.Map;

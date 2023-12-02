@@ -1,95 +1,97 @@
 package com.ldtteam.aequivaleo.api.compound.container.dummy;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import org.apache.commons.lang3.Validate;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
- * Represents a unknown type.
+ * Represents an unknown type.
  * Will contain the original JsonData in case of recovery.
  */
-public class Dummy implements ICompoundContainer<Dummy>
-{
-
-    @NotNull
-    private final JsonObject originalData;
-
-    public Dummy(@NotNull final JsonObject originalData) {
-        this.originalData = Validate.notNull(originalData);
+public record Dummy(@NotNull JsonElement originalData) implements ICompoundContainer<Dummy> {
+    
+    public static final Codec<Dummy> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            ExtraCodecs.JSON.fieldOf("originalData").forGetter(Dummy::originalData)
+    ).apply(instance, Dummy::new));
+    
+    public Dummy(@NotNull final JsonElement originalData) {
+        this.originalData = Objects.requireNonNull(originalData);
     }
-
+    
     @Override
-    public boolean isValid()
-    {
+    public boolean isValid() {
         return false;
     }
-
+    
     @Override
-    public Dummy getContents()
-    {
+    public Dummy contents() {
         return this;
     }
-
+    
     @Override
-    public Double getContentsCount()
-    {
+    public Double contentsCount() {
         return 0d;
     }
-
+    
     @Override
-    public boolean canBeLoadedFromDisk()
-    {
-        return false;
-    }
-
-    @Override
-    public String getContentAsFileName()
-    {
+    public String getContentAsFileName() {
         throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
     }
-
-    @NotNull
-    public JsonObject getOriginalData()
-    {
-        return originalData;
-    }
-
+    
     @Override
-    public int compareTo(@NotNull final ICompoundContainer<?> o)
-    {
-        if (!(o instanceof Dummy))
-        {
+    public ICompoundContainerType<Dummy> type() {
+        return null;
+    }
+    
+    @Override
+    public int compareTo(@NotNull final ICompoundContainer<?> o) {
+        if (!(o instanceof Dummy d)) {
             //If it is not a dummy then we say we are greater. Dummies end up last in the list.
             return 1;
         }
-
-        final Dummy d = (Dummy) o;
-
+        
         //Now we can compare the data stored inside.
         return originalData.toString().compareTo(d.originalData.toString());
     }
-
+    
     @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
         }
-        if (!(o instanceof Dummy))
-        {
+        if (!(o instanceof Dummy dummy)) {
             return false;
         }
-
-        final Dummy dummy = (Dummy) o;
-
+        
         return originalData.toString().equals(dummy.originalData.toString());
     }
-
+    
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return originalData.toString().hashCode();
+    }
+    
+    public static final class Type implements ICompoundContainerType<Dummy> {
+        
+        @Override
+        public @NotNull Class<Dummy> getContainedType() {
+            return Dummy.class;
+        }
+        
+        @Override
+        public @NotNull ICompoundContainer<Dummy> create(@NotNull Dummy inputInstance, double count) {
+            return new Dummy(inputInstance.originalData());
+        }
+        
+        @Override
+        public Codec<ICompoundContainer<Dummy>> codec() {
+            return null;
+        }
     }
 }

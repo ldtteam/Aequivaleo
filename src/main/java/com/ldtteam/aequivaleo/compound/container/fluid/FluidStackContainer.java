@@ -1,29 +1,32 @@
 package com.ldtteam.aequivaleo.compound.container.fluid;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
 import com.ldtteam.aequivaleo.api.util.Comparators;
 import com.ldtteam.aequivaleo.api.util.FluidStackUtils;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.ldtteam.aequivaleo.bootstrap.ModContainerTypes;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fluids.FluidStack;
-import org.apache.commons.lang3.Validate;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
+import java.util.Objects;
 
 public class FluidStackContainer implements ICompoundContainer<FluidStack>
 {
+    
+    public static final Codec<FluidStackContainer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+      FluidStack.CODEC.fieldOf("stack").forGetter(FluidStackContainer::contents),
+      Codec.DOUBLE.fieldOf("count").forGetter(FluidStackContainer::contentsCount)
+    ).apply(instance, FluidStackContainer::new));
 
-    public static final class Factory implements ICompoundContainerFactory<FluidStack>
+    public static final class Type implements ICompoundContainerType<FluidStack>
     {
 
-        public Factory()
+        public Type()
         {
         }
 
@@ -35,54 +38,18 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         }
 
         @Override
-        public @NotNull ICompoundContainer<FluidStack> create(@NotNull final FluidStack instance, @NotNull final double count)
+        public @NotNull ICompoundContainer<FluidStack> create(@NotNull final FluidStack instance, final double count)
         {
             final FluidStack stack = instance.copy();
             stack.setAmount(1);
             return new FluidStackContainer(stack, count);
         }
-
+        
         @Override
-        public ICompoundContainer<FluidStack> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
-        {
-            try
-            {
-                return new FluidStackContainer(FluidStack.loadFluidStackFromNBT(TagParser.parseTag(json.getAsJsonObject().get("stack").getAsString())),
-                  json.getAsJsonObject().get("count").getAsDouble());
-            }
-            catch (CommandSyntaxException e)
-            {
-                AequivaleoLogger.getLogger().error(e);
-            }
-
-            return null;
+        public Codec<? extends ICompoundContainer<FluidStack>> codec() {
+            return CODEC;
         }
-
-        @Override
-        public JsonElement serialize(final ICompoundContainer<FluidStack> src, final Type typeOfSrc, final JsonSerializationContext context)
-        {
-            final JsonObject object = new JsonObject();
-            object.addProperty("count", src.getContentsCount());
-            object.addProperty("stack", src.getContents().writeToNBT(new CompoundTag()).toString());
-            return object;
-        }
-
-        @Override
-        public void write(final ICompoundContainer<FluidStack> object, final FriendlyByteBuf buffer)
-        {
-            buffer.writeFluidStack(object.getContents());
-            buffer.writeDouble(object.getContentsCount());
-        }
-
-        @Override
-        public ICompoundContainer<FluidStack> read(final FriendlyByteBuf buffer)
-        {
-            return new FluidStackContainer(
-              buffer.readFluidStack(),
-              buffer.readDouble()
-            );
-        }
-
+        
         @Override
         public double getInnateCount(@NotNull FluidStack inputInstance) {
             return inputInstance.getAmount();
@@ -117,13 +84,13 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
     }
 
     @Override
-    public FluidStack getContents()
+    public FluidStack contents()
     {
         return stack;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -131,15 +98,23 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
     @Override
     public boolean canBeLoadedFromDisk()
     {
-        return false;
+        return true;
     }
 
     @Override
     public String getContentAsFileName()
     {
-        throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
+        return "fluidstack_%s_%s".formatted(
+                Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents().getFluid())).getNamespace(),
+                Objects.requireNonNull(BuiltInRegistries.FLUID.getKey(contents().getFluid())).getPath()
+        );
     }
-
+    
+    @Override
+    public ICompoundContainerType<FluidStack> type() {
+        return ModContainerTypes.FLUIDSTACK.get();
+    }
+    
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
@@ -147,13 +122,12 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         if (o instanceof Dummy)
             return -1;
 
-        final Object contents = Validate.notNull(o.getContents());
-        if (!(contents instanceof FluidStack))
+        final Object contents = Objects.requireNonNull(o.contents());
+        if (!(contents instanceof FluidStack otherStack))
         {
             return FluidStack.class.getName().compareTo(contents.getClass().getName());
         }
-
-        final FluidStack otherStack = (FluidStack) contents;
+        
         return Comparators.FLUID_STACK_COMPARATOR.compare(stack, otherStack);
     }
 
@@ -164,13 +138,11 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         {
             return true;
         }
-        if (!(o instanceof FluidStackContainer))
+        if (!(o instanceof FluidStackContainer that))
         {
             return false;
         }
-
-        final FluidStackContainer that = (FluidStackContainer) o;
-
+        
         if (Double.compare(that.count, count) != 0)
         {
             return false;

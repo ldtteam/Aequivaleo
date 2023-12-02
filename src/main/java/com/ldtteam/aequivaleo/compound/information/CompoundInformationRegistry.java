@@ -35,7 +35,7 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
     public ICompoundInformationRegistry registerValue(
       @NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> compounds)
     {
-        if (wrapper.getContentsCount() != 1)
+        if (wrapper.contentsCount() != 1)
             throw new IllegalArgumentException("Can not set locked information with none unit stack.");
 
         valueInformation.put(wrapper, ImmutableSet.copyOf(compounds));
@@ -57,7 +57,7 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
     public ICompoundInformationRegistry registerLocking(
       @NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> instances)
     {
-        if (wrapper.getContentsCount() != 1)
+        if (wrapper.contentsCount() != 1)
             throw new IllegalArgumentException("Can not set locked information with none unit stack.");
 
         lockedInformation.put(wrapper, ImmutableSet.copyOf(instances));
@@ -80,7 +80,7 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
     public ICompoundInformationRegistry registerBase(
             @NotNull final ICompoundContainer<?> wrapper, @NotNull final Set<CompoundInstance> instances)
     {
-        if (wrapper.getContentsCount() != 1)
+        if (wrapper.contentsCount() != 1)
             throw new IllegalArgumentException("Can not set locked information with none unit stack.");
 
         baseInformation.put(wrapper, ImmutableSet.copyOf(instances));

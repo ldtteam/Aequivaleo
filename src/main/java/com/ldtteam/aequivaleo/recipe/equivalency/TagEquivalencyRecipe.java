@@ -3,7 +3,7 @@ package com.ldtteam.aequivaleo.recipe.equivalency;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ITagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import net.minecraft.tags.TagKey;
 import org.apache.commons.lang3.Validate;
 

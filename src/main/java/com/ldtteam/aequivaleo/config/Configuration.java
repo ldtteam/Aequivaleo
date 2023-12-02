@@ -1,8 +1,10 @@
 package com.ldtteam.aequivaleo.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.config.ModConfig;
+
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.NeoForgeConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
 /**
@@ -34,9 +36,9 @@ public class Configuration
      */
     public Configuration(final ModContainer modContainer)
     {
-        final Pair<ClientConfiguration, ForgeConfigSpec> cli = new ForgeConfigSpec.Builder().configure(ClientConfiguration::new);
-        final Pair<ServerConfiguration, ForgeConfigSpec> ser = new ForgeConfigSpec.Builder().configure(ServerConfiguration::new);
-        final Pair<CommonConfiguration, ForgeConfigSpec> com = new ForgeConfigSpec.Builder().configure(CommonConfiguration::new);
+        final Pair<ClientConfiguration, ModConfigSpec> cli = new ModConfigSpec.Builder().configure(ClientConfiguration::new);
+        final Pair<ServerConfiguration, ModConfigSpec> ser = new ModConfigSpec.Builder().configure(ServerConfiguration::new);
+        final Pair<CommonConfiguration, ModConfigSpec> com = new ModConfigSpec.Builder().configure(CommonConfiguration::new);
         client = new ModConfig(ModConfig.Type.CLIENT, cli.getRight(), modContainer);
         server = new ModConfig(ModConfig.Type.SERVER, ser.getRight(), modContainer);
         common = new ModConfig(ModConfig.Type.COMMON, com.getRight(), modContainer);

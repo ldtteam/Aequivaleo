@@ -17,14 +17,14 @@ import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public class JGraphTBasedCompoundAnalyzer
                 recipeGraph.addVertex(outputWrapperGraphNode);
 
                 recipeGraph.addEdge(recipeGraphNode, outputWrapperGraphNode);
-                recipeGraph.setEdgeWeight(recipeGraphNode, outputWrapperGraphNode, output.getContentsCount());
+                recipeGraph.setEdgeWeight(recipeGraphNode, outputWrapperGraphNode, output.contentsCount());
             }
         }
 
@@ -412,7 +412,7 @@ public class JGraphTBasedCompoundAnalyzer
         if (!recipeGraph.containsEdge(candidateNode, target))
         {
             recipeGraph.addEdge(candidateNode, target);
-            recipeGraph.setEdgeWeight(candidateNode, target, candidate.getContentsCount());
+            recipeGraph.setEdgeWeight(candidateNode, target, candidate.contentsCount());
         }
     }
 
@@ -424,12 +424,12 @@ public class JGraphTBasedCompoundAnalyzer
 
     private ICompoundContainer<?> createUnitWrapper(@NotNull final ICompoundContainer<?> wrapper)
     {
-        if (wrapper.getContentsCount() == 1d)
+        if (wrapper.contentsCount() == 1d)
         {
             return wrapper;
         }
 
-        return CompoundContainerFactoryManager.getInstance().wrapInContainer(wrapper.getContents(), 1d);
+        return CompoundContainerFactoryManager.getInstance().wrapInContainer(wrapper.contents(), 1d);
     }
 
     private Set<ContainerNode> findRootNodes(@NotNull final Graph<INode, IEdge> graph)

@@ -1,9 +1,7 @@
 package com.ldtteam.aequivaleo.utils;
 
 import com.ldtteam.aequivaleo.Aequivaleo;
-import com.ldtteam.aequivaleo.config.Configuration;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.event.config.ModConfigEvent;
 import org.apache.logging.log4j.Logger;
 
 public class AnalysisLogHandler

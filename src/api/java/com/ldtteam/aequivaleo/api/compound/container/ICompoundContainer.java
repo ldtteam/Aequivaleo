@@ -1,15 +1,25 @@
 package com.ldtteam.aequivaleo.api.compound.container;
 
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.mojang.serialization.Codec;
 
 /**
- * Holds a object that is made up out of compounds.
+ * Holds an object that is made up out of compounds.
  * @param <T> The type of game object that is held.
  */
 public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
 {
+    /**
+     * The codec that can be used to serialize and deserialize a container.
+     */
+    Codec<ICompoundContainer<?>> CODEC = ModRegistries.CONTAINER_FACTORY.byNameCodec()
+                                                 .dispatch(
+                                                        ICompoundContainer::type,
+                                                        ICompoundContainerType::codec
+                                                 );
+    
     /**
      * Creates a container from the given source object.
      * The source object needs to have an innate count that its factory is aware of.
@@ -57,18 +67,18 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
      *
      * @return The contents.
      */
-    T getContents();
+    T contents();
 
     /**
      * The amount of {@code T}s contained in this wrapper.
      * @return The amount.
      */
-    Double getContentsCount();
+    Double contentsCount();
 
     /**
-     * Indicates if this containers locked information
+     * Indicates if this container's locked information
      * can be loaded from disk.
-     *
+     * <br/>
      * This if for example false for ItemStacks.
      *
      * @return True to indicate that data can be loaded form disk, false when not.
@@ -85,4 +95,11 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
     default String getContentAsFileName() {
         throw new UnsupportedOperationException();
     }
+    
+    /**
+     * The type of container this is.
+     *
+     * @return The type of container this is.
+     */
+    ICompoundContainerType<T> type();
 }

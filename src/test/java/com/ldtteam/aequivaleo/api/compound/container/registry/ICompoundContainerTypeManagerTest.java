@@ -12,7 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-public class ICompoundContainerFactoryManagerTest
+public class ICompoundContainerTypeManagerTest
 {
 
     private ICompoundContainerFactoryManager manager = mock(ICompoundContainerFactoryManager.class);

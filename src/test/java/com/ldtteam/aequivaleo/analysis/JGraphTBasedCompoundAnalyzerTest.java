@@ -1,6 +1,5 @@
 package com.ldtteam.aequivaleo.analysis;
 
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -8,12 +7,12 @@ import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
 import com.ldtteam.aequivaleo.api.compound.information.ICompoundInformationRegistry;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.mediation.IMediationCandidate;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IRecipeIngredientType;
 import com.ldtteam.aequivaleo.api.registry.ISyncedRegistry;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
@@ -23,16 +22,18 @@ import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.config.CommonConfiguration;
 import com.ldtteam.aequivaleo.config.Configuration;
 import com.ldtteam.aequivaleo.config.ServerConfiguration;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredient;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.TagIngredient;
 import com.ldtteam.aequivaleo.testing.Color;
 import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
 import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecipe;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -41,23 +42,15 @@ import org.junit.rules.TestName;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import javax.swing.text.html.HTML;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class JGraphTBasedCompoundAnalyzerTest
 {
@@ -97,28 +90,33 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         Configuration config = mock(Configuration.class);
         ServerConfiguration serverConfig = mock(ServerConfiguration.class);
-        ForgeConfigSpec.BooleanValue alwaysFalseConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        ModConfigSpec.BooleanValue alwaysFalseConfig = mock(ModConfigSpec.BooleanValue.class);
         when(alwaysFalseConfig.get()).thenReturn(false);
         serverConfig.exportGraph = alwaysFalseConfig;
         serverConfig.writeResultsToLog = alwaysFalseConfig;
         when(config.getServer()).thenReturn(serverConfig);
 
         CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
-        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        ModConfigSpec.BooleanValue alwaysTrueConfig = mock(ModConfigSpec.BooleanValue.class);
         when(alwaysTrueConfig.get()).thenReturn(true);
         commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
         when(config.getCommon()).thenReturn(commonConfiguration);
 
         when(mod.getConfiguration()).thenReturn(config);
 
-        List<ICompoundContainerFactory<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Factory());
-        ModRegistries.CONTAINER_FACTORY = Suppliers.memoize(() -> mock(IForgeRegistry.class));
-        when(ModRegistries.CONTAINER_FACTORY.get().iterator()).thenReturn(containerFactories.iterator());
+        List<ICompoundContainerType<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Type());
+        ModRegistries.CONTAINER_FACTORY = (Registry<ICompoundContainerType<?>>) mock(Registry.class);
+        when(ModRegistries.CONTAINER_FACTORY.iterator()).thenReturn(containerFactories.iterator());
+        when(ModRegistries.CONTAINER_FACTORY.byNameCodec()).thenCallRealMethod();
         CompoundContainerFactoryManager.getInstance().bake();
 
+        List<IRecipeIngredientType> ingredientTypes = ImmutableList.of(new SimpleIngredient.Type(), new TagIngredient.Type());
+        ModRegistries.RECIPE_INGREDIENT_TYPE = (Registry<IRecipeIngredientType>) mock(Registry.class);
+        when(ModRegistries.RECIPE_INGREDIENT_TYPE.iterator()).thenReturn(ingredientTypes.iterator());
+        when(ModRegistries.RECIPE_INGREDIENT_TYPE.byNameCodec()).thenCallRealMethod();
+        
         when(typeUnknownIsZero.getGroup()).thenReturn(groupUnknownIsZero);
         when(typeUnknownIsZero.toString()).thenReturn("Type:Zero");
-        when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_zero"));
         when(groupUnknownIsZero.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
@@ -139,7 +137,6 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         when(typeUnknownIsInvalid.getGroup()).thenReturn(groupUnknownIsInvalid);
         when(typeUnknownIsInvalid.toString()).thenReturn("Type:Invalid");
-        when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_invalid"));
         when(groupUnknownIsInvalid.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
@@ -172,11 +169,11 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
 
-        ISyncedRegistry<ICompoundType> typeReg = mock(ISyncedRegistry.class);
-        when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
+        ISyncedRegistry<ICompoundType, ICompoundTypeGroup> typeReg = mock(ISyncedRegistry.class);
+        when(typeReg.getId(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
         when(typeReg.getAllKnownRegistryNames()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
         when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
-        ModRegistries.COMPOUND_TYPE = () -> typeReg;
+        ModRegistries.COMPOUND_TYPE = typeReg;
 
         final ModList modList = mock(ModList.class);
         when(modList.getMods()).thenReturn(Collections.emptyList());
@@ -740,18 +737,6 @@ public class JGraphTBasedCompoundAnalyzerTest
             name,
             inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
             Collections.emptySet(),
-            outputs
-          )
-        );
-    }
-
-    public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> containers, Set<ICompoundContainer<?>> outputs)
-    {
-        EquivalencyRecipeRegistry.getInstance(key).register(
-          new TestingEquivalencyRecipe(
-            name,
-            inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
-            containers,
             outputs
           )
         );

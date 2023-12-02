@@ -1,21 +1,25 @@
 package com.ldtteam.aequivaleo.compound.container.heat;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.ldtteam.aequivaleo.bootstrap.ModContainerTypes;
 import com.ldtteam.aequivaleo.heat.Heat;
-import net.minecraft.network.FriendlyByteBuf;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Type;
 
 public class HeatContainer implements ICompoundContainer<Heat>
 {
+    
+    public static final Codec<HeatContainer> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
+            Codec.unit(new Heat()).fieldOf("heat").forGetter(HeatContainer::contents),
+            Codec.DOUBLE.fieldOf("count").forGetter(HeatContainer::contentsCount)
+    ).apply(instance, HeatContainer::new));
 
-    public static final class Factory implements ICompoundContainerFactory<Heat>
+    public static final class Type implements ICompoundContainerType<Heat>
     {
 
-        public Factory()
+        public Type()
         {
         }
 
@@ -28,33 +32,14 @@ public class HeatContainer implements ICompoundContainer<Heat>
 
         @NotNull
         @Override
-        public ICompoundContainer<Heat> create(@NotNull final Heat instance, @NotNull final double count)
+        public ICompoundContainer<Heat> create(@NotNull final Heat instance, final double count)
         {
             return new HeatContainer(instance, count);
         }
-
+        
         @Override
-        public ICompoundContainer<Heat> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
-        {
-            return new HeatContainer(new Heat(), json.getAsDouble());
-        }
-
-        @Override
-        public JsonElement serialize(final ICompoundContainer<Heat> src, final Type typeOfSrc, final JsonSerializationContext context)
-        {
-            return new JsonPrimitive(src.getContentsCount());
-        }
-
-        @Override
-        public void write(final ICompoundContainer<Heat> object, final FriendlyByteBuf buffer)
-        {
-            buffer.writeDouble(object.getContentsCount());
-        }
-
-        @Override
-        public ICompoundContainer<Heat> read(final FriendlyByteBuf buffer)
-        {
-            return new HeatContainer(new Heat(), buffer.readDouble());
+        public Codec<? extends ICompoundContainer<Heat>> codec() {
+            return CODEC;
         }
     }
 
@@ -74,13 +59,13 @@ public class HeatContainer implements ICompoundContainer<Heat>
     }
 
     @Override
-    public Heat getContents()
+    public Heat contents()
     {
         return heat;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -96,17 +81,22 @@ public class HeatContainer implements ICompoundContainer<Heat>
     {
         return "heat";
     }
-
+    
+    @Override
+    public ICompoundContainerType<Heat> type() {
+        return ModContainerTypes.HEAT.get();
+    }
+    
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
-        return !(o instanceof HeatContainer) ? -1 : (int) (getContentsCount() - o.getContentsCount());
+        return !(o instanceof HeatContainer) ? -1 : (int) (contentsCount() - o.contentsCount());
     }
 
     @Override
     public int hashCode()
     {
-        return getContentsCount().hashCode();
+        return contentsCount().hashCode();
     }
 
     @Override
@@ -115,7 +105,7 @@ public class HeatContainer implements ICompoundContainer<Heat>
         if (!(obj instanceof HeatContainer))
             return false;
 
-        return ((HeatContainer) obj).getContentsCount().equals(getContentsCount());
+        return ((HeatContainer) obj).contentsCount().equals(contentsCount());
     }
 
     @Override

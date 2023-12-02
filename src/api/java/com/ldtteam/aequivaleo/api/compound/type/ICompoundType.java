@@ -4,6 +4,7 @@ import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.ISyncedRegistryEntryType;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -18,10 +19,14 @@ import java.util.Comparator;
  *   * Energy
  *   * etc.
  */
-public interface ICompoundType extends Comparable<ICompoundType>, ISyncedRegistryEntry<ICompoundType>
+public interface ICompoundType extends Comparable<ICompoundType>, ISyncedRegistryEntry<ICompoundType, ICompoundTypeGroup>
 {
-
-    Comparator<ICompoundType> COMPARATOR = Comparator.nullsLast(Comparator.comparing((type) -> ModRegistries.COMPOUND_TYPE.get().getRegistryNameOf(type)));
+    
+    /**
+     * Default comparator for compound types.
+     * Sorts based on name, allows for a reproducible order.
+     */
+    Comparator<ICompoundType> COMPARATOR = Comparator.nullsLast(Comparator.comparing((type) -> ModRegistries.COMPOUND_TYPE.getKey(type)));
 
     /**
      * The group this compound type belongs to.
@@ -32,7 +37,7 @@ public interface ICompoundType extends Comparable<ICompoundType>, ISyncedRegistr
     ICompoundTypeGroup getGroup();
 
     @Override
-    default ISyncedRegistryEntryType<ICompoundType> getType() {
+    default ICompoundTypeGroup getType() {
         return getGroup();
     }
 

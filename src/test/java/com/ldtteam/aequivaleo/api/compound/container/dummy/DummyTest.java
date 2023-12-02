@@ -1,12 +1,25 @@
 package com.ldtteam.aequivaleo.api.compound.container.dummy;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
-import org.junit.Assert;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IRecipeIngredientType;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredient;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.TagIngredient;
+import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
+import net.minecraft.core.Registry;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.List;
 
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@SuppressWarnings("unchecked")
 public class DummyTest
 {
 
@@ -27,20 +40,31 @@ public class DummyTest
 
         targetOne = new Dummy(one);
         targetTwo = new Dummy(two);
+        
+        List<ICompoundContainerType<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Type());
+        ModRegistries.CONTAINER_FACTORY = (Registry<ICompoundContainerType<?>>) mock(Registry.class);
+        when(ModRegistries.CONTAINER_FACTORY.iterator()).thenReturn(containerFactories.iterator());
+        when(ModRegistries.CONTAINER_FACTORY.byNameCodec()).thenCallRealMethod();
+        CompoundContainerFactoryManager.getInstance().bake();
+        
+        List<IRecipeIngredientType> ingredientTypes = ImmutableList.of(new SimpleIngredient.Type(), new TagIngredient.Type());
+        ModRegistries.RECIPE_INGREDIENT_TYPE = (Registry<IRecipeIngredientType>) mock(Registry.class);
+        when(ModRegistries.RECIPE_INGREDIENT_TYPE.iterator()).thenReturn(ingredientTypes.iterator());
+        when(ModRegistries.RECIPE_INGREDIENT_TYPE.byNameCodec()).thenCallRealMethod();
     }
 
     @Test
     public void getContents()
     {
-        assertEquals(targetOne, targetOne.getContents());
-        assertEquals(targetTwo, targetTwo.getContents());
+        assertEquals(targetOne, targetOne.contents());
+        assertEquals(targetTwo, targetTwo.contents());
     }
 
     @Test
     public void getContentsCount()
     {
-        assertEquals(0D, targetOne.getContentsCount(), 0d);
-        assertEquals(0D, targetTwo.getContentsCount(), 0d);
+        assertEquals(0D, targetOne.contentsCount(), 0d);
+        assertEquals(0D, targetTwo.contentsCount(), 0d);
     }
 
     @Test
@@ -60,8 +84,8 @@ public class DummyTest
     @Test
     public void getOriginalData()
     {
-        assertEquals(one, targetOne.getOriginalData());
-        assertEquals(two, targetTwo.getOriginalData());
+        assertEquals(one, targetOne.originalData());
+        assertEquals(two, targetTwo.originalData());
     }
 
     @Test
@@ -80,8 +104,6 @@ public class DummyTest
     @Test
     public void testEquals()
     {
-        assertEquals(one, one);
-        assertEquals(two, two);
         assertNotEquals(one, two);
         assertNotEquals(two, one);
     }

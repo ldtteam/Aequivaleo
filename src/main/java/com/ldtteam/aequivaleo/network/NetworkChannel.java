@@ -10,11 +10,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.neoforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.NetworkRegistry;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.simple.MessageFunctions;
+import net.neoforged.neoforge.network.simple.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,7 +33,7 @@ public class NetworkChannel
     /**
      * Forge network channel
      */
-    private final        SimpleChannel rawChannel;
+    private final SimpleChannel rawChannel;
 
     /**
      * Creates a new instance of network channel.
@@ -66,18 +67,25 @@ public class NetworkChannel
      */
     private <MSG extends IMessage> void registerMessage(final int id, final Class<MSG> msgClazz, final Function<FriendlyByteBuf, MSG> initializer)
     {
-        rawChannel.registerMessage(id, msgClazz, IMessage::toBytes, initializer, (msg, ctxIn) -> {
-            final NetworkEvent.Context ctx = ctxIn.get();
-            final LogicalSide packetOrigin = ctx.getDirection().getOriginationSide();
-            ctx.setPacketHandled(true);
-            if (msg.getExecutionSide() != null && packetOrigin.equals(msg.getExecutionSide()))
-            {
-                LOGGER.warn("Receving {} at wrong side!", msg.getClass().getName());
-                return;
-            }
-            // boolean param MUST equals true if packet arrived at logical server
-            ctx.enqueueWork(() -> msg.onExecute(ctx, packetOrigin.equals(LogicalSide.CLIENT)));
-        });
+        rawChannel.registerMessage(
+                id,
+                msgClazz,
+                IMessage::toBytes,
+                initializer::apply,
+                (msg, context) -> {
+                    final NetworkEvent.Context ctx = context;
+                    final LogicalSide packetOrigin = ctx.getDirection().getOriginationSide();
+                    ctx.setPacketHandled(true);
+
+                    if (msg.getExecutionSide() != null && packetOrigin.equals(msg.getExecutionSide()))
+                    {
+                        LOGGER.warn("Receving {} at wrong side!", msg.getClass().getName());
+                        return;
+                    }
+                    // boolean param MUST equals true if packet arrived at logical server
+                    ctx.enqueueWork(() -> msg.onExecute(ctx, packetOrigin.equals(LogicalSide.CLIENT)));
+                }
+        );
     }
 
     /**

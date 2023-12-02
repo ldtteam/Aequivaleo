@@ -1,20 +1,16 @@
 package com.ldtteam.aequivaleo.api.compound.container.factory;
 
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
+import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
 /**
- * Represents a object that converts a certain game object into a wrapped counterpart which can
+ * Represents an object that converts a certain game object into a wrapped counterpart which can
  * then carry compound information.
  */
-public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundContainer<T>>,
-                                                           JsonDeserializer<ICompoundContainer<T>>,
-                                                           IPacketBufferSerializer<ICompoundContainer<T>>
+public interface ICompoundContainerType<T>
 {
 
     /**
@@ -54,6 +50,13 @@ public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundCo
      * @return The innate count within the instance.
      */
     default double getInnateCount(@NotNull final T inputInstance) {
-        throw new IllegalStateException("The type: " + inputInstance.getClass().getSimpleName() + " has no innate count.");
+        return 1d;
     }
+    
+    /**
+     * Method used to get the codec for the containers represented by this type.
+     *
+     * @return The codec for the containers represented by this type.
+     */
+    Codec<? extends ICompoundContainer<T>> codec();
 }

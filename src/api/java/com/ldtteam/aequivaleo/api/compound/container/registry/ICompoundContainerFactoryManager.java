@@ -4,16 +4,18 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
 import com.ldtteam.aequivaleo.api.util.IPacketBufferSerializer;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraft.core.Registry;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 /**
  * A manager type for factories that handle wrapping compound containers, like ItemStacks.
- * Making this a manager with {@link IForgeRegistry} combination instead of hardcoding allows for easier expansion of the compound system into new and several types, like entities and power.
+ * Making this a manager with {@link Registry} combination instead of hardcoding allows for easier expansion of the compound system into new and several types, like entities and power.
  */
-public interface ICompoundContainerFactoryManager extends JsonDeserializer<ICompoundContainer<?>>, JsonSerializer<ICompoundContainer<?>>, IPacketBufferSerializer<ICompoundContainer<?>>
+public interface ICompoundContainerFactoryManager
 {
     /**
      * Gives access to the current instance of the factory registry.
@@ -29,7 +31,7 @@ public interface ICompoundContainerFactoryManager extends JsonDeserializer<IComp
      *
      * @return The registry.
      */
-    IForgeRegistry<ICompoundContainerFactory<?>> getRegistry();
+    Registry<ICompoundContainerType<?>> getRegistry();
 
     /**
      * Utility method to check if a given class of a compound container can be wrapped properly.
@@ -72,4 +74,14 @@ public interface ICompoundContainerFactoryManager extends JsonDeserializer<IComp
      */
     @NotNull
     <T> ICompoundContainer<T> wrapInContainer(@NotNull T gameObject) throws IllegalArgumentException;
+    
+    /**
+     * Determines the innate count of the game object, if possible.
+     *
+     * @param gameObject The game object to determine the innate count of.
+     * @return The innate count, if possible.
+     * @param <T> The type of the game object.
+     */
+    @NotNull
+    <T> Optional<Double> getInnateCount(@NotNull T gameObject);
 }

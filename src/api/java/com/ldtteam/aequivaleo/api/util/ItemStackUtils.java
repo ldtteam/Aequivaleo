@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +62,8 @@ public class ItemStackUtils
         if (!isEmpty(itemStack1) &&
               !isEmpty(itemStack2) &&
                 Objects.equals(
-                        ForgeRegistries.ITEMS.getKey(itemStack1.getItem()),
-                        ForgeRegistries.ITEMS.getKey(itemStack2.getItem()))
+                        BuiltInRegistries.ITEM.getKey(itemStack1.getItem()),
+                        BuiltInRegistries.ITEM.getKey(itemStack2.getItem()))
                 &&
               (itemStack1.getDamageValue() == itemStack2.getDamageValue() || !matchMeta))
         {

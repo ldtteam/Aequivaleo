@@ -1,16 +1,19 @@
 package com.ldtteam.aequivaleo.testing.compound.container.testing;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import net.minecraft.network.FriendlyByteBuf;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Type;
 
 public class LoadableStringCompoundContainer implements ICompoundContainer<String>
 {
-
+    
+    public static final Codec<LoadableStringCompoundContainer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.STRING.fieldOf("content").forGetter(LoadableStringCompoundContainer::contents),
+            Codec.DOUBLE.fieldOf("count").forGetter(LoadableStringCompoundContainer::contentsCount)
+    ).apply(instance, LoadableStringCompoundContainer::new));
+    
     String content;
     double count;
 
@@ -27,13 +30,13 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
     }
 
     @Override
-    public String getContents()
+    public String contents()
     {
         return content;
     }
 
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -68,7 +71,12 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
     {
         return content;
     }
-
+    
+    @Override
+    public ICompoundContainerType<String> type() {
+        return new Type();
+    }
+    
     @Override
     public int hashCode()
     {
@@ -85,9 +93,8 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
         return false;
     }
 
-    public static class Factory implements ICompoundContainerFactory<String>
+    public static class Type implements ICompoundContainerType<String>
     {
-
         @NotNull
         @Override
         public Class<String> getContainedType() {
@@ -99,28 +106,10 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
         public ICompoundContainer<String> create(@NotNull String inputInstance, double count) {
             return new LoadableStringCompoundContainer(inputInstance, count);
         }
-
+        
         @Override
-        public ICompoundContainer<String> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
-        {
-            return new LoadableStringCompoundContainer(json.getAsString(), 1);
-        }
-
-        @Override
-        public JsonElement serialize(ICompoundContainer<String> src, Type typeOfSrc, JsonSerializationContext context) {
-            final LoadableStringCompoundContainer container = (LoadableStringCompoundContainer) src;
-            return new JsonPrimitive(container.content);
-        }
-
-        @Override
-        public void write(ICompoundContainer<String> object, FriendlyByteBuf buffer) {
-            final LoadableStringCompoundContainer container = (LoadableStringCompoundContainer) object;
-            buffer.writeUtf(container.content);
-        }
-
-        @Override
-        public ICompoundContainer<String> read(FriendlyByteBuf buffer) {
-            return new LoadableStringCompoundContainer(buffer.readUtf(32767), 1d);
+        public Codec<? extends ICompoundContainer<String>> codec() {
+            return CODEC;
         }
     }
 }

@@ -4,12 +4,12 @@ import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainer
 import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.IPotionEquivalencyRecipe;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Objects;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class PotionEquivalencyRecipe extends GenericRecipeEquivalencyRecipe impl
     ) {
         super(
                 new ResourceLocation(
-                        Objects.requireNonNull(ForgeRegistries.POTIONS.getKey(PotionUtils.getPotion(output))).toString().replace(":", "_") + "/in/" + Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(output.getItem())).toString().replace(":", "_")
+                        Objects.requireNonNull(BuiltInRegistries.POTION.getKey(PotionUtils.getPotion(output))).toString().replace(":", "_") + "/in/" + Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(output.getItem())).toString().replace(":", "_")
                 ),
                 Stream.of(input, reagent)
                         .map(IRecipeIngredient::from).collect(Collectors.toSet()),

@@ -1,31 +1,32 @@
 package com.ldtteam.aequivaleo.compound.container.itemstack;
 
-import com.google.gson.*;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.dummy.Dummy;
-import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
-import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerType;
 import com.ldtteam.aequivaleo.api.util.Comparators;
 import com.ldtteam.aequivaleo.api.util.ItemStackUtils;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.ldtteam.aequivaleo.bootstrap.ModContainerTypes;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
 import java.util.Objects;
 
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
 
-    public static final class Factory implements ICompoundContainerFactory<ItemStack>
+    public static final Codec<ItemStackContainer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+      ItemStack.CODEC.fieldOf("stack").forGetter(ItemStackContainer::contents),
+      Codec.DOUBLE.fieldOf("count").forGetter(ItemStackContainer::contentsCount)
+    ).apply(instance, ItemStackContainer::new));
+    
+    public static final class Type implements ICompoundContainerType<ItemStack>
     {
 
-        public Factory()
+        public Type()
         {
         }
 
@@ -37,55 +38,20 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         }
 
         @Override
-        public @NotNull ICompoundContainer<ItemStack> create(@NotNull final ItemStack instance, @NotNull final double count)
+        public @NotNull ICompoundContainer<ItemStack> create(@NotNull final ItemStack instance, final double count)
         {
             final ItemStack stack = instance.copyWithCount(1);
             return new ItemStackContainer(stack, count);
         }
 
         @Override
-        public ICompoundContainer<ItemStack> deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException
-        {
-            try
-            {
-                return new ItemStackContainer(ItemStack.of(TagParser.parseTag(json.getAsJsonObject().get("stack").getAsString())), json.getAsJsonObject().get("count").getAsDouble());
-            }
-            catch (CommandSyntaxException e)
-            {
-                AequivaleoLogger.getLogger().error(e);
-            }
-
-            return null;
-        }
-
-        @Override
-        public JsonElement serialize(final ICompoundContainer<ItemStack> src, final Type typeOfSrc, final JsonSerializationContext context)
-        {
-            final JsonObject object = new JsonObject();
-            object.addProperty("count", src.getContentsCount());
-            object.addProperty("stack", src.getContents().save(new CompoundTag()).toString());
-            return object;
-        }
-
-        @Override
-        public void write(final ICompoundContainer<ItemStack> object, final FriendlyByteBuf buffer)
-        {
-            buffer.writeItem(object.getContents());
-            buffer.writeDouble(object.getContentsCount());
-        }
-
-        @Override
-        public ICompoundContainer<ItemStack> read(final FriendlyByteBuf buffer)
-        {
-            return new ItemStackContainer(
-              buffer.readItem(),
-              buffer.readDouble()
-            );
-        }
-
-        @Override
         public double getInnateCount(@NotNull ItemStack inputInstance) {
             return inputInstance.getCount();
+        }
+        
+        @Override
+        public Codec<? extends ICompoundContainer<ItemStack>> codec() {
+            return CODEC;
         }
     }
 
@@ -122,7 +88,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
      * @return The contents.
      */
     @Override
-    public ItemStack getContents()
+    public ItemStack contents()
     {
         return stack;
     }
@@ -133,7 +99,7 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
      * @return The amount.
      */
     @Override
-    public Double getContentsCount()
+    public Double contentsCount()
     {
         return count;
     }
@@ -149,11 +115,16 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     {
 
         return "itemstack_%s_%s".formatted(
-                Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getNamespace(),
-                Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getPath()
+                Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(contents().getItem())).getNamespace(),
+                Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(contents().getItem())).getPath()
         );
     }
-
+    
+    @Override
+    public ICompoundContainerType<ItemStack> type() {
+        return ModContainerTypes.ITEMSTACK.get();
+    }
+    
     @Override
     public int compareTo(@NotNull final ICompoundContainer<?> o)
     {
@@ -161,13 +132,12 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         if (o instanceof Dummy)
             return -1;
 
-        final Object contents = Validate.notNull(o.getContents());
-        if (!(contents instanceof ItemStack))
+        final Object contents = Objects.requireNonNull(o.contents());
+        if (!(contents instanceof ItemStack otherStack))
         {
             return ItemStack.class.getName().compareTo(contents.getClass().getName());
         }
-
-        final ItemStack otherStack = (ItemStack) contents;
+        
         return Comparators.ITEM_STACK_COMPARATOR.compare(stack, otherStack);
     }
 
@@ -178,13 +148,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         {
             return true;
         }
-        if (!(o instanceof ItemStackContainer))
+        if (!(o instanceof ItemStackContainer that))
         {
             return false;
         }
-
-        final ItemStackContainer that = (ItemStackContainer) o;
-
+        
         if (Double.compare(that.count, count) != 0)
         {
             return false;

@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -41,8 +41,8 @@ public class FluidStackUtils
     private static Boolean compareFluidStacksIgnoreStackSize(final FluidStack fluidStack1, final FluidStack fluidStack2, final boolean matchNBT)
     {
         if (Objects.equals(
-                ForgeRegistries.FLUIDS.getKey(fluidStack1.getFluid()),
-                ForgeRegistries.FLUIDS.getKey(fluidStack2.getFluid())))
+                BuiltInRegistries.FLUID.getKey(fluidStack1.getFluid()),
+                BuiltInRegistries.FLUID.getKey(fluidStack2.getFluid())))
         {
             // Then sort on NBT
             if (fluidStack1.hasTag() && fluidStack2.hasTag())

@@ -1,7 +1,7 @@
 package com.ldtteam.aequivaleo.config;
 
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
  * Mod client configuration.
@@ -14,7 +14,7 @@ public class ClientConfiguration extends AbstractAequivaleoConfiguration
      *
      * @param builder config builder
      */
-    protected ClientConfiguration(final ForgeConfigSpec.Builder builder)
+    protected ClientConfiguration(final ModConfigSpec.Builder builder)
     {
     }
 }

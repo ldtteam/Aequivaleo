@@ -1,9 +1,8 @@
 package com.ldtteam.aequivaleo.registry;
 
-import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryView;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.IForgeRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -11,25 +10,25 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> implements IRegistryView<E>
+public class ShadowRegistry<T, E> implements IRegistryView<E>
 {
     private final IRegistryView<T> source;
     private final Function<T, Optional<E>> filter;
 
-    public ShadowRegistry(final IForgeRegistry<T> source, final Function<T, Optional<E>> viewFilter) {
-        this.source = new IRegistryView<T>() {
+    public ShadowRegistry(final Registry<T> source, final Function<T, Optional<E>> viewFilter) {
+        this.source = new IRegistryView<>() {
             @Override
             public Optional<T> get(final ResourceLocation name) {
-                return Optional.ofNullable(source.getValue(name));
+                return Optional.ofNullable(source.get(name));
             }
-
+            
             @Override
             public Stream<T> stream() {
-                return source.getValues().stream();
+                return source.stream();
             }
 
             @Override
-            public <E extends IRegistryEntry> IRegistryView<E> createView(final Function<T, Optional<E>> viewFilter) {
+            public <F> IRegistryView<F> createView(final Function<T, Optional<F>> viewFilter) {
                 return new ShadowRegistry<>(this, viewFilter);
             }
 
@@ -55,7 +54,7 @@ public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> 
                  .filter(Optional::isPresent)
                  .map(Optional::get);
     }
-
+    
     @Override
     public Stream<E> stream()
     {
@@ -66,7 +65,7 @@ public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> 
     }
 
     @Override
-    public <F extends IRegistryEntry> IRegistryView<F> createView(Function<E, Optional<F>> viewFilter)
+    public <F> IRegistryView<F> createView(Function<E, Optional<F>> viewFilter)
     {
         return new ShadowRegistry<>(
           source,
@@ -88,8 +87,8 @@ public class ShadowRegistry<T extends IRegistryEntry, E extends IRegistryEntry> 
     {
         return new FilteredIterator<>(source, filter);
     }
-
-    private static class FilteredIterator<T extends IRegistryEntry, E extends IRegistryEntry> implements Iterator<E> {
+    
+    private static class FilteredIterator<T, E> implements Iterator<E> {
 
         private final Function<T, Optional<E>> filter;
         private final Iterator<T> sourceIterator;

@@ -6,18 +6,18 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
+import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
 import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.utils.Permutations;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +74,7 @@ public class RecipeCalculator implements IRecipeCalculator {
                                     iRecipeIngredients.stream()
                                             .map(iRecipeIngredient -> iRecipeIngredient.getCandidates()
                                                     .stream()
-                                                    .map(container -> Pair.of(container.getContents(), iRecipeIngredient.getRequiredCount().intValue() * container.getContentsCount().intValue()))
+                                                    .map(container -> Pair.of(container.contents(), iRecipeIngredient.getRequiredCount().intValue() * container.contentsCount().intValue()))
                                                     .filter(integerPair -> integerPair.getKey() instanceof ItemStack)
                                                     .map(integerPair -> Pair.of((ItemStack) integerPair.getKey(), integerPair.getValue()))
                                                     .filter(itemStackIntegerPair -> !itemStackIntegerPair.getKey().isEmpty())
@@ -181,12 +181,12 @@ public class RecipeCalculator implements IRecipeCalculator {
 
         final Collection<Collection<ICompoundContainer<?>>> groupedStacks = GroupingUtils.groupByUsingSet(
                 wrappedStacks,
-                s -> CompoundContainerFactoryManager.getInstance().wrapInContainer(s.getContents(), 1)
+                s -> CompoundContainerFactoryManager.getInstance().wrapInContainer(s.contents(), 1)
         );
 
         return groupedStacks
                 .stream()
-                .map(c -> CompoundContainerFactoryManager.getInstance().wrapInContainer(c.iterator().next().getContents(), c.stream().mapToDouble(ICompoundContainer::getContentsCount).sum()))
+                .map(c -> CompoundContainerFactoryManager.getInstance().wrapInContainer(c.iterator().next().contents(), c.stream().mapToDouble(ICompoundContainer::contentsCount).sum()))
                 .collect(Collectors.toCollection(TreeSet::new));
     }
 
@@ -195,7 +195,7 @@ public class RecipeCalculator implements IRecipeCalculator {
         @Override
             public int hashCode() {
                 return Objects.hash(
-                        ForgeRegistries.ITEMS.getKey(stack.getItem()),
+                        BuiltInRegistries.ITEM.getKey(stack.getItem()),
                         stack.getDamageValue(),
                         stack.getOrCreateTag()
                 );
@@ -208,8 +208,8 @@ public class RecipeCalculator implements IRecipeCalculator {
                 }
 
                 return Objects.equals(
-                        ForgeRegistries.ITEMS.getKey(stack.getItem()),
-                        ForgeRegistries.ITEMS.getKey(other.stack.getItem())
+                        BuiltInRegistries.ITEM.getKey(stack.getItem()),
+                        BuiltInRegistries.ITEM.getKey(other.stack.getItem())
                 ) &&
                         Objects.equals(
                                 stack.getDamageValue(),
@@ -293,11 +293,10 @@ public class RecipeCalculator implements IRecipeCalculator {
             }
 
             private static void logIngredient(final Ingredient ingredient, final Logger logger) {
-                logger.error(String.format("Failed to process Ingredient. IsVanilla?: %s - IsSimple?: %s. Contained ItemStacks:",
-                        ingredient.isVanilla() ? "Yes" : "No",
+                logger.error(String.format("Failed to process Ingredient. IsSimple?: %s. Contained ItemStacks:",
                         ingredient.isSimple() ? "Yes" : "No"));
                 for (final ItemStack matchingStack : ingredient.getItems()) {
-                    logger.error(String.format("  > Item: %s - NBT: %s", ForgeRegistries.ITEMS.getKey(matchingStack.getItem()), matchingStack.save(new CompoundTag())));
+                    logger.error(String.format("  > Item: %s - NBT: %s", BuiltInRegistries.ITEM.getKey(matchingStack.getItem()), matchingStack.save(new CompoundTag())));
                 }
             }
         }
