@@ -32,7 +32,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider {
     
     private static final Codec<Optional<WithConditions<GenericRecipeData>>> INSTANCE_CODE = ConditionalOps.createConditionalCodecWithConditions(
             GenericRecipeData.CODEC
-    ).codec();
+    );
     
     private final DataGenerator dataGenerator;
     private final CompletableFuture<HolderLookup.Provider> holderLookupProvider;

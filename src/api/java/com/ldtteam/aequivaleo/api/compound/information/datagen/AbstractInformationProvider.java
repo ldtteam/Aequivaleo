@@ -36,7 +36,7 @@ public abstract class AbstractInformationProvider implements DataProvider
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Codec<Optional<WithConditions<CompoundInstanceData>>> INSTANCE_CODEC =
-        ConditionalOps.createConditionalCodecWithConditions(CompoundInstanceData.CODEC).codec();
+        ConditionalOps.createConditionalCodecWithConditions(CompoundInstanceData.CODEC);
 
     @VisibleForTesting
     final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
