@@ -63,7 +63,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     
     private static <C extends Container, T extends Recipe<C>> List<? extends Recipe<C>> getRecipes(final RecipeType<T> type, final ResourceLocation serializerName, final ServerLevel world) {
         return world.getRecipeManager().getAllRecipesFor(type).stream().filter(recipe -> recipe.value().getType() == type)
-                       .filter(recipe -> world.registryAccess().registryOrThrow(Registries.RECIPE_SERIALIZER).getKey(recipe.value().getSerializer()) == serializerName)
+                       .filter(recipe -> world.registryAccess().registryOrThrow(Registries.RECIPE_SERIALIZER).getKey(recipe.value().getSerializer()).equals(serializerName))
                        .map(RecipeHolder::value)
                        .toList();
     }
