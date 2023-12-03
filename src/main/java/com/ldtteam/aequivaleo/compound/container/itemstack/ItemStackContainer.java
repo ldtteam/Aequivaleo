@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+import static com.ldtteam.aequivaleo.utils.ItemStackUtils.copyWithJsonOps;
+
 public class ItemStackContainer implements ICompoundContainer<ItemStack>
 {
 
@@ -61,7 +63,8 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     private final int hashCode;
 
     public ItemStackContainer(final ItemStack stack, final double count) {
-        this.stack = stack.copy();
+        //We need to copy the stack using JSONOps, because it converts numeric values into their lowest memory footprint. int -> byte for example.
+        this.stack = copyWithJsonOps(stack);
         this.stack.setCount(1);
 
         this.count = count;
