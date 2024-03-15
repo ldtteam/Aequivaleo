@@ -367,7 +367,7 @@ public class AequivaleoInformationProvider extends ForcedInformationProvider
         
         saveData(Items.DEAD_BUSH, nature);
         saveData(Items.FERN, nature);
-        saveData(Items.GRASS, nature);
+        saveData(Items.SHORT_GRASS, nature);
         saveData(Items.CRIMSON_ROOTS, nature);
         saveData(Items.NETHER_SPROUTS, nature);
         saveData(Items.WARPED_ROOTS, nature);

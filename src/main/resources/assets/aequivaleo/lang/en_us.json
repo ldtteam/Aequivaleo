@@ -1,0 +1,4 @@
+{
+  "aequivaleo.network.failure.compound_types": "Failed to synchronize the compound type data: %s",
+  "aequivaleo.network.failure.level_sync": "Failed to synchronize the equivalency data for: %s, failure message: %s"
+}

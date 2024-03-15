@@ -1,3 +1,7 @@
+configurations {
+    implementation.extendsFrom library
+}
+
 dependencies {
 
     library ("org.jgrapht:jgrapht-core:${project.jgraphtVersion}") {

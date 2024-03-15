@@ -509,4 +509,15 @@ public class CycleNode
         }
         return compoundedResult;
     }
+
+    public boolean canResultBeCalculated(final IGraph graph) {
+        for (IEdge iEdge : ioGraph.edgeSet()) {
+            INode edgeSource = ioGraph.getEdgeSource(iEdge);
+            if (!graph.containsVertex(edgeSource)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

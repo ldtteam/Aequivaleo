@@ -10,13 +10,12 @@ import com.ldtteam.aequivaleo.bootstrap.CompoundContainerTypeRegistrar;
 import com.ldtteam.aequivaleo.bootstrap.CompoundTypesRegistrar;
 import com.ldtteam.aequivaleo.bootstrap.RecipeIngredientTypeRegistrar;
 import com.ldtteam.aequivaleo.config.Configuration;
-import com.ldtteam.aequivaleo.network.NetworkChannel;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculatorLogHandler;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,30 +28,28 @@ public class Aequivaleo
     private static final Logger LOGGER = LogManager.getLogger();
 
     private final Configuration configuration;
-    private final NetworkChannel networkChannel;
 
-    public Aequivaleo()
+    public Aequivaleo(IEventBus modBus)
     {
         LOGGER.info("Aequivaleo is being instantiated.");
 
         RecipeCalculatorLogHandler.setupLogging();
 
-        CompoundContainerTypeRegistrar.COMPOUND_CONTAINER_FACTORY_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        CompoundTypesRegistrar.COMPOUND_TYPE_GROUP_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        CompoundTypesRegistrar.COMPOUND_TYPE_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
-        RecipeIngredientTypeRegistrar.RECIPE_INGREDIENT_TYPE_REGISTRY.register(FMLJavaModLoadingContext.get().getModEventBus());
+        CompoundContainerTypeRegistrar.COMPOUND_CONTAINER_FACTORY_REGISTRY.register(modBus);
+        CompoundTypesRegistrar.COMPOUND_TYPE_GROUP_REGISTRY.register(modBus);
+        CompoundTypesRegistrar.COMPOUND_TYPE_REGISTRY.register(modBus);
+        RecipeIngredientTypeRegistrar.RECIPE_INGREDIENT_TYPE_REGISTRY.register(modBus);
 
         INSTANCE = this;
         IAequivaleoAPI.Holder.setInstance(AequivaleoAPI.getInstance());
         StreamUtils.setup(IAequivaleoAPI.getInstance());
 
         configuration = new Configuration(ModLoadingContext.get().getActiveContainer());
-        networkChannel = new NetworkChannel(Constants.MOD_ID);
 
         PluginManger.getInstance().detect();
         PluginManger.getInstance().run(IAequivaleoPlugin::onConstruction);
 
-        Mod.EventBusSubscriber.Bus.MOD.bus().get().addListener(AnalysisLogHandler::onConfigurationReloaded);
+        modBus.addListener(AnalysisLogHandler::onConfigurationReloaded);
 
         Tags.init();
     }
@@ -65,10 +62,5 @@ public class Aequivaleo
     public Configuration getConfiguration()
     {
         return configuration;
-    }
-
-    public NetworkChannel getNetworkChannel()
-    {
-        return networkChannel;
     }
 }
