@@ -3,9 +3,10 @@ package com.ldtteam.aequivaleo.analysis.jgrapht.node;
 import com.ldtteam.aequivaleo.analysis.StatCollector;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INodeWithoutResult;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IStartAnalysisNode;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 
-public class SourceNode extends AbstractNode implements INodeWithoutResult
+public class SourceNode extends AbstractNode implements INodeWithoutResult, IStartAnalysisNode
 {
     @Override
     public int hashCode()

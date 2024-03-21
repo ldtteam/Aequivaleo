@@ -30,6 +30,8 @@ public class CliqueNode
     private final Set<INode> innerCliqueNodes = Sets.newHashSet();
     private final Set<IContainerNode> innerContainerNodes = Sets.newHashSet();
     private int hash;
+    private final Map<INode, INode> ioGraphReplacedNodes = Maps.newHashMap();
+    private final Multimap<INode, INode> ioGraphReplacedNodesReverse = HashMultimap.create();
 
     private final Table<INode, INode, IEdge> disabledIoGraphEdges = HashBasedTable.create();
 
@@ -315,7 +317,21 @@ public class CliqueNode
             }
             ioGraph.removeVertex(originalNeighbor);
 
+            if (!ioGraphReplacedNodesReverse.containsKey(originalNeighbor)) {
+                ioGraphReplacedNodes.put(originalNeighbor, newNeighbor);
+                ioGraphReplacedNodesReverse.put(newNeighbor, originalNeighbor);
+            } else {
+                Collection<INode> replacedNodes = Sets.newHashSet(ioGraphReplacedNodesReverse.get(originalNeighbor));
+                for (INode replacedNode : replacedNodes) {
+                    ioGraphReplacedNodes.put(replacedNode, newNeighbor);
+                    ioGraphReplacedNodesReverse.put(newNeighbor, replacedNode);
+                    ioGraphReplacedNodesReverse.remove(originalNeighbor, replacedNode);
+                }
+            }
+
             validateIOGraph();
+        } else {
+            AnalysisLogHandler.error(LOGGER, "Neighbor data from: " + originalNeighbor + " to: " + newNeighbor + " is not present in the IO Graph.");
         }
     }
 
@@ -460,12 +476,19 @@ public class CliqueNode
 
     @Override
     public Set<CompoundInstance> getInputInstances(final IRecipeNode recipeNode) {
+        INode ioNodeTarget = recipeNode;
+
         if (!ioGraph.containsVertex(recipeNode)) {
-            return Collections.emptySet();
+            if (!ioGraphReplacedNodes.containsKey(recipeNode)) {
+                return Collections.emptySet();
+            }
+
+            final INode replacementNode = ioGraphReplacedNodes.get(recipeNode);
+            ioNodeTarget = replacementNode;
         }
 
         final Set<CompoundInstance> result = Sets.newHashSet();
-        for (final IEdge iEdge : ioGraph.incomingEdgesOf(recipeNode)) {
+        for (final IEdge iEdge : ioGraph.incomingEdgesOf(ioNodeTarget)) {
             final INode source = ioGraph.getEdgeSource(iEdge);
             if (source instanceof IRecipeInputNode) {
                 final IRecipeInputNode residueNode = (IRecipeInputNode) source;

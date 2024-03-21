@@ -40,15 +40,15 @@ public class BFSCyclesReducer implements ICyclesReducer {
     }
 
     @Override
-    public void reduce(IGraph graph) {
-        if (!reduceOnce(graph) && !reduceSingularCycle) {
+    public void reduce(IGraph graph, INode startNode) {
+        if (!reduceOnce(graph, startNode) && !reduceSingularCycle) {
             return;
         }
 
         int count = 10;
         final CycleDetector<INode, IEdge> cycleDetector = new CycleDetector<>(graph);
         while(cycleDetector.detectCycles() && count > 0) {
-            if (!reduceOnce(graph) && !reduceSingularCycle) {
+            if (!reduceOnce(graph, startNode) && !reduceSingularCycle) {
                 return;
             }
             count--;
@@ -60,7 +60,7 @@ public class BFSCyclesReducer implements ICyclesReducer {
     }
 
     @VisibleForTesting
-    public boolean reduceOnce(IGraph graph) {
+    public boolean reduceOnce(IGraph graph, INode startNode) {
         final Multimap<INode, IEdge> pathTaken = ArrayListMultimap.create();
         final List<List<INode>> cycles = new ArrayList<>();
         final BreadthFirstIterator<INode, IEdge> iterator = new BreadthFirstIterator<>(graph) {

@@ -21,6 +21,13 @@ public class AnalysisLogHandler
         CONFIG.clear();
     }
 
+    public static void error(
+      final Logger logger,
+      final String string
+    ) {
+        logger.error(string);
+    }
+
     public static void debug(
       final Logger logger,
       final String string

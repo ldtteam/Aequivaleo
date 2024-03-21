@@ -68,6 +68,9 @@ public class JGraphTBasedCompoundAnalyzerTest
     ICompoundType      typeUnknownIsZero  = mock(ICompoundType.class);
     ICompoundTypeGroup groupUnknownIsZero = mock(ICompoundTypeGroup.class);
 
+    ICompoundType      ironType = mock(ICompoundType.class);
+    ICompoundType      woodType = mock(ICompoundType.class);
+
     ICompoundType      typeUnknownIsInvalid = mock(ICompoundType.class);
     ICompoundTypeGroup groupUnknownIsInvalid = mock(ICompoundTypeGroup.class);
 
@@ -119,6 +122,12 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(typeUnknownIsZero.getGroup()).thenReturn(groupUnknownIsZero);
         when(typeUnknownIsZero.toString()).thenReturn("Type:Zero");
         when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_zero"));
+        when(ironType.getGroup()).thenReturn(groupUnknownIsZero);
+        when(ironType.toString()).thenReturn("iron");
+        when(ironType.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, "iron"));
+        when(woodType.getGroup()).thenReturn(groupUnknownIsZero);
+        when(woodType.toString()).thenReturn("wood");
+        when(woodType.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, "wood"));
         when(groupUnknownIsZero.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsZero.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
@@ -139,7 +148,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         when(typeUnknownIsInvalid.getGroup()).thenReturn(groupUnknownIsInvalid);
         when(typeUnknownIsInvalid.toString()).thenReturn("Type:Invalid");
-        when(typeUnknownIsZero.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_invalid"));
+        when(typeUnknownIsInvalid.getRegistryName()).thenReturn(new ResourceLocation(Constants.MOD_ID, currentTestName.getMethodName().toLowerCase() + "_invalid"));
         when(groupUnknownIsInvalid.canContributeToRecipeAsInput(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.isValidFor(any(), any())).thenReturn(true);
         when(groupUnknownIsInvalid.canContributeToRecipeAsOutput(any(), any())).thenReturn(true);
@@ -173,9 +182,9 @@ public class JGraphTBasedCompoundAnalyzerTest
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
 
         ISyncedRegistry<ICompoundType> typeReg = mock(ISyncedRegistry.class);
-        when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid).indexOf(invocation.getArgument(0)));
-        when(typeReg.getAllKnownRegistryNames()).thenReturn(Sets.newHashSet(new ResourceLocation("zero"), new ResourceLocation("invalid")));
-        when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid).iterator());
+        when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid, ironType, woodType).indexOf(invocation.getArgument(0)));
+        when(typeReg.getAllKnownRegistryNames()).thenAnswer(invocation -> Sets.newHashSet(typeUnknownIsZero.getRegistryName(), typeUnknownIsInvalid.getRegistryName(), ironType.getRegistryName(), woodType.getRegistryName()));
+        when(typeReg.iterator()).thenAnswer((Answer<Iterator<ICompoundType>>) invocation -> Sets.newHashSet(typeUnknownIsZero, typeUnknownIsInvalid, ironType, woodType).iterator());
         ModRegistries.COMPOUND_TYPE = () -> typeReg;
 
         final ModList modList = mock(ModList.class);
@@ -733,6 +742,67 @@ public class JGraphTBasedCompoundAnalyzerTest
         }
     }
 
+    @Test
+    public void testGenerateBlasting() {
+        final String ironOre = "iron_ore";
+        final String ironIngot = "iron_ingot";
+        final String ironNugget = "iron_nugget";
+        final String wood = "wood";
+        final String plank = "plank";
+        final String stick = "stick";
+        final String ironSword = "iron_sword";
+
+        input.registerValue(ironOre, s(iron(9)));
+        registerRecipe("1x iron_ore to 1x iron_ingot", s(cc(ironOre, 1)), s(cc(ironIngot, 1)));
+        registerRecipe("1x iron_ingot to 9x iron_nugget", s(cc(ironIngot, 1)), s(cc(ironNugget, 9)));
+        registerRecipe("9x iron_nugget to 1x iron_ingot", s(cc(ironNugget, 9)), s(cc(ironIngot, 1)));
+
+        input.registerValue(wood, s(wood(8)));
+        registerRecipe("1x wood to 4x plank", s(cc(wood, 1)), s(cc(plank, 4)));
+        registerRecipe("2x plank to 4x stick", s(cc(plank, 2)), s(cc(stick, 4)));
+
+        registerRecipe("1x stick + 2x iron_ingot to 1x iron_sword", s(cc(stick, 1), cc(ironIngot, 2)), s(cc(ironSword, 1)));
+
+        //Target problematic recipe. The conversion from the sword to the nugget due to recycling via smelting/blasting
+        registerRecipe("1x iron_sword to 1x iron_nugget", s(cc(ironSword, 1)), s(cc(ironNugget, 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc(ironSword)));
+    }
+
+    @Test
+    public void testGenerateRecyclingWithClique() {
+        final String ironOre = "iron_ore";
+        final String ironIngot = "iron_ingot";
+        final String ironNugget = "iron_nugget";
+        final String wood = "wood";
+        final String plank = "plank";
+        final String stick = "stick";
+        final String stickStack = "stickStack";
+        final String ironSword = "iron_sword";
+
+        input.registerValue(ironOre, s(iron(9)));
+        registerRecipe("1x iron_ore to 1x iron_ingot", s(cc(ironOre, 1)), s(cc(ironIngot, 1)));
+        registerRecipe("1x iron_ingot to 9x iron_nugget", s(cc(ironIngot, 1)), s(cc(ironNugget, 9)));
+        registerRecipe("9x iron_nugget to 1x iron_ingot", s(cc(ironNugget, 9)), s(cc(ironIngot, 1)));
+
+        input.registerValue(wood, s(wood(8)));
+        registerRecipe("1x wood to 4x plank", s(cc(wood, 1)), s(cc(plank, 4)));
+        registerRecipe("2x plank to 4x stick", s(cc(plank, 2)), s(cc(stick, 4)));
+        registerRecipe("1x stick to 1x stickStack", s(cc(stick, 1)), s(cc(stickStack, 1)));
+        registerRecipe("1x stickStack to 1x stick", s(cc(stickStack, 1)), s(cc(stick, 1)));
+
+        registerRecipe("1x stick + 2x iron_ingot to 1x iron_sword", s(cc(stick, 1), cc(ironIngot, 2)), s(cc(ironSword, 1)));
+
+        //Target problematic recipe. The conversion from the sword to the nugget due to recycling via smelting/blasting
+        registerRecipe("1x iron_sword to 1x iron_nugget", s(cc(ironSword, 1)), s(cc(ironNugget, 1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc(ironSword)));
+    }
+
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {
         EquivalencyRecipeRegistry.getInstance(key).register(
@@ -756,7 +826,7 @@ public class JGraphTBasedCompoundAnalyzerTest
           )
         );
     }
-    
+
     public void addConversion(int count, String result, List<String> inputs) {
         final Collection<Collection<String>> groupedInputs = GroupingUtils.groupByUsingList(inputs, Function.identity());
         final Set<ICompoundContainer<?>> inputContainers = groupedInputs
@@ -798,5 +868,15 @@ public class JGraphTBasedCompoundAnalyzerTest
     public CompoundInstance ci(double amount)
     {
         return new CompoundInstance(typeUnknownIsInvalid, amount);
+    }
+
+    public CompoundInstance iron(double amount)
+    {
+        return new CompoundInstance(ironType, amount);
+    }
+
+    public CompoundInstance wood(double amount)
+    {
+        return new CompoundInstance(woodType, amount);
     }
 }
