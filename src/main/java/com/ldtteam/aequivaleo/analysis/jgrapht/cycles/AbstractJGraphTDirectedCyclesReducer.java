@@ -7,11 +7,14 @@ import com.google.common.collect.Multimap;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.CrossComponentDepthMapBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.FullScanDepthMapBuilder;
+import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.IDepthMapBuilder;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
+import com.ldtteam.aequivaleo.utils.ListUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.jetbrains.annotations.NotNull;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 
 import java.util.*;
@@ -40,30 +43,22 @@ public abstract class AbstractJGraphTDirectedCyclesReducer implements ICyclesRed
     }
 
     @Override
-    public void reduce(final IGraph graph) {
+    public void reduce(final IGraph graph, INode startNode) {
         //Unit testing has shown that this is enough
         //Saves a recompilation of the cycle detection graph.
-        reduceOnce(graph);
+        reduceOnce(graph, startNode);
     }
 
     @SuppressWarnings("DuplicatedCode")
     @VisibleForTesting
-    public boolean reduceOnce(final IGraph graph) {
+    public boolean reduceOnce(final IGraph graph, INode startNode) {
         AnalysisLogHandler.debug(LOGGER, "Reducing the graph");
 
         final DirectedSimpleCycles<INode, IEdge> cycleFinder = createCycleDetector(graph);
         List<List<INode>> sortedCycles = cycleFinder.findSimpleCycles();
 
-        List<List<INode>> list = new ArrayList<>();
-        Set<List<INode>> uniqueValues = new HashSet<>();
-        for (List<INode> sortedCycle : sortedCycles)
-        {
-            if (uniqueValues.add(sortedCycle))
-            {
-                list.add(sortedCycle);
-            }
-        }
-        sortedCycles = list;
+        Set<List<INode>> uniqueValues = new HashSet<>(sortedCycles);
+        sortedCycles = new ArrayList<>(uniqueValues);
 
         if (sortedCycles.isEmpty() || (sortedCycles.size() == 1 && !reduceSingularCycle))
         {
@@ -71,16 +66,23 @@ public abstract class AbstractJGraphTDirectedCyclesReducer implements ICyclesRed
             return false;
         }
 
-        sortedCycles.sort(Comparator.comparing(List::size));
+        final IDepthMapBuilder depthMapBuilder = new FullScanDepthMapBuilder(graph, startNode);
+        final Map<INode, Integer> depthMap = depthMapBuilder.calculateDepthMap();
+
+        //Sort by size, if size is equal sort by depth. The deeper the earlier the replacement.
+        sortedCycles.sort(Comparator.<List<INode>>comparingInt(List::size)
+                .thenComparingInt(cycle -> Integer.MAX_VALUE - cycle.stream().mapToInt(depthMap::get).max().orElse(0)));
 
         while(!sortedCycles.isEmpty()) {
-            final List<INode> cycle = sortedCycles.get(0);
+            final List<INode> cycle = sortedCycles.remove(0);
+            if (cycle.isEmpty())
+                continue;
 
             AnalysisLogHandler.debug(LOGGER, String.format(" > Removing cycle: %s", cycle));
 
             final INode replacementNode = vertexReplacerFunction.apply(graph, cycle);
 
-            sortedCycles = updateRemainingCyclesAfterReplacement(
+            updateRemainingCyclesAfterReplacement(
                     sortedCycles,
                     cycle,
                     replacementNode
@@ -164,52 +166,17 @@ public abstract class AbstractJGraphTDirectedCyclesReducer implements ICyclesRed
 
     protected abstract DirectedSimpleCycles<INode, IEdge> createCycleDetector(IGraph graph);
 
-    private List<List<INode>> updateRemainingCyclesAfterReplacement(final List<List<INode>> cycles, final List<INode> replacedCycle, final INode replacementNode) {
-        cycles.remove(replacedCycle);
+    private void updateRemainingCyclesAfterReplacement(final List<List<INode>> cycles, final List<INode> replacedCycle, final INode replacementNode) {
+        final Set<INode> replacedNodes = new HashSet<>(replacedCycle);
 
-        List<List<INode>> list = new ArrayList<>();
         for (List<INode> cycle : cycles)
         {
-            List<INode> vs = updateCycleWithReplacement(replacedCycle, replacementNode, cycle);
-            if (vs.size() > 1)
-            {
-                list.add(vs);
-            }
+            updateCycleWithReplacement(replacedNodes, replacementNode, cycle);
         }
-        list.sort(Comparator.comparing(List::size));
-        return list;
     }
 
-    @NotNull
-    private List<INode> updateCycleWithReplacement(final List<INode> replacedCycle, final INode replacementNode, final List<INode> cycle)
+    private void updateCycleWithReplacement(final Set<INode> replacedCycle, final INode replacementNode, final List<INode> cycle)
     {
-        final List<INode> intersectingNodes = new ArrayList<>();
-        for (INode v1 : cycle)
-        {
-            if (replacedCycle.contains(v1))
-            {
-                intersectingNodes.add(v1);
-            }
-        }
-        for (INode intersectingNode : intersectingNodes)
-        {
-            AnalysisLogHandler.debug(LOGGER, "    > Replacing: " + intersectingNode + " with: " + replacementNode);
-            final int nodeIndex = cycle.indexOf(intersectingNode);
-            cycle.remove(nodeIndex);
-            cycle.add(nodeIndex, replacementNode);
-        }
-
-        List<INode> result = new ArrayList<>();
-        INode lastAdded = null;
-        for (int i = 0; i < cycle.size(); i++)
-        {
-            final INode v = cycle.get(i);
-            if (!v.equals(lastAdded) && (i != cycle.size() -1 || cycle.get(0) != v))
-            {
-                lastAdded = v;
-                result.add(lastAdded);
-            }
-        }
-        return result;
+        ListUtils.replaceAllInWidthWithoutRepetitions(cycle, replacedCycle, replacementNode);
     }
 }

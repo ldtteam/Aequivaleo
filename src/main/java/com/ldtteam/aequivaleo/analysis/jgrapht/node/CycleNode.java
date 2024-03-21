@@ -222,17 +222,9 @@ public class CycleNode
             }
 
             //We remove the inner edge of all edge
-            for (IEdge incomingEdge : workingGraphIncomingEdges) {
-                workingGraph.removeEdge(incomingEdge);
-            }
             for (IEdge incomingEdge : innerGraphIncomingEdges) {
+                workingGraph.removeEdge(incomingEdge);
                 innerGraph.removeEdge(incomingEdge);
-            }
-
-            for (Map.Entry<IEdge, INode> e : workingGraphSourceMap.entrySet()) {
-                IEdge key = e.getKey();
-                INode value = e.getValue();
-                value.onOutgoingEdgeDisable(startNode, key);
             }
 
             for (Map.Entry<IEdge, INode> e : innerGraphSourceMap.entrySet()) {
@@ -253,21 +245,11 @@ public class CycleNode
             iterator.analyse(innerStatCollector);
 
             //Re-add the original edges that where removed.
-            for (Map.Entry<IEdge, INode> entry : workingGraphSourceMap.entrySet()) {
-                IEdge edge = entry.getKey();
-                INode source = entry.getValue();
-                workingGraph.addEdge(source, startNode, edge);
-            }
             for (Map.Entry<IEdge, INode> entry : innerGraphSourceMap.entrySet()) {
                 IEdge edge = entry.getKey();
                 INode source = entry.getValue();
+                workingGraph.addEdge(source, startNode, edge);
                 innerGraph.addEdge(source, startNode, edge);
-            }
-
-            for (Map.Entry<IEdge, INode> entry : workingGraphSourceMap.entrySet()) {
-                IEdge key = entry.getKey();
-                INode value = entry.getValue();
-                value.onOutgoingEdgeEnabled(startNode, key);
             }
 
             for (Map.Entry<IEdge, INode> entry : innerGraphSourceMap.entrySet()) {
@@ -301,6 +283,9 @@ public class CycleNode
             ioGraph.removeVertex(originalNeighbor);
 
             validateIOGraph();
+        }
+        else {
+            AnalysisLogHandler.error(LOGGER, "Neighbor data from: " + originalNeighbor + " to: " + newNeighbor + " is not present in the IO Graph.");
         }
     }
 
@@ -350,7 +335,11 @@ public class CycleNode
                 INode::onNeighborReplaced,
                 false);
 
-        cyclesReducer.reduce(innerGraph);
+        cyclesReducer.reduce(innerGraph, innerVertices
+                .stream()
+                .filter(IStartAnalysisNode.class::isInstance)
+                .findFirst()
+                .orElseGet(() -> innerVertices.iterator().next()));
     }
 
     private void setupIOGraph(final IGraph graph, final Set<INode> innerVertices) {
@@ -514,6 +503,32 @@ public class CycleNode
         for (IEdge iEdge : ioGraph.edgeSet()) {
             INode edgeSource = ioGraph.getEdgeSource(iEdge);
             if (!graph.containsVertex(edgeSource)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean canResultBeCalculated(final IGraph analysisGraph, Set<Set<CompoundInstance>> nodesToBeAnalyzed) {
+        for (IEdge iEdge : ioGraph.edgeSet()) {
+            INode edgeSource = ioGraph.getEdgeSource(iEdge);
+
+            if (innerGraph.containsVertex(edgeSource)) {
+                //Outbound edge from inner graph, we ignore this.
+                continue;
+            }
+
+            if (!analysisGraph.containsVertex(edgeSource)) {
+                return false;
+            }
+
+            if (!analysisGraph.containsEdge(edgeSource, this)) {
+                //We are an inner cycle and this incoming edge is removed for sub-analysis purposes.
+                continue;
+            }
+
+            if (!getAnalyzedNeighbors().contains(edgeSource)) {
                 return false;
             }
         }

@@ -57,44 +57,24 @@ public class BFSAnalysisBuilder implements IAnalysisBuilder {
 
         final List<INode> incomplete = new ArrayList<>();
 
-        final BreadthFirstIterator<INode, IEdge> iterator = new BreadthFirstIterator<>(iteratingGraph, sourceNode) {
-            @Override
-            protected void encounterVertex(INode vertex, IEdge edge) {
-                super.encounterVertex(vertex, edge);
-
-                if (vertex.canResultBeCalculated(iteratingGraph)) {
-                    calculateResult(vertex, statCollector);
-                } else {
-                    incomplete.add(vertex);
-                }
+        final List<INode> toProcess = new ArrayList<>(iteratingGraph.vertexSet());
+        final Set<INode> nodesToProcess = new HashSet<>(toProcess);
+        toProcess.sort(Comparator.comparing((Function<INode, Integer>) depthMap::get).thenComparing(INode::getInertImportance));
+        toProcess.forEach(node -> {
+            if (node.canResultBeCalculated(analysisGraph, nodesToProcess)) {
+                calculateResult(node, statCollector);
+            } else {
+                incomplete.add(node);
+                nodesToProcess.remove(node);
             }
-
-            @Override
-            protected void encounterVertexAgain(INode vertex, IEdge edge) {
-                super.encounterVertexAgain(vertex, edge);
-
-                boolean complete = false;
-                if (vertex.canResultBeCalculated(iteratingGraph)) {
-                    calculateResult(vertex, statCollector);
-                    complete = true;
-                }
-
-                incomplete.remove(vertex);
-
-                if (!complete) {
-                    incomplete.add(vertex);
-                }
-            }
-        };
-
-        while(iterator.hasNext()) { iterator.next(); }
+        });
 
         incomplete.sort(Comparator.comparing((Function<INode, Integer>) depthMap::get).thenComparing(INode::getInertImportance));
         incomplete.forEach(node -> this.calculateResult(node, statCollector));
     }
 
     private void calculateResult(final INode node, final StatCollector statCollector) {
-        node.determineResult(this.iteratingGraph);
+        node.determineResult(this.analysisGraph);
         if (node instanceof INodeWithoutResult) {
             AnalysisLogHandler.debug(LOGGER, String.format("  > Processed node without result: %s", node));
         }

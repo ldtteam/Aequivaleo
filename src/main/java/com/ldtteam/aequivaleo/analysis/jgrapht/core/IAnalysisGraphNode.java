@@ -32,20 +32,40 @@ public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysi
     @NotNull
     Set<S> getAnalyzedNeighbors();
 
-    default boolean canResultBeCalculated(final G graph) {
+    default boolean canResultBeCalculated(final G analysisGraph, Set<S> nodesToBeAnalyzed) {
         //Either we already have a value, are forced analyzed or all our neighbors need to be analyzed.
-        if (getResultingValue().isPresent() || !graph.containsVertex(getSelf()))
+        if (getResultingValue().isPresent() || !analysisGraph.containsVertex(getSelf()))
         {
             return true;
         }
 
         Set<S> set = new HashSet<>();
-        for (E iEdge : graph.incomingEdgesOf(getSelf()))
+        for (E iEdge : analysisGraph.incomingEdgesOf(getSelf()))
         {
-            S edgeSource = graph.getEdgeSource(iEdge);
+            S edgeSource = analysisGraph.getEdgeSource(iEdge);
             set.add(edgeSource);
         }
-        return getAnalyzedNeighbors().containsAll(set);
+
+        final Set<S> analyzedNeighbors = getAnalyzedNeighbors();
+        //TODO: Check if this case ever happens and what the consequences are.
+        if (set.isEmpty() && analyzedNeighbors.isEmpty()) {
+            return true;
+        }
+
+        final Set<S> missing = new HashSet<>(set);
+        missing.removeAll(analyzedNeighbors);
+
+        //If these are two different graphs (reference wise check suffices), then that means we are operating in a
+        //scenario where candidates are being searched. For example in cycles. As such some inputs will not have values, yet we can calculate our results of
+        //what we have.
+        if (!nodesToBeAnalyzed.isEmpty()) {
+            missing.removeAll(nodesToBeAnalyzed);
+        }
+
+        //If the set is empty then all nodes are potentially accounted for:
+        //- Either they are calculated
+        //- Or are potentially being calculated in a circle.
+        return missing.isEmpty();
     }
 
     boolean hasUncalculatedChildren(final G graph);

@@ -233,7 +233,7 @@ public class JGraphTBasedCompoundAnalyzer
           CycleNode::new,
           INode::onNeighborReplaced);
 
-        cyclesReducer.reduce(recipeGraph);
+        cyclesReducer.reduce(recipeGraph, sourceNode);
 
         LOGGER.warn("Finished cycle reduction.");
 

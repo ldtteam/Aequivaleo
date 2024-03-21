@@ -78,7 +78,8 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
                        : getSeenData(Graphs.getOppositeVertex(graph, edge, vertex)).depth + 1);
         putSeenData(vertex, new AnalysisBFSGraphIterator.SearchNodeData(edge, depth));
 
-        if (vertex.canResultBeCalculated(getGraph()) || vertex == startNode)
+        final Set<INode> verticesToAnalyse = analysisGraph == getGraph() ? Set.of() : getGraph().vertexSet();
+        if (vertex.canResultBeCalculated(analysisGraph, verticesToAnalyse) || vertex == startNode)
             completeQueue.offer(vertex);
         else
             incompleteQueue.offer(vertex);
@@ -119,7 +120,8 @@ public class AnalysisBFSGraphIterator extends CrossComponentIterator<INode, IEdg
     @Override
     protected void encounterVertexAgain(final INode vertex, final IEdge edge)
     {
-        if (!vertex.getResultingValue().isPresent() && incompleteQueue.contains(vertex) && vertex.canResultBeCalculated(getGraph())) {
+        final Set<INode> verticesToAnalyse = analysisGraph == getGraph() ? Set.of() : getGraph().vertexSet();
+        if (!vertex.getResultingValue().isPresent() && incompleteQueue.contains(vertex) && vertex.canResultBeCalculated(analysisGraph, verticesToAnalyse)) {
             AnalysisLogHandler.debug(LOGGER, String.format("Upgrading completion state from incomplete to complete on the queued vertex: %s", vertex));
             incompleteQueue.remove(vertex);
             completeQueue.offer(vertex);
