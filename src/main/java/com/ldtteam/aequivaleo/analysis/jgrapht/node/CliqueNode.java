@@ -307,11 +307,13 @@ public class CliqueNode
         if (ioGraph.containsVertex(originalNeighbor)) {
             AnalysisLogHandler.debug(LOGGER, "Updating neighbor data from: " + originalNeighbor + " to: " + newNeighbor);
             ioGraph.addVertex(newNeighbor);
-            for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor)) {
+            final Set<IEdge> outgoingEdges = new HashSet<>(ioGraph.outgoingEdgesOf(originalNeighbor));
+            for (IEdge edge : outgoingEdges) {
                 ioGraph.addEdge(newNeighbor, ioGraph.getEdgeTarget(edge));
                 ioGraph.setEdgeWeight(newNeighbor, ioGraph.getEdgeTarget(edge), ioGraph.getEdgeWeight(edge));
             }
-            for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor)) {
+            final Set<IEdge> incomingEdges = new HashSet<>(ioGraph.incomingEdgesOf(originalNeighbor));
+            for (IEdge edge : incomingEdges) {
                 ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor);
                 ioGraph.setEdgeWeight(ioGraph.getEdgeSource(edge), newNeighbor, ioGraph.getEdgeWeight(edge));
             }
