@@ -1,30 +1,26 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles;
 
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
-import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
 import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 
 import java.util.List;
 import java.util.function.BiFunction;
 
-@Deprecated(forRemoval = true)
-public class SzwarcfiterLauerCyclesReducer extends AbstractJGraphTDirectedCyclesReducer {
+public class SzwarcfiterLauerCyclesReducer<G extends Graph<V, E>, V, E> extends AbstractJGraphTDirectedCyclesReducer<G, V, E> {
 
 
-    public SzwarcfiterLauerCyclesReducer(BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction, TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback) {
+    public SzwarcfiterLauerCyclesReducer(BiFunction<G, List<V>, V> vertexReplacerFunction, TriConsumer<V, V, V> onNeighborNodeReplacedCallback) {
         super(vertexReplacerFunction, onNeighborNodeReplacedCallback);
     }
 
-    public SzwarcfiterLauerCyclesReducer(BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction, TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback, boolean reduceSingularCycle) {
+    public SzwarcfiterLauerCyclesReducer(BiFunction<G, List<V>, V> vertexReplacerFunction, TriConsumer<V, V, V> onNeighborNodeReplacedCallback, boolean reduceSingularCycle) {
         super(vertexReplacerFunction, onNeighborNodeReplacedCallback, reduceSingularCycle);
     }
 
     @Override
-    protected DirectedSimpleCycles<INode, IEdge> createCycleDetector(IGraph graph) {
+    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph) {
         return new SzwarcfiterLauerSimpleCycles<>(graph);
     }
 }

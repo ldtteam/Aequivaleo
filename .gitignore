@@ -35,3 +35,4 @@ gradle/local.gradle
 /repo/
 /src/datagen/generated/aequivaleo/.cache/
 runs
+extra-mods**

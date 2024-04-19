@@ -1,9 +1,7 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles;
 
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
 
@@ -11,19 +9,19 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 @Deprecated(forRemoval = true)
-public class HawickJamesCyclesReducer extends AbstractJGraphTDirectedCyclesReducer {
+public class HawickJamesCyclesReducer<G extends Graph<V, E>, V, E> extends AbstractJGraphTDirectedCyclesReducer<G, V, E> {
 
 
-    public HawickJamesCyclesReducer(BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction, TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback) {
+    public HawickJamesCyclesReducer(BiFunction<G, List<V>, V> vertexReplacerFunction, TriConsumer<V, V, V> onNeighborNodeReplacedCallback) {
         super(vertexReplacerFunction, onNeighborNodeReplacedCallback);
     }
 
-    public HawickJamesCyclesReducer(BiFunction<IGraph, List<INode>, INode> vertexReplacerFunction, TriConsumer<INode, INode, INode> onNeighborNodeReplacedCallback, boolean reduceSingularCycle) {
+    public HawickJamesCyclesReducer(BiFunction<G, List<V>, V> vertexReplacerFunction, TriConsumer<V, V, V> onNeighborNodeReplacedCallback, boolean reduceSingularCycle) {
         super(vertexReplacerFunction, onNeighborNodeReplacedCallback, reduceSingularCycle);
     }
 
     @Override
-    protected DirectedSimpleCycles<INode, IEdge> createCycleDetector(IGraph graph) {
+    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph) {
         return new HawickJamesSimpleCycles<>(graph);
     }
 }
