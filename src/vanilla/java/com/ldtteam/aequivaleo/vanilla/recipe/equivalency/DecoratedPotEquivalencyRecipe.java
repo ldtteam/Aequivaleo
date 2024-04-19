@@ -33,7 +33,7 @@ public class DecoratedPotEquivalencyRecipe extends GenericRecipeEquivalencyRecip
     }
 
     private static ResourceLocation toRecipeName(final ServerLevel world, final DecoratedPotBlockEntity.Decorations decorations) {
-        return new ResourceLocation(String.format(RECIPE_NAME_TEMPLATE, decorations.m_284195_()
+        return new ResourceLocation(String.format(RECIPE_NAME_TEMPLATE, decorations.sorted()
                 .map(item -> world.registryAccess().registryOrThrow(Registries.ITEM).getKey(item))
                 .filter(Objects::nonNull)
                 .map(ResourceLocation::toString)
@@ -42,14 +42,14 @@ public class DecoratedPotEquivalencyRecipe extends GenericRecipeEquivalencyRecip
     }
 
     private static Set<IRecipeIngredient> toIngredients(DecoratedPotBlockEntity.Decorations decorations) {
-        return decorations.m_284195_()
+        return decorations.sorted()
                 .map(item -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(item.getDefaultInstance(), 1d))
                 .map(container -> new SimpleIngredientBuilder().from(container).createIngredient())
                 .collect(Collectors.toSet());
     }
 
     private static Set<ICompoundContainer<?>> toOutput(DecoratedPotBlockEntity.Decorations decorations) {
-        ItemStack itemstack = DecoratedPotRecipe.m_284234_(decorations);
+        ItemStack itemstack = DecoratedPotRecipe.createDecoratedPotItem(decorations);
         return Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(itemstack, 1d));
     }
 }

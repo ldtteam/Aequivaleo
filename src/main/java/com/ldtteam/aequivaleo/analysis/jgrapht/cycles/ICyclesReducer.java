@@ -6,8 +6,8 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.edge.Edge;
 import org.jgrapht.Graph;
 
-public interface ICyclesReducer {
-    void reduce(IGraph graph, INode startNode);
+public interface ICyclesReducer<G extends Graph<V, E>, V, E> {
+    void reduce(G graph, V startNode);
 
-    boolean reduceOnce(IGraph graph, INode startNode);
+    boolean reduceOnce(G graph, V startNode);
 }

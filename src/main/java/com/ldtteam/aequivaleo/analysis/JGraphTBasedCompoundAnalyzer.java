@@ -229,7 +229,7 @@ public class JGraphTBasedCompoundAnalyzer
 
         LOGGER.warn("Starting cycle reduction.");
 
-        final ICyclesReducer cyclesReducer = new SzwarcfiterLauerCyclesReducer(
+        final ICyclesReducer<IGraph, INode, IEdge> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
           CycleNode::new,
           INode::onNeighborReplaced);
 

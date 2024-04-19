@@ -6,6 +6,6 @@ import org.jgrapht.traverse.GraphIterator;
 
 import java.util.Map;
 
-public interface IDepthMapBuilder {
-    Map<INode, Integer> calculateDepthMap();
+public interface IDepthMapBuilder<V> {
+    Map<V, Integer> calculateDepthMap();
 }

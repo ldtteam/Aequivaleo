@@ -272,11 +272,13 @@ public class CycleNode
         if (ioGraph.containsVertex(originalNeighbor)) {
             AnalysisLogHandler.debug(LOGGER, "Updating neighbor data from: " + originalNeighbor + " to: " + newNeighbor);
             ioGraph.addVertex(newNeighbor);
-            for (IEdge edge : ioGraph.outgoingEdgesOf(originalNeighbor)) {
+            final Set<IEdge> outgoingEdges = Sets.newHashSet(ioGraph.outgoingEdgesOf(originalNeighbor));
+            for (IEdge edge : outgoingEdges) {
                 ioGraph.addEdge(newNeighbor, ioGraph.getEdgeTarget(edge));
                 ioGraph.setEdgeWeight(newNeighbor, ioGraph.getEdgeTarget(edge), ioGraph.getEdgeWeight(edge));
             }
-            for (IEdge edge : ioGraph.incomingEdgesOf(originalNeighbor)) {
+            final Set<IEdge> incomingEdges = Sets.newHashSet(ioGraph.incomingEdgesOf(originalNeighbor));
+            for (IEdge edge : incomingEdges) {
                 ioGraph.addEdge(ioGraph.getEdgeSource(edge), newNeighbor);
                 ioGraph.setEdgeWeight(ioGraph.getEdgeSource(edge), newNeighbor, ioGraph.getEdgeWeight(edge));
             }
@@ -301,7 +303,8 @@ public class CycleNode
 
     @Override
     public void onOutgoingEdgeEnabled(final INode target, final IEdge edge) {
-        disabledIoGraphEdges.rowKeySet().forEach(sourceNode -> {
+        final Set<INode> sourceNodes = Sets.newHashSet(disabledIoGraphEdges.rowKeySet());
+        sourceNodes.forEach(sourceNode -> {
             if (disabledIoGraphEdges.contains(sourceNode, target)) {
                 ioGraph.addEdge(sourceNode, target, disabledIoGraphEdges.get(sourceNode, target));
                 disabledIoGraphEdges.remove(sourceNode, target);
@@ -330,7 +333,7 @@ public class CycleNode
             }
         }
 
-        final ICyclesReducer cyclesReducer = new SzwarcfiterLauerCyclesReducer(
+        final ICyclesReducer<IGraph, INode, IEdge> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
                 CycleNode::new,
                 INode::onNeighborReplaced,
                 false);

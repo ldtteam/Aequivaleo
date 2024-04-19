@@ -132,7 +132,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private static void processDecoratedPotRecipe(@NotNull final ServerLevel world) {
         world.registryAccess().registry(Registries.ITEM).orElseThrow()
-                .getTag(ItemTags.DECORATED_POT_SHARDS)
+                .getTag(ItemTags.DECORATED_POT_SHERDS)
                 .ifPresent(holder -> {
                     final List<Item> sherds = holder.stream().map(Holder::get).toList();
                     final List<List<Item>> permutedSherds = IRecipeCalculator.getInstance().getAllPerturbations(sherds, 4);
