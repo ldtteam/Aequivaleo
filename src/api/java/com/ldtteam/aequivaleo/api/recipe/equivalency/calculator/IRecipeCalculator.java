@@ -22,6 +22,11 @@ import java.util.stream.Stream;
 public interface IRecipeCalculator
 {
 
+    /**
+     * Gets the instance of the recipe calculator.
+     *
+     * @return The instance of the recipe calculator.
+     */
     static IRecipeCalculator getInstance() {
         return IAequivaleoAPI.getInstance().getRecipeCalculator();
     }

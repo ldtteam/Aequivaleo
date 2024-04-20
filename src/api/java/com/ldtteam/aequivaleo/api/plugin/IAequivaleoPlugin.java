@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.api.plugin;
 
+import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -71,4 +72,11 @@ public interface IAequivaleoPlugin
      * @param event The event.
      */
     default void onGatherData(GatherDataEvent event) {}
+
+    /**
+     * Called when the analysis state of a world changes.
+     * @param key The key of the world.
+     * @param state The new state.
+     */
+    default void onAnalysisStateChanged(ResourceKey<Level> key, AnalysisState state) {}
 }

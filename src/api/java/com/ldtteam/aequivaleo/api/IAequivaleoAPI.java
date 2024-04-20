@@ -202,13 +202,26 @@ public interface IAequivaleoAPI {
      */
     <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter);
 
+    /**
+     * The inner api holder class which is responsible for setting up the api instance.
+     */
     class Holder {
         private static IAequivaleoAPI apiInstance;
 
+        /**
+         * Returns the instance of the api, once it has been initialized.
+         *
+         * @return The api.
+         */
         public static IAequivaleoAPI getInstance() {
             return apiInstance;
         }
 
+        /**
+         * Sets up the api instance.
+         *
+         * @param instance The instance to set up.
+         */
         public static void setInstance(final IAequivaleoAPI instance) {
             if (apiInstance != null)
                 throw new IllegalStateException("Can not setup API twice!");

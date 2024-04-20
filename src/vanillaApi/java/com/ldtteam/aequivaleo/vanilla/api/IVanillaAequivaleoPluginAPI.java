@@ -25,14 +25,25 @@ public interface IVanillaAequivaleoPluginAPI
      */
     ITagEquivalencyRegistry getTagEquivalencyRegistry();
 
+    /**
+     * Holder for the api instance.
+     */
     class Holder {
         private static IVanillaAequivaleoPluginAPI apiInstance;
 
+        /**
+         * Returns the instance of the api, once it has been initialized.
+         * @return The api.
+         */
         public static IVanillaAequivaleoPluginAPI getInstance()
         {
             return apiInstance;
         }
 
+        /**
+         * Sets the instance of the api.
+         * @param instance The instance to set.
+         */
         public static void setInstance(final IVanillaAequivaleoPluginAPI instance)
         {
             if (apiInstance != null)

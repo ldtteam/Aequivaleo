@@ -10,6 +10,9 @@ import net.minecraftforge.registries.ForgeRegistry;
 import java.util.Comparator;
 import java.util.Objects;
 
+/**
+ * Utility class that defines comparators used by Aequivaleo to achieve a stable sorting of game objects.
+ */
 public final class Comparators
 {
 
@@ -18,6 +21,9 @@ public final class Comparators
         throw new IllegalStateException("Tried to initialize: Comparators but this is a Utility class.");
     }
 
+    /**
+     * Comparator for ItemStacks.
+     */
     public static final Comparator<ItemStack> ITEM_STACK_COMPARATOR = (itemStack1, itemStack2) -> {
         if (itemStack1 != null && itemStack2 != null)
         {
@@ -104,6 +110,9 @@ public final class Comparators
         }
     };
 
+    /**
+     * Comparator for FluidStacks.
+     */
     public static final Comparator<FluidStack> FLUID_STACK_COMPARATOR = (fluidStack1, fluidStack2) -> {
 
         if (fluidStack1 != null && fluidStack2 != null)

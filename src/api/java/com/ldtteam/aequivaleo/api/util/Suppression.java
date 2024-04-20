@@ -2,6 +2,9 @@ package com.ldtteam.aequivaleo.api.util;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Utility class for suppressing warnings.
+ */
 public final class Suppression
 {
 

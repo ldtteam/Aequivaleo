@@ -13,9 +13,15 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+/**
+ * Represents the data of a generic recipe on disk.
+ */
 public class GenericRecipeData
 {
 
+    /**
+     * A disabled generic recipe data.
+     */
     public static final GenericRecipeData DISABLED = new GenericRecipeData(
       Sets.newHashSet(),
       Sets.newHashSet(),
@@ -28,6 +34,13 @@ public class GenericRecipeData
     private final SortedSet<ICompoundContainer<?>> outputs;
     private final SortedSet<ICondition> conditions;
 
+    /**
+     * Creates a new generic recipe data.
+     *
+     * @param inputs The inputs.
+     * @param requiredKnownOutputs The required known outputs.
+     * @param outputs The outputs.
+     */
     GenericRecipeData(
       final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
@@ -42,21 +55,41 @@ public class GenericRecipeData
         this.conditions.addAll(Validate.noNullElements(Validate.notNull(conditions)));
     }
 
+    /**
+     * Gets the inputs.
+     *
+     * @return The inputs.
+     */
     public SortedSet<IRecipeIngredient> getInputs()
     {
         return inputs;
     }
 
+    /**
+     * Gets the required known outputs.
+     *
+     * @return The required known outputs.
+     */
     public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
     {
         return requiredKnownOutputs;
     }
 
+    /**
+     * Gets the outputs.
+     *
+     * @return The outputs.
+     */
     public SortedSet<ICompoundContainer<?>> getOutputs()
     {
         return outputs;
     }
 
+    /**
+     * Gets the conditions.
+     *
+     * @return The conditions.
+     */
     public Set<ICondition> getConditions()
     {
         return conditions;

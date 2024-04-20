@@ -5,16 +5,34 @@ import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents a single instance of a compound.
+ * <p>
+ *     This is a simple compound instance, which is a compound type and an amount.
+ * </p>
+ */
 public final class CompoundInstance implements Comparable<CompoundInstance>
 {
     private final ICompoundType type;
     private final Double        amount;
 
+    /**
+     * Creates a new compound instance.
+     *
+     * @param type The type of the instance.
+     * @param amount The amount of the instance.
+     */
     public CompoundInstance(final ICompoundType type, final Integer amount) {
         this.type = type;
         this.amount = Double.valueOf(amount);
     }
 
+    /**
+     * Creates a new compound instance.
+     *
+     * @param type The type of the instance.
+     * @param amount The amount of the instance.
+     */
     public CompoundInstance(final ICompoundType type, final Double amount) {
         this.type = type;
         this.amount = amount;
@@ -100,6 +118,11 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
                  '}';
     }
 
+    /**
+     * Converts this instance to a reference.
+     *
+     * @return The reference.
+     */
     public CompoundInstanceRef asRef() {
         return new CompoundInstanceRef(
           getType().getRegistryName(),

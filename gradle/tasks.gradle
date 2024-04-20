@@ -15,3 +15,13 @@ tasks.withType(Test.class, { task ->
         ]
     }
 })
+
+tasks.named('apiJavadoc', Javadoc.class, { Javadoc task ->
+    task.failOnError = true
+    task.options.addStringOption('Werror', '-quiet')
+})
+
+tasks.named('vanillaApiJavadoc', Javadoc.class, { Javadoc task ->
+    task.failOnError = true
+    task.options.addStringOption('Werror', '-quiet')
+})

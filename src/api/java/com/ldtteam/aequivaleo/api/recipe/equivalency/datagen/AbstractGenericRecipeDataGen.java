@@ -1,6 +1,5 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.datagen;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -19,31 +18,49 @@ import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Defines a recipe data generator that can be used to generate recipe data for the aequivaleo only.
+ * <p>
+ *     This generator should be used when you only want recipes to show up during aequivaleo's analysis
+ *     but not in the game itself. Allowing you to alter the way information flows through the system,
+ *     without altering the game itself.
+ * </p>
+ * <p>
+ *     The recipes are stored as a {@link GenericRecipeData} object, which is a simple object that contains
+ *     the inputs, required known outputs and outputs of a recipe.
+ * </p>
+ */
 @SuppressWarnings("SameParameterValue")
 public abstract class AbstractGenericRecipeDataGen implements DataProvider
 {
-
     private final DataGenerator dataGenerator;
-    @VisibleForTesting
-    final         WorldData     generalData  = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
+    private final WorldData generalData = new WorldData(new ResourceLocation(Constants.MOD_ID, "general")) {
         @Override
         public String getPath()
         {
             return "general";
         }
     };
-    @VisibleForTesting
-    final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
+    private final Map<ResourceLocation, WorldData> worldDataMap = Maps.newHashMap();
 
-    protected AbstractGenericRecipeDataGen(final DataGenerator dataGenerator) {this.dataGenerator = dataGenerator;}
+    /**
+     * Creates a new recipe data generator.
+     *
+     * @param dataGenerator The data generator to use.
+     */
+    protected AbstractGenericRecipeDataGen(final DataGenerator dataGenerator) {
+        this.dataGenerator = dataGenerator;
+    }
 
+    /**
+     * Runs the generator using the given cache.
+     *
+     * @param cache The cache to use.
+     * @return A future that completes when the generator is done.
+     */
     @Override
     public CompletableFuture<?> run(@NotNull final CachedOutput cache)
     {
@@ -71,8 +88,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
-    @VisibleForTesting
-    CompletableFuture<?> writeData(
+    private CompletableFuture<?> writeData(
       final CachedOutput cache,
       final Gson gson,
       final WorldData worldData
@@ -96,8 +112,19 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
-    public abstract void calculateDataToSave();
+    /**
+     * Invoked so that an implementer of this class can calculate the data to save.
+     */
+    protected abstract void calculateDataToSave();
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param worldId The id of the world to add the recipe to.
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     */
     protected void saveData(
       final ResourceLocation worldId,
       final ResourceLocation name,
@@ -111,7 +138,12 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
           outputs
         );
     }
-
+/**
+     * Adds a recipe to the generator.
+     *
+     * @param worldId The id of the world to add the recipe to.
+     * @param recipeEquivalencyRecipe The recipe to add.
+     */
     protected void saveData(
       final ResourceLocation worldId,
       final IGenericRecipeEquivalencyRecipe recipeEquivalencyRecipe
@@ -125,6 +157,15 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param worldId The id of the world to add the recipe to.
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param requiredKnownOutputs The required known outputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     */
     protected void saveData(
       final ResourceLocation worldId,
       final ResourceLocation name,
@@ -141,89 +182,142 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param worldId The id of the world to add the recipe to.
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param requiredKnownOutputs The required known outputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     * @param conditions The conditions of the recipe.
+     */
     protected void saveData(
-      final ResourceLocation worldId,
-      final ResourceLocation name,
-      final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
-      final Set<ICompoundContainer<?>> outputs,
-      final Set<ICondition> conditions) {
+            final ResourceLocation worldId,
+            final ResourceLocation name,
+            final Set<IRecipeIngredient> inputs,
+            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<ICompoundContainer<?>> outputs,
+            final Set<ICondition> conditions) {
         this.saveData(
-          worldId,
-          name,
-          new GenericRecipeDataBuilder()
-            .setInputs(inputs)
-            .setRequiredKnownOutputs(requiredKnownOutputs)
-            .setOutputs(outputs)
-            .setConditions(conditions)
+                worldId,
+                name,
+                new GenericRecipeDataBuilder()
+                        .setInputs(inputs)
+                        .setRequiredKnownOutputs(requiredKnownOutputs)
+                        .setOutputs(outputs)
+                        .setConditions(conditions)
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param worldId The id of the world to add the recipe to.
+     * @param name The name of the recipe.
+     * @param builder The builder to create the recipe data with.
+     */
     protected void saveData(
-      final ResourceLocation worldId,
-      final ResourceLocation name,
-      final GenericRecipeDataBuilder builder) {
+            final ResourceLocation worldId,
+            final ResourceLocation name,
+            final GenericRecipeDataBuilder builder) {
         this.worldDataMap.computeIfAbsent(worldId, WorldData::new).recipes.put(name,
           builder
             .createGenericRecipeData());
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     */
     protected void saveData(
-      final ResourceLocation name,
-      final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> outputs) {
+            final ResourceLocation name,
+            final Set<IRecipeIngredient> inputs,
+            final Set<ICompoundContainer<?>> outputs) {
         this.saveData(
-          name,
-          inputs,
-          Collections.emptySet(),
-          outputs
+                name,
+                inputs,
+                Collections.emptySet(),
+                outputs
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param recipeEquivalencyRecipe The recipe to add.
+     */
     protected void saveData(
-      final IGenericRecipeEquivalencyRecipe recipeEquivalencyRecipe
+            final IGenericRecipeEquivalencyRecipe recipeEquivalencyRecipe
     ) {
         this.saveData(
-          recipeEquivalencyRecipe.getRecipeName(),
-          recipeEquivalencyRecipe.getInputs(),
-          recipeEquivalencyRecipe.getRequiredKnownOutputs(),
-          recipeEquivalencyRecipe.getOutputs()
+                recipeEquivalencyRecipe.getRecipeName(),
+                recipeEquivalencyRecipe.getInputs(),
+                recipeEquivalencyRecipe.getRequiredKnownOutputs(),
+                recipeEquivalencyRecipe.getOutputs()
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param requiredKnownOutputs The required known outputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     */
     protected void saveData(
-      final ResourceLocation name,
-      final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
-      final Set<ICompoundContainer<?>> outputs) {
+            final ResourceLocation name,
+            final Set<IRecipeIngredient> inputs,
+            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<ICompoundContainer<?>> outputs) {
         this.saveData(
-          name,
-          inputs,
-          requiredKnownOutputs,
-          outputs,
-          Sets.newHashSet()
+                name,
+                inputs,
+                requiredKnownOutputs,
+                outputs,
+                Sets.newHashSet()
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param name The name of the recipe.
+     * @param inputs The inputs of the recipe.
+     * @param requiredKnownOutputs The required known outputs of the recipe.
+     * @param outputs The outputs of the recipe.
+     * @param conditions The conditions of the recipe.
+     */
+    
     protected void saveData(
-      final ResourceLocation name,
-      final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
-      final Set<ICompoundContainer<?>> outputs,
-      final Set<ICondition> conditions) {
+            final ResourceLocation name,
+            final Set<IRecipeIngredient> inputs,
+            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<ICompoundContainer<?>> outputs,
+            final Set<ICondition> conditions) {
         this.saveData(
-          name,
-          new GenericRecipeDataBuilder()
-            .setInputs(inputs)
-            .setRequiredKnownOutputs(requiredKnownOutputs)
-            .setOutputs(outputs)
-            .setConditions(conditions)
+                name,
+                new GenericRecipeDataBuilder()
+                        .setInputs(inputs)
+                        .setRequiredKnownOutputs(requiredKnownOutputs)
+                        .setOutputs(outputs)
+                        .setConditions(conditions)
         );
     }
 
+    /**
+     * Adds a recipe to the generator.
+     *
+     * @param name The name of the recipe.
+     * @param builder The builder to create the recipe data with.
+     */
     protected void saveData(
-      final ResourceLocation name,
-      final GenericRecipeDataBuilder builder
+            final ResourceLocation name,
+            final GenericRecipeDataBuilder builder
     ) {
         generalData.recipes.put(name,
           builder

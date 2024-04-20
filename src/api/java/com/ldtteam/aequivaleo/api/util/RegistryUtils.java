@@ -11,6 +11,9 @@ import net.minecraftforge.registries.*;
 
 import java.util.function.Supplier;
 
+/**
+ * Utility class for Forge registries.
+ */
 @SuppressWarnings("UnstableApiUsage")
 public final class RegistryUtils
 {
@@ -20,11 +23,27 @@ public final class RegistryUtils
         throw new IllegalStateException("Tried to initialize: RegistryUtils but this is a Utility class.");
     }
 
+    /**
+     * Creates a new registry builder.
+     *
+     * @param type The type of the registry.
+     * @return The builder.
+     * @param <T> The type of the registry.
+     */
     public static <T> RegistryBuilder<T> makeRegistry(Class<T> type) {
         return new RegistryBuilder<T>()
                  .setIDRange(1, Integer.MAX_VALUE - 1);
     }
 
+    /**
+     * Creates a new synced registry builder.
+     *
+     * @param type The type of the registry.
+     * @param typeRegistrySupplier The supplier for the type registry.
+     * @return The builder.
+     * @param <T> The type of the registry.
+     * @param <G> The type of the registry type.
+     */
     public static <T extends ISyncedRegistryEntry<T>, G extends ISyncedRegistryEntryType<T>> RegistryBuilder<T> makeSyncedRegistry(Class<T> type, Supplier<IForgeRegistry<G>> typeRegistrySupplier) {
         Codec<ISyncedRegistryEntryType<T>> serializerCodec = ResourceLocation.CODEC
                 .comapFlatMap(
@@ -44,10 +63,25 @@ public final class RegistryUtils
                 .setIDRange(1, Integer.MAX_VALUE - 1);
     }
 
+    /**
+     * Gets a registry by its key.
+     *
+     * @param key The key.
+     * @return The registry.
+     * @param <T> The type of the registry.
+     */
     public static <T> ForgeRegistry<T> getFull(final ResourceKey<? extends Registry<T>> key) {
         return RegistryManager.ACTIVE.getRegistry(key);
     }
 
+    /**
+     * Gets a registry entries sync id from the given registry.
+     *
+     * @param registry The registry.
+     * @param instance The instance.
+     * @return The id.
+     * @param <T> The type of the registry.
+     */
     public static <T> int getId(final IForgeRegistry<T> registry, final T instance) {
         return ((ForgeRegistry<T>) registry).getID(instance);
     }

@@ -21,6 +21,9 @@ import java.util.Comparator;
 public interface ICompoundType extends Comparable<ICompoundType>, ISyncedRegistryEntry<ICompoundType>
 {
 
+    /**
+     * The comparator for compound types.
+     */
     Comparator<ICompoundType> COMPARATOR = Comparator.nullsLast(Comparator.comparing((type) -> ModRegistries.COMPOUND_TYPE.get().getRegistryNameOf(type)));
 
     /**

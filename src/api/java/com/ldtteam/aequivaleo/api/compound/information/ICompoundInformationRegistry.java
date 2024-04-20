@@ -115,4 +115,10 @@ public interface ICompoundInformationRegistry
      * @return The locking data.
      */
     ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getLockingInformation();
+
+    /**
+     * Gives access to base data.
+     * @return The base data.
+     */
+    ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getBaseInformation();
 }

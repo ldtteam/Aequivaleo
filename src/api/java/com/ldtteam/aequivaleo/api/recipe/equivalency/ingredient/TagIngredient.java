@@ -14,6 +14,9 @@ import java.util.TreeSet;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Represents a tag ingredient.
+ */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class TagIngredient implements IRecipeIngredient
 {
@@ -23,6 +26,13 @@ public class TagIngredient implements IRecipeIngredient
     private final Supplier<SortedSet<ICompoundContainer<?>>> containers;
     private final double                                     count;
 
+    /**
+     * Creates a new tag ingredient.
+     *
+     * @param registryName The registry name.
+     * @param tagName The tag name.
+     * @param count The count.
+     */
     public TagIngredient(final ResourceLocation registryName, final ResourceLocation tagName, final double count) {
         this.registryName = (ResourceKey<Registry<?>>) (ResourceKey) ResourceKey.createRegistryKey(registryName);
         this.tagName = TagKey.create((ResourceKey<? extends Registry<Object>>) this.registryName, tagName);
@@ -47,11 +57,21 @@ public class TagIngredient implements IRecipeIngredient
         return count;
     }
 
+    /**
+     * Gets the registry name.
+     *
+     * @return The registry name.
+     */
     public ResourceLocation getRegistryName()
     {
         return registryName.registry();
     }
 
+    /**
+     * Gets the tag name.
+     *
+     * @return The tag name.
+     */
     public ResourceLocation getTagName()
     {
         return tagName.location();

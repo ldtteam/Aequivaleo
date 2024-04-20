@@ -7,6 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * Utility class for ItemStacks.
+ */
 public class ItemStackUtils
 {
 

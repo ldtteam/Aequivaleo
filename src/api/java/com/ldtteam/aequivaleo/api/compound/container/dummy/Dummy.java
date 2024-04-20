@@ -15,6 +15,11 @@ public class Dummy implements ICompoundContainer<Dummy>
     @NotNull
     private final JsonObject originalData;
 
+    /**
+     * Creates a new dummy container.
+     *
+     * @param originalData The original data.
+     */
     public Dummy(@NotNull final JsonObject originalData) {
         this.originalData = Validate.notNull(originalData);
     }
@@ -49,6 +54,11 @@ public class Dummy implements ICompoundContainer<Dummy>
         throw new IllegalStateException("Tried to access the file name for the container. Container does not support.");
     }
 
+    /**
+     * Gets the original data.
+     *
+     * @return The original data.
+     */
     @NotNull
     public JsonObject getOriginalData()
     {

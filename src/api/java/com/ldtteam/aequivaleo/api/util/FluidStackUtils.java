@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * Utility class that deals with FluidStacks.
+ */
 public class FluidStackUtils
 {
 

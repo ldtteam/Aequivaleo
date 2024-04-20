@@ -115,6 +115,7 @@ public class CompoundInformationRegistry implements ICompoundInformationRegistry
         return ImmutableMap.copyOf(lockedInformation);
     }
 
+    @Override
     public ImmutableMap<ICompoundContainer<?>, ImmutableSet<CompoundInstance>> getBaseInformation()
     {
         return ImmutableMap.copyOf(baseInformation);
