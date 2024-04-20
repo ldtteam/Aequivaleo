@@ -1,9 +1,6 @@
 package com.ldtteam.aequivaleo.api.util;
 
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -11,6 +8,9 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import java.util.Comparator;
 import java.util.Objects;
 
+/**
+ * Utility class that defines comparators used by Aequivaleo to achieve a stable sorting of game objects.
+ */
 public final class Comparators
 {
 
@@ -19,6 +19,9 @@ public final class Comparators
         throw new IllegalStateException("Tried to initialize: Comparators but this is a Utility class.");
     }
 
+    /**
+     * Comparator for ItemStacks.
+     */
     public static final Comparator<ItemStack> ITEM_STACK_COMPARATOR = (itemStack1, itemStack2) -> {
         if (itemStack1 != null && itemStack2 != null)
         {
@@ -105,6 +108,9 @@ public final class Comparators
         }
     };
 
+    /**
+     * Comparator for FluidStacks.
+     */
     public static final Comparator<FluidStack> FLUID_STACK_COMPARATOR = (fluidStack1, fluidStack2) -> {
 
         if (fluidStack1 != null && fluidStack2 != null)

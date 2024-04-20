@@ -15,6 +15,11 @@ import java.util.function.Function;
 public interface IInstancedEquivalencyHandlerRegistry
 {
 
+    /**
+     * Returns the instance of the registry.
+     *
+     * @return The instance of the registry.
+     */
     static IInstancedEquivalencyHandlerRegistry getInstance() {
         return IAequivaleoAPI.getInstance().getInstancedEquivalencyHandlerRegistry();
     }

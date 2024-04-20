@@ -13,14 +13,23 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * Represents the data of a generic recipe on disk.
+ */
 public class GenericRecipeData
 {
+    /**
+     * The codec for the generic recipe data.
+     */
     public static final Codec<GenericRecipeData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
       AequivaleoExtraCodecs.sortedSetOf(IRecipeIngredient.CODEC).fieldOf("inputs").forGetter(GenericRecipeData::getInputs),
       AequivaleoExtraCodecs.sortedSetOf(ICompoundContainer.CODEC).fieldOf("requiredKnownOutputs").forGetter(GenericRecipeData::getRequiredKnownOutputs),
       AequivaleoExtraCodecs.sortedSetOf(ICompoundContainer.CODEC).fieldOf("outputs").forGetter(GenericRecipeData::getOutputs)
     ).apply(instance, GenericRecipeData::new));
 
+    /**
+     * A disabled generic recipe data.
+     */
     public static final GenericRecipeData DISABLED = new GenericRecipeData(
       Sets.newHashSet(),
       Sets.newHashSet(),
@@ -31,6 +40,13 @@ public class GenericRecipeData
     private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
+    /**
+     * Creates a new generic recipe data.
+     *
+     * @param inputs The inputs.
+     * @param requiredKnownOutputs The required known outputs.
+     * @param outputs The outputs.
+     */
     GenericRecipeData(
       final Set<IRecipeIngredient> inputs,
       final Set<ICompoundContainer<?>> requiredKnownOutputs,
@@ -42,16 +58,31 @@ public class GenericRecipeData
         this.outputs = new TreeSet<>(Validate.noNullElements(Objects.requireNonNull(outputs)));
     }
 
+    /**
+     * Gets the inputs.
+     *
+     * @return The inputs.
+     */
     public SortedSet<IRecipeIngredient> getInputs()
     {
         return inputs;
     }
 
+    /**
+     * Gets the required known outputs.
+     *
+     * @return The required known outputs.
+     */
     public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
     {
         return requiredKnownOutputs;
     }
 
+    /**
+     * Gets the outputs.
+     *
+     * @return The outputs.
+     */
     public SortedSet<ICompoundContainer<?>> getOutputs()
     {
         return outputs;

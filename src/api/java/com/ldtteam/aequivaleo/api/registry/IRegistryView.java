@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 /**
  * A view of a given registry.
- * @param <T>
+ * @param <T> The type of the element in the view of the registry
  */
 public interface IRegistryView<T> extends Iterable<T>
 {
@@ -35,6 +35,7 @@ public interface IRegistryView<T> extends Iterable<T>
      * if synchronization happens between said calls.
      *
      * @param viewFilter The view filter.
+     * @param <E> The type of the element in the view of the registry.
      * @return The registry view with the filter applied.
      */
     <E> IRegistryView<E> createView(Function<T, Optional<E>> viewFilter);

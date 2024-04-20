@@ -10,13 +10,42 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * Represents a generic recipe equivalency recipe.
+ * <p>
+ *     This is the in-graph and game representation of a generic recipe.
+ * </p>
+ */
 public class GenericRecipeEquivalencyRecipe implements IGenericRecipeEquivalencyRecipe
 {
+    /**
+     * The recipe name.
+     */
     protected final ResourceLocation                 recipeName;
+
+    /**
+     * The inputs.
+     */
     protected final SortedSet<IRecipeIngredient>     inputs;
+
+    /**
+     * The required known outputs.
+     */
     protected final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
+
+    /**
+     * The outputs.
+     */
     protected final SortedSet<ICompoundContainer<?>> outputs;
 
+    /**
+     * Creates a new generic recipe equivalency recipe.
+     *
+     * @param recipeName The recipe name.
+     * @param inputs The inputs.
+     * @param requiredKnownOutputs The required known outputs.
+     * @param outputs The outputs.
+     */
     public GenericRecipeEquivalencyRecipe(
       final ResourceLocation recipeName, final Set<IRecipeIngredient> inputs, final Set<ICompoundContainer<?>> requiredKnownOutputs, final Set<ICompoundContainer<?>> outputs)
     {

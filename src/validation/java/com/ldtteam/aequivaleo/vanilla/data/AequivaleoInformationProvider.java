@@ -391,7 +391,7 @@ public class AequivaleoInformationProvider extends ForcedInformationProvider
     }
     
     private void saveData(LinkedHashSet<Object> items, CompoundInstance... instances) {
-        save(specFor(items).withCompounds(instances[0]));
+        addInformation(specFor(items).withCompounds(instances[0]));
     }
     
     private static CompoundInstance validation(double d) { return new CompoundInstance(Registry.VALIDATION.get(), d); }

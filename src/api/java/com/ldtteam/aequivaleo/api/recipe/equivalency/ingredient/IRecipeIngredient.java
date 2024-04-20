@@ -1,17 +1,13 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
-import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IRecipeIngredientType;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
-import com.ldtteam.aequivaleo.api.util.ModRegistryKeys;
 import com.ldtteam.aequivaleo.api.util.SortedSetComparator;
 import com.mojang.serialization.Codec;
 import net.minecraft.tags.TagKey;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -21,6 +17,9 @@ import java.util.SortedSet;
 public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
 {
 
+    /**
+     * The codec for recipe ingredients.
+     */
     Codec<IRecipeIngredient> CODEC = ModRegistries.RECIPE_INGREDIENT_TYPE
                                              .byNameCodec()
                                                 .dispatch(
@@ -125,7 +124,7 @@ public interface IRecipeIngredient extends Comparable<IRecipeIngredient>
     @Override
     default int compareTo(@NotNull final IRecipeIngredient iRecipeIngredient)
     {
-        final int candidateComparison = SortedSetComparator.<ICompoundContainer<?>>getInstance().compare(getCandidates(), iRecipeIngredient.getCandidates());
+        final int candidateComparison = SortedSetComparator.<ICompoundContainer<?>>create().compare(getCandidates(), iRecipeIngredient.getCandidates());
         if (candidateComparison != 0)
             return candidateComparison;
 

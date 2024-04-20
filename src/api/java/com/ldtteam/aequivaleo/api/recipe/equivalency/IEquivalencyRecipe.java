@@ -65,15 +65,15 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
 
     @Override
     default int compareTo(@NotNull IEquivalencyRecipe recipe) {
-        final int inputComparison = SortedSetComparator.<IRecipeIngredient>getInstance().compare(getInputs(), recipe.getInputs());
+        final int inputComparison = SortedSetComparator.<IRecipeIngredient>create().compare(getInputs(), recipe.getInputs());
         if (inputComparison != 0)
             return inputComparison;
 
-        final int requiredOutputsComparison = SortedSetComparator.<ICompoundContainer<?>>getInstance().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
+        final int requiredOutputsComparison = SortedSetComparator.<ICompoundContainer<?>>create().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
         if (requiredOutputsComparison != 0)
             return requiredOutputsComparison;
 
-        final int outputComparison = SortedSetComparator.<ICompoundContainer<?>>getInstance().compare(getOutputs(), recipe.getOutputs());
+        final int outputComparison = SortedSetComparator.<ICompoundContainer<?>>create().compare(getOutputs(), recipe.getOutputs());
         if (outputComparison != 0)
             return outputComparison;
 

@@ -4,10 +4,20 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
 
+/**
+ * A comparator for sorted sets.
+ *
+ * @param <T> The type of the elements in the set.
+ */
 public final class SortedSetComparator<T extends Comparable<T>> implements Comparator<SortedSet<T>>
 {
-
-    public static <Z extends Comparable<Z>> SortedSetComparator<Z> getInstance()
+    /**
+     * Gets an instance of the comparator.
+     *
+     * @param <Z> The type of the elements in the set.
+     * @return The instance.
+     */
+    public static <Z extends Comparable<Z>> SortedSetComparator<Z> create()
     {
         return new SortedSetComparator<>();
     }

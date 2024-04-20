@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analysis;
 
 import com.google.common.collect.Maps;
 import com.ldtteam.aequivaleo.api.analysis.AnalysisState;
+import com.ldtteam.aequivaleo.plugin.PluginManger;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -23,6 +24,7 @@ public class AnalysisStateManager
 
     public static void setState(final ResourceKey<Level> key, final AnalysisState state) {
         STATE_MAP.put(key, state);
+        PluginManger.getInstance().run(plugin -> plugin.onAnalysisStateChanged(key, state));
     }
 
     public static void setState(final List<? extends Level> worlds, final AnalysisState state) {

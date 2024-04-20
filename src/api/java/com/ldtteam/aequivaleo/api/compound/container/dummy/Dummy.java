@@ -9,17 +9,26 @@ import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Represents an unknown type.
  * Will contain the original JsonData in case of recovery.
  */
 public record Dummy(@NotNull JsonElement originalData) implements ICompoundContainer<Dummy> {
-    
-    public static final Codec<Dummy> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ExtraCodecs.JSON.fieldOf("originalData").forGetter(Dummy::originalData)
+
+    /**
+     * The codec for the dummy container.
+     */
+    public static final Codec<ICompoundContainer<Dummy>> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            ExtraCodecs.JSON.fieldOf("originalData").forGetter(dummyICompoundContainer -> dummyICompoundContainer.contents().originalData())
     ).apply(instance, Dummy::new));
-    
+
+    /**
+     * Creates a new dummy container.
+     *
+     * @param originalData The original data.
+     */
     public Dummy(@NotNull final JsonElement originalData) {
         this.originalData = Objects.requireNonNull(originalData);
     }
@@ -46,7 +55,7 @@ public record Dummy(@NotNull JsonElement originalData) implements ICompoundConta
     
     @Override
     public ICompoundContainerType<Dummy> type() {
-        return null;
+        return new Type();
     }
     
     @Override
@@ -76,7 +85,10 @@ public record Dummy(@NotNull JsonElement originalData) implements ICompoundConta
     public int hashCode() {
         return originalData.toString().hashCode();
     }
-    
+
+    /**
+     * The type of the dummy container.
+     */
     public static final class Type implements ICompoundContainerType<Dummy> {
         
         @Override
@@ -91,7 +103,7 @@ public record Dummy(@NotNull JsonElement originalData) implements ICompoundConta
         
         @Override
         public Codec<ICompoundContainer<Dummy>> codec() {
-            return null;
+            return CODEC;
         }
     }
 }

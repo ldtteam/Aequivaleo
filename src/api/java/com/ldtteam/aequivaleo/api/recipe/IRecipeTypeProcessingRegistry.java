@@ -16,6 +16,11 @@ import java.util.Set;
 public interface IRecipeTypeProcessingRegistry
 {
 
+    /**
+     * Gets the instance of the recipe type processing registry.
+     *
+     * @return The instance of the recipe type processing registry.
+     */
     static IRecipeTypeProcessingRegistry getInstance() {
         return IAequivaleoAPI.getInstance().getRecipeTypeProcessingRegistry();
     }

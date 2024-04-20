@@ -93,6 +93,7 @@ public interface IEquivalencyResults
      * If a container is not contained in this map, then no value was calculated for it.
      *
      * @param group The group to get the data of.
+     * @param <R> The type of the processed cache result.
      * @return An unmodifiable map that returns all the cached results. Don't modify its contents.
      */
     <R>  Map<ICompoundContainer<?>, R> getAllMappedDataOf(ICompoundTypeGroup group);
