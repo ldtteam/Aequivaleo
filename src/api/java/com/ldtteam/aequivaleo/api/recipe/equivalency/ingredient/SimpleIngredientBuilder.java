@@ -15,6 +15,10 @@ import java.util.SortedSet;
  */
 public class SimpleIngredientBuilder {
 
+    public static IRecipeIngredient simple(ICompoundContainer<?> container) {
+        return new SimpleIngredientBuilder().from(container).createIngredient();
+    }
+
     private SortedSet<ICompoundContainer<?>> candidates = Sets.newTreeSet();
     private Double                           count;
 
@@ -45,7 +49,7 @@ public class SimpleIngredientBuilder {
      * @return This builder.
      */
     public SimpleIngredientBuilder from(final SortedSet<ICompoundContainer<?>> containers) {
-        this.candidates = containers;
+        this.candidates = containers.stream().map(container -> ICompoundContainer.from(container.getContents(), 1)).collect(Sets::newTreeSet, Set::add, Set::addAll);
         return this;
     }
 

@@ -32,7 +32,7 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
      *
      * @return The compound containers who act as catalysts in the recipe.
      */
-    SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs();
+    SortedSet<IRecipeIngredient> getRequiredKnownOutputs();
 
     /**
      * The compound containers that are the output for this recipe.
@@ -59,7 +59,7 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         return !getInputs().isEmpty() &&
                  !getOutputs().isEmpty() &&
                  getInputs().stream().allMatch(IRecipeIngredient::isValid) &&
-                 getRequiredKnownOutputs().stream().allMatch(ICompoundContainer::isValid) &&
+                 getRequiredKnownOutputs().stream().allMatch(IRecipeIngredient::isValid) &&
                  getOutputs().stream().allMatch(ICompoundContainer::isValid);
     }
 
@@ -69,7 +69,7 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         if (inputComparison != 0)
             return inputComparison;
 
-        final int requiredOutputsComparison = SortedSetComparator.<ICompoundContainer<?>>getInstance().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
+        final int requiredOutputsComparison = SortedSetComparator.<IRecipeIngredient>getInstance().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
         if (requiredOutputsComparison != 0)
             return requiredOutputsComparison;
 

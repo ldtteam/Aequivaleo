@@ -8,12 +8,12 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import java.util.Objects;
 import java.util.Set;
 
-public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
+public class CliqueDetectionEdge<N> extends DefaultWeightedEdge implements IEdge
 {
 
-    private final Set<INode> intermediaryNodes;
+    private final Set<N> intermediaryNodes;
 
-    public CliqueDetectionEdge(Set<INode> intermediaryNodes) {
+    public CliqueDetectionEdge(Set<N> intermediaryNodes) {
         this.intermediaryNodes = intermediaryNodes;
     }
 
@@ -23,7 +23,7 @@ public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
         return 1;
     }
 
-    public Set<INode> getIntermediaryNodes()
+    public Set<N> getIntermediaryNodes()
     {
         return intermediaryNodes;
     }
@@ -32,13 +32,13 @@ public class CliqueDetectionEdge extends DefaultWeightedEdge implements IEdge
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CliqueDetectionEdge that = (CliqueDetectionEdge) o;
-        return Objects.equals(intermediaryNodes, that.intermediaryNodes);
+        CliqueDetectionEdge<?> that = (CliqueDetectionEdge<?>) o;
+        return Objects.equals(getIntermediaryNodes(), that.getIntermediaryNodes());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(intermediaryNodes);
+        return Objects.hashCode(getIntermediaryNodes());
     }
 
     @Override

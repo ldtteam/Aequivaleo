@@ -5,61 +5,65 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.traverse.BreadthFirstIterator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-@Deprecated(forRemoval = true)
-public class BFSDepthMapBuilder implements IDepthMapBuilder {
+public class BFSDepthMapBuilder<G extends Graph<V, E>, V, E> implements IDepthMapBuilder<V> {
     
-    private final IGraph graph;
-    private final INode sourceVertex;
+    private final G graph;
+    private final V sourceVertex;
 
-    public BFSDepthMapBuilder(final IGraph graph, INode sourceVertex) {
+    public BFSDepthMapBuilder(final G graph, V sourceVertex) {
         this.graph = graph;
         this.sourceVertex = sourceVertex;
+
+        if (graph.inDegreeOf(sourceVertex) != 0)
+            throw new IllegalArgumentException("Source vertex must have in-degree of 0");
     }
 
     @Override
-    public Map<INode, Integer> calculateDepthMap() {
-        final Object2IntMap<INode> depthMap = new Object2IntArrayMap<>();
+    public Map<V, Integer> calculateDepthMap() {
+        final Object2IntMap<V> incomingDegreeMap = new Object2IntOpenHashMap<>(graph.vertexSet().size());
+        final Object2IntMap<V> depthMap = new Object2IntOpenHashMap<>(graph.vertexSet().size());
 
-        final List<INode> visited = new ArrayList<>();
+        for (V vertex : graph.vertexSet()) {
+            incomingDegreeMap.put(vertex, graph.inDegreeOf(vertex));
+        }
 
-        final BreadthFirstIterator<INode, IEdge> iterator = new BreadthFirstIterator<>(graph, sourceVertex) {
-            @Override
-            protected void encounterVertex(INode vertex, IEdge edge) {
-                super.encounterVertex(vertex, edge);
-                if (edge == null) {
-                    depthMap.put(vertex, 0);
-                    return;
+        final Deque<V> zeroInDegreeQueue = new ArrayDeque<>();
+        zeroInDegreeQueue.add(sourceVertex);
+        depthMap.put(sourceVertex, 0);
+
+        while (!zeroInDegreeQueue.isEmpty()) {
+            final V vertex = zeroInDegreeQueue.poll();
+            final int inDegree = incomingDegreeMap.getInt(vertex);
+            if (inDegree != 0)
+                throw new IllegalStateException("Vertex with non-zero in-degree in zero in-degree queue: " + vertex);
+
+            final int myDepth = depthMap.getInt(vertex);
+            final int neighborDepth = myDepth + 1;
+
+            for (E edge : graph.outgoingEdgesOf(vertex)) {
+                final V target = Graphs.getOppositeVertex(graph, edge, vertex);
+                final int newInDegree = incomingDegreeMap.getInt(target) - 1;
+                incomingDegreeMap.put(target, newInDegree);
+                if (newInDegree == 0) {
+                    zeroInDegreeQueue.add(target);
                 }
 
-                final INode source = Graphs.getOppositeVertex(graph, edge, vertex);
-                if (!depthMap.containsKey(source))
-                    throw new IllegalStateException("Unknown depth map vertex: " + vertex + ". Did BFS iteration fail?");
-
-                final int sourceDepth = depthMap.getInt(source);
-                int newTargetDepth = sourceDepth + 1;
-                if (depthMap.containsKey(vertex)) {
-                    final int currentDepth = depthMap.getInt(vertex);
-                    newTargetDepth = Math.max(newTargetDepth, currentDepth);
-                }
-                depthMap.put(vertex, newTargetDepth);
-
-                visited.add(vertex);
+                depthMap.compute(target, (k, v) -> {
+                    if (v == null) {
+                        return neighborDepth;
+                    } else {
+                        return Math.max(v, neighborDepth);
+                    }
+                });
             }
-
-            @Override
-            protected void encounterVertexAgain(INode vertex, IEdge edge) {
-                encounterVertex(vertex, edge);
-            }
-        };
-
-        while(iterator.hasNext()) { iterator.next(); }
+        }
 
         return depthMap;
     }

@@ -11,7 +11,6 @@ import com.ldtteam.aequivaleo.api.instanced.IInstancedEquivalencyHandlerRegistry
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryView;
@@ -99,13 +98,6 @@ public interface IAequivaleoAPI {
      * @return The plugin manager.
      */
     IAequivaleoPluginManager getPluginManager();
-
-    /**
-     * Gives access to the recipe calculator.
-     *
-     * @return The recipe calculator.
-     */
-    IRecipeCalculator getRecipeCalculator();
 
     /**
      * Sets up a new Gson instance and create the serialization handler.
@@ -223,7 +215,7 @@ public interface IAequivaleoAPI {
          * @param instance The instance to set up.
          */
         public static void setInstance(final IAequivaleoAPI instance) {
-            if (apiInstance != null)
+            if (instance != null && apiInstance != null)
                 throw new IllegalStateException("Can not setup API twice!");
 
             apiInstance = instance;

@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class GenericRecipeDataBuilder {
     private Set<IRecipeIngredient>     inputs;
-    private Set<ICompoundContainer<?>> requiredKnownOutputs = Sets.newHashSet();
+    private Set<IRecipeIngredient> requiredKnownOutputs = Sets.newHashSet();
     private Set<ICompoundContainer<?>> outputs;
     private Set<ICondition>            conditions = Sets.newHashSet();
 /**
@@ -37,7 +37,7 @@ public class GenericRecipeDataBuilder {
      * @param requiredKnownOutputs The required known outputs.
      * @return This builder.
      */
-    public GenericRecipeDataBuilder setRequiredKnownOutputs(final Set<ICompoundContainer<?>> requiredKnownOutputs)
+    public GenericRecipeDataBuilder setRequiredKnownOutputs(final Set<IRecipeIngredient> requiredKnownOutputs)
     {
         this.requiredKnownOutputs = requiredKnownOutputs;
         return this;

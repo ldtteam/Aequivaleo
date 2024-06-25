@@ -15,6 +15,9 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration
     public ForgeConfigSpec.IntValue networkBatchingSize;
     public ForgeConfigSpec.BooleanValue debugAnalysisLog;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> blackListedDimensions;
+    public ForgeConfigSpec.BooleanValue traceCycleLog;
+    public ForgeConfigSpec.BooleanValue debugCycleLog;
+    public ForgeConfigSpec.BooleanValue outputCycleCount;
 
     public CommonConfiguration(ForgeConfigSpec.Builder builder)
     {
@@ -28,6 +31,9 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration
         finishCategory(builder);
         createCategory(builder, "log");
         debugAnalysisLog = defineBoolean(builder,"debug", false);
+        traceCycleLog = defineBoolean(builder, "cycle.trace", false);
+        debugCycleLog = defineBoolean(builder, "cycle.full", false);
+        outputCycleCount = defineBoolean(builder, "cycle.count", true);
         finishCategory(builder);
         createCategory(builder, "export");
         jsonPrettyPrint = defineBoolean(builder, "json", false);

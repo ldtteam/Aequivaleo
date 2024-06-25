@@ -3,14 +3,16 @@ package com.ldtteam.aequivaleo.api.util;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import org.antlr.v4.runtime.misc.MultiMap;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Utility class for grouping collections.
@@ -101,5 +103,46 @@ public final class GroupingUtils
         );
 
         return groups.asMap();
+    }
+
+    public static <T, O> Stream<Stream<T>> groupByDynamically(final Stream<T> items, Function<T, O> extractor) {
+        record GroupedStreams<T, O>(Map<O, Stream.Builder<T>> streams) {}
+
+        return items.collect(new Collector<T, GroupedStreams<T, O>, Stream<Stream<T>>>() {
+            @Override
+            public Supplier<GroupedStreams<T, O>> supplier() {
+                return () -> new GroupedStreams<T, O>(new HashMap<>());
+            }
+
+            @Override
+            public BiConsumer<GroupedStreams<T, O>, T> accumulator() {
+                return (toGroupedStreams, t) -> {
+                    final O key = extractor.apply(t);
+                    toGroupedStreams.streams.computeIfAbsent(key, k -> Stream.<T>builder()).accept(t);
+                };
+            }
+
+            @Override
+            public BinaryOperator<GroupedStreams<T, O>> combiner() {
+                return (left, right) -> {
+                    right.streams.forEach((key, value) -> {
+                        final Stream.Builder<T> builder = left.streams.computeIfAbsent(key, k -> Stream.<T>builder());
+                        value.build().forEach(builder);
+                    });
+
+                    return left;
+                };
+            }
+
+            @Override
+            public Function<GroupedStreams<T, O>, Stream<Stream<T>>> finisher() {
+                return toGroupedStreams -> toGroupedStreams.streams.values().stream().map(Stream.Builder::build);
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Set.of();
+            }
+        });
     }
 }

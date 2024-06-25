@@ -15,8 +15,6 @@ import java.util.function.Function;
 public class JSONGraphExporter extends BaseExporter<INode, IEdge> implements GraphExporter<INode, IEdge>, JsonSerializer<Graph<INode, IEdge>>
 {
 
-
-
     public JSONGraphExporter()
     {
         this(new IntegerIdProvider<>());

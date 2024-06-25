@@ -9,7 +9,7 @@ import org.jgrapht.traverse.CrossComponentIterator;
 
 import java.util.*;
 
-public class CrossComponentDepthMapBuilder implements IDepthMapBuilder  {
+public class CrossComponentDepthMapBuilder implements IDepthMapBuilder<INode>  {
 
     private final IGraph graph;
     private final INode sourceNode;

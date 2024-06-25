@@ -6,6 +6,7 @@ import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 public class SzwarcfiterLauerCyclesReducer<G extends Graph<V, E>, V, E> extends AbstractJGraphTDirectedCyclesReducer<G, V, E> {
@@ -20,7 +21,7 @@ public class SzwarcfiterLauerCyclesReducer<G extends Graph<V, E>, V, E> extends 
     }
 
     @Override
-    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph) {
+    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph, Map<V, Integer> depthMap) {
         return new SzwarcfiterLauerSimpleCycles<>(graph);
     }
 }

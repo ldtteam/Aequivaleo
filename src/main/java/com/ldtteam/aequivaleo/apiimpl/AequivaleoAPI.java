@@ -14,7 +14,6 @@ import com.ldtteam.aequivaleo.api.instanced.IInstancedEquivalencyHandlerRegistry
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPluginManager;
 import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.data.IIngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryEntry;
 import com.ldtteam.aequivaleo.api.registry.IRegistryView;
@@ -28,7 +27,6 @@ import com.ldtteam.aequivaleo.gameobject.equivalent.GameObjectEquivalencyHandler
 import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.RecipeTypeProcessingRegistry;
-import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSerializerRegistry;
 import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSerializer;
@@ -99,12 +97,6 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     public IAequivaleoPluginManager getPluginManager()
     {
         return PluginManger.getInstance();
-    }
-
-    @Override
-    public IRecipeCalculator getRecipeCalculator()
-    {
-        return RecipeCalculator.getInstance();
     }
 
     @Override

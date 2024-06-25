@@ -1,13 +1,13 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo;
 
-import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisNodeWithContainer;
-import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
+import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 
-import java.util.Set;
+import java.util.Optional;
 
 /**
  * Represents a node that represents a container (like Item, ItemStack, etc) in the recipe graph.
  */
-public interface IContainerNode extends INode, IAnalysisNodeWithContainer<IGraph, Set<CompoundInstance>, INode, IEdge>
+public interface IContainerNode extends IResultsOwningNode
 {
+    ICompoundContainer<?> contents();
 }

@@ -19,7 +19,7 @@ public class FullScanDepthMapBuilder<G extends Graph<V, E>, V, E> implements IDe
 
     @Override
     public Map<V, Integer> calculateDepthMap() {
-        final Iterator iterator = new Iterator(graph, startNode);
+        final Iterator<G, V, E> iterator = new Iterator<>(graph, startNode);
 
         while (iterator.hasNext()) {
             iterator.next();

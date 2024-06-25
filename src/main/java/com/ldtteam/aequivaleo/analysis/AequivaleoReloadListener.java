@@ -27,7 +27,6 @@ import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.bootstrap.WorldBootstrapper;
 import com.ldtteam.aequivaleo.compound.data.serializers.CompoundInstanceDataSerializer;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
-import com.ldtteam.aequivaleo.recipe.equivalency.RecipeCalculator;
 import com.ldtteam.aequivaleo.recipe.equivalency.data.GenericRecipeDataSerializer;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
@@ -143,15 +142,12 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                 return thread;
             });
 
-            RecipeCalculator.IngredientHandler.getInstance().reset();
-
             CompletableFuture.allOf(buildAnalysisFutures(forceReload, valueData, lockedData, baseData, additionalRecipes, worlds, aequivaleoReloadExecutor))
                     .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.SYNCING)), aequivaleoReloadExecutor)
                     .thenRunAsync(AequivaleoReloadListener::synchronizeSyncedRegistries, aequivaleoReloadExecutor)
                     .thenRunAsync(EquivalencyResults::updateAllPlayers, aequivaleoReloadExecutor)
                     .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.POST_PROCESSING)), aequivaleoReloadExecutor)
                     .thenRunAsync(() -> worlds.forEach(world -> PluginManger.getInstance().run(plugin -> plugin.onReloadFinishedFor(world))), aequivaleoReloadExecutor)
-                    .thenRunAsync(() -> RecipeCalculator.IngredientHandler.getInstance().logErrors(), aequivaleoReloadExecutor)
                     .thenRunAsync(() -> worlds.forEach(world -> AnalysisStateManager.setStateIfNotError(world.dimension(), AnalysisState.COMPLETED)), aequivaleoReloadExecutor)
                     .thenRunAsync(aequivaleoReloadExecutor::shutdown, aequivaleoReloadExecutor);
         } catch (Exception ex) {
@@ -359,7 +355,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                 GenericRecipeData data = gson.fromJson(reader, GenericRecipeDataSerializer.HANDLED_TYPE);
                 if (data != null) {
                     if (data.getConditions().size() != 1 || data.getConditions().iterator().next().test(this.serverResources.getConditionContext())) {
-                        collectedData.add(new GenericRecipeEquivalencyRecipe(name, data.getInputs(), data.getRequiredKnownOutputs(), data.getOutputs()));
+                        collectedData.add(new GenericRecipeEquivalencyRecipe(data.getInputs(), data.getRequiredKnownOutputs(), data.getOutputs(), name));
                     } else {
                         LOGGER.info("Skipping the load of file {} from {} its conditions indicate it is disabled.", resourceLocationWithoutExtension, resourceLocation);
                     }

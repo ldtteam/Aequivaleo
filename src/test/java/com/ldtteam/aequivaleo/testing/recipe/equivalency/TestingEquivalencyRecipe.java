@@ -14,12 +14,12 @@ public class TestingEquivalencyRecipe implements IEquivalencyRecipe
 {
     private final String name;
     private final SortedSet<IRecipeIngredient>     inputs;
-    private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
+    private final SortedSet<IRecipeIngredient> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
 
     public TestingEquivalencyRecipe(
       final String name, final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
+      final Set<IRecipeIngredient> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs
     ) {
         this.name = name;
@@ -35,7 +35,7 @@ public class TestingEquivalencyRecipe implements IEquivalencyRecipe
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    public SortedSet<IRecipeIngredient> getRequiredKnownOutputs()
     {
         return requiredKnownOutputs;
     }

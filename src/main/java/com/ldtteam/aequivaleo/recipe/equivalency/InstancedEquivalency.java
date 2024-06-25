@@ -40,7 +40,7 @@ public class InstancedEquivalency implements IInstancedEquivalency
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    public SortedSet<IRecipeIngredient> getRequiredKnownOutputs()
     {
         return Collections.emptySortedSet();
     }

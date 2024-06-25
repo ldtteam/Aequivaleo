@@ -10,25 +10,22 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariant;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariants;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.tags.Tags;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
-import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
-import net.minecraft.core.Holder;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -38,10 +35,12 @@ import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.extensions.IForgeItemStack;
@@ -83,75 +82,37 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, CookingEquivalencyRecipe::new);
     }
 
     private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, SimpleEquivalencyRecipe::new);
     }
 
     private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, StoneCuttingEquivalencyRecipe::new);
     }
 
     private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+        processRecipe(world, iRecipe, v -> new GenericRecipeEquivalencyRecipe(v, iRecipe.getId()));
     }
 
     private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world,
                 iRecipe,
-                smithingRecipe -> {
-                    if (!(smithingRecipe instanceof SmithingTransformRecipe))
-                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
-
-                    final NonNullList<Ingredient> ingredients = NonNullList.create();
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).template);
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).base);
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).addition);
-                    return ingredients;
-                },
-                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+                SmithingEquivalencyRecipe::new);
     }
 
     private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
         processRecipe(world,
                 iRecipe,
-                smithingRecipe -> {
-                    if (!(smithingRecipe instanceof SmithingTrimRecipe))
-                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
-
-                    final NonNullList<Ingredient> ingredients = NonNullList.create();
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).template);
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).base);
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).addition);
-                    return ingredients;
-                },
-                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
-    }
-
-    private static void processDecoratedPotRecipe(@NotNull final ServerLevel world) {
-        world.registryAccess().registry(Registries.ITEM).orElseThrow()
-                .getTag(ItemTags.DECORATED_POT_SHERDS)
-                .ifPresent(holder -> {
-                    final List<Item> sherds = holder.stream().map(Holder::get).toList();
-                    final List<List<Item>> permutedSherds = IRecipeCalculator.getInstance().getAllPerturbations(sherds, 4);
-                    final List<DecoratedPotEquivalencyRecipe> recipes = permutedSherds.stream()
-                            .map(sherdList -> {
-                                final DecoratedPotBlockEntity.Decorations decorations = new DecoratedPotBlockEntity.Decorations(sherdList.get(0), sherdList.get(1), sherdList.get(2), sherdList.get(3));
-                                return new DecoratedPotEquivalencyRecipe(world, decorations);
-                            })
-                            .toList();
-
-                    recipes.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
-                });
+                SmithingEquivalencyRecipe::new);
     }
 
     private void processRecipe(
-            @NotNull final ServerLevel world,
+            final ServerLevel world,
             final Recipe<?> recipe,
-            final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
-            final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
+            final Function<RecipeVariant, IEquivalencyRecipe> converter
     ) {
         try {
             if (recipe.getResultItem(world.registryAccess()).isEmpty()) {
@@ -162,13 +123,10 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 return;
             }
 
-            final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
-                    world,
-                    recipe,
-                    ingredientExtractor,
-                    IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
-                    recipeFactory
-            ).toList();
+            final RecipeVariants recipeVariants = new RecipeVariants(recipe, world.registryAccess());
+            final Collection<IEquivalencyRecipe> variants = recipeVariants.variants().stream()
+                    .map(converter)
+                    .collect(Collectors.toSet());
 
             if (configuration.getCommon().logEmptyVariantsWarning.get() && variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
                 LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
@@ -176,7 +134,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
             variants.forEach(variant -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(variant));
         } catch (Exception ex) {
-            LOGGER.error("A recipe has throw an exception while processing: " + recipe.getId(), ex);
+            LOGGER.error("A recipe has throw an exception while processing: {}", recipe.getId(), ex);
         }
     }
 
@@ -201,15 +159,20 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     public void processRecipeWithInAndOut(ServerLevel level, String name, ItemStack outStack, ItemStack... inStacks) {
-        IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(new SimpleEquivalencyRecipe(new ResourceLocation("custom/" + name),
-                Arrays.stream(inStacks).map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
-                        .map(container -> new SimpleIngredientBuilder().from(container).createIngredient()).collect(Collectors.toSet()),
-                Arrays.stream(inStacks)
-                        .map(IForgeItemStack::getCraftingRemainingItem)
-                        .filter(stack -> !stack.isEmpty())
-                        .map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
-                        .collect(Collectors.toSet()),
-                Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount()))));
+        IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(
+                new GenericRecipeEquivalencyRecipe(
+                        Arrays.stream(inStacks).map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
+                                .map(container -> new SimpleIngredientBuilder().from(container).createIngredient()).collect(Collectors.toSet()),
+                        Arrays.stream(inStacks)
+                                .map(IForgeItemStack::getCraftingRemainingItem)
+                                .filter(stack -> !stack.isEmpty())
+                                .map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
+                                .map(c -> new SimpleIngredientBuilder().from(c).withCount(c.getContentsCount()).createIngredient())
+                                .collect(Collectors.toSet()),
+                        Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount())),
+                        new ResourceLocation("custom/" + name)
+                )
+        );
     }
 
     private static void processBucketFluidRecipeFor(
@@ -223,7 +186,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         final ICompoundContainer<?> emptyBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
                 Items.BUCKET, 1
         );
-        final IRecipeIngredient emptyBucketIngredient = new SimpleIngredientBuilder().from(emptyBucketContainer).createIngredient();
+        final IRecipeIngredient emptyBucketIngredient = SimpleIngredientBuilder.simple(emptyBucketContainer);
 
         final Fluid fluid = bucketItem.getFluid();
         final ICompoundContainer<?> fluidContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
@@ -234,8 +197,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         final ICompoundContainer<?> fullBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
                 bucketItem, 1
         );
-        final IRecipeIngredient fullBucketIngredient = new SimpleIngredientBuilder().from(fullBucketContainer
-        ).createIngredient();
+        final IRecipeIngredient fullBucketIngredient = SimpleIngredientBuilder.simple(fullBucketContainer);
 
         final BucketFluidRecipe fillingRecipe = new BucketFluidRecipe(
                 Sets.newHashSet(emptyBucketIngredient, fluidIngredient),
@@ -244,7 +206,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         );
         final BucketFluidRecipe emptyingRecipe = new BucketFluidRecipe(
                 Sets.newHashSet(fullBucketIngredient),
-                Sets.newHashSet(emptyBucketContainer),
+                Sets.newHashSet(emptyBucketIngredient),
                 Sets.newHashSet(fluidContainer)
         );
 
@@ -495,7 +457,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private void processWaterBottleFillRecipe(ServerLevel world) {
         final BucketFluidRecipe fillBottleRecipe = new BucketFluidRecipe(
-            Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE, 1), IRecipeIngredient.from(Fluids.WATER, 250)),
+                Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE, 1), IRecipeIngredient.from(Fluids.WATER, 250)),
                 Set.of(),
                 Set.of(ICompoundContainer.from(PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER)))
         );
@@ -507,7 +469,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         }
 
         for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
-            for(ItemStack containerStack : container.getItems()) {
+            for (ItemStack containerStack : container.getItems()) {
                 for (PotionBrewing.Mix<Potion> potionMix : PotionBrewing.POTION_MIXES) {
                     processPotionRecipe(world, potionMix, containerStack);
                 }

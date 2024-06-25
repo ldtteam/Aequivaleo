@@ -1,13 +1,15 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.graph;
 
 import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.jgrapht.graph.DirectedWeightedPseudograph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SimpleAnalysisGraph<V, E> extends DirectedWeightedMultigraph<V, E>
+public class SimpleAnalysisGraph<V, E> extends SimpleDirectedWeightedGraph<V, E>
 {
     public SimpleAnalysisGraph(final Supplier<E> edgeSupplier)
     {
@@ -39,5 +41,23 @@ public class SimpleAnalysisGraph<V, E> extends DirectedWeightedMultigraph<V, E>
         }
 
         return "(" + vertexSet + ", " + renderedEdges + ")";
+    }
+
+    @Override
+    public E addEdge(V sourceVertex, V targetVertex) {
+        if (getEdge(sourceVertex, targetVertex) != null) {
+            throw new IllegalArgumentException("Edge already exists");
+        }
+
+        return super.addEdge(sourceVertex, targetVertex);
+    }
+
+    @Override
+    public boolean addEdge(V sourceVertex, V targetVertex, E e) {
+        if (getEdge(sourceVertex, targetVertex) != null) {
+            throw new IllegalArgumentException("Edge already exists");
+        }
+
+        return super.addEdge(sourceVertex, targetVertex, e);
     }
 }

@@ -49,7 +49,7 @@ public class GenericRecipeDataSerializer implements JsonSerializer<GenericRecipe
         final JsonArray conditionsArray = object.has("conditions") ? object.get("conditions").getAsJsonArray() : new JsonArray();
 
         final Set<IRecipeIngredient> inputs = context.deserialize(object.get("input"), IngredientSetSerializer.HANDLED_TYPE);
-        final Set<ICompoundContainer<?>> requiredKnownOutputs = object.has("residue") ? context.deserialize(object.get("residue"), CompoundContainerSetSerializer.HANDLED_TYPE) : Collections
+        final Set<IRecipeIngredient> requiredKnownOutputs = object.has("residue") ? context.deserialize(object.get("residue"), IngredientSetSerializer.HANDLED_TYPE) : Collections
                                                                                                                                                                                     .emptySet();
         final Set<ICompoundContainer<?>> outputs = context.deserialize(object.get("output"), CompoundContainerSetSerializer.HANDLED_TYPE);
 
