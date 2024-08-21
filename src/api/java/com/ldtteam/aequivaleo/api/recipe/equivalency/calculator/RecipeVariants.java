@@ -12,26 +12,64 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Represents all variants of a recipe, based on its ingredients and output.
+ * <p>
+ *     This class is used to calculate all possible variants of a recipe, based on the ingredients and output.
+ *     It will take into account different remainders of an ingredient and split the recipe into multiple variants.
+ * </p>
+ *
+ * @param input The input ingredients.
+ * @param output The output of the recipe.
+ */
 public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?> output) {
 
+    /**
+     * Creates a new recipe variants collection.
+     *
+     * @param recipe The recipe to create the variants for.
+     * @param access The registry access.
+     */
     public RecipeVariants(Recipe<?> recipe, RegistryAccess access) {
         this(Arrays.asList(recipe.getIngredients().toArray(new Ingredient[0])), ICompoundContainer.from(recipe.getResultItem(access), recipe.getResultItem(access).getCount()));
     }
 
+    /**
+     * Represents a counted ingredient.
+     * <p>
+     *     This class is used to represent an ingredient and the amount of times it is used in a recipe.
+     * </p>
+     *
+     * @param representative The representative ingredient.
+     * @param count The amount of times the ingredient is used.
+     */
     public record CountedIngredient(Ingredient representative, int count) {
         CountedIngredient(Collection<Ingredient> ingredients) {
             this(ingredients.stream().findFirst().orElseThrow(), ingredients.size());
         }
     }
 
+    /**
+     * Represents an input with a remainder.
+     * <p>
+     *     This class is used to represent an input ingredient and the remainder of the ingredient.
+     *     A remainder is the element that is left after the ingredient is used in a recipe.
+     *     For example, a bucket is the remainder of a water bucket.
+     * </p>
+     *
+     * @param input The input ingredient.
+     * @param remainder The remainder of the ingredient.
+     */
     public record InputWithRemainder(IRecipeIngredient input, IRecipeIngredient remainder) {
     }
 
+    /**
+     * Get all variants of the recipe.
+     *
+     * @return The recipe variants.
+     */
     public Collection<RecipeVariant> variants() {
         final Collection<Collection<Ingredient>> groupedIngredients = GroupingUtils.groupByUsingList(input.stream().filter(ingredient -> ingredient.getItems().length > 0).toList(), IngredientEquivalency::new);
         final Collection<Collection<InputWithRemainder>> explodedIngredients = groupedIngredients.stream()
@@ -55,6 +93,17 @@ public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?>
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Explode an ingredient into its components.
+     * <p>
+     *     This method will explode an ingredient into its components.
+     *     If an ingredient has different inputs, then multiple ingredients will be returned if a different remainder is discovered.
+     * </p>
+     *
+     * @param ingredient The ingredient to explode.
+     * @param count The amount of times the ingredient is used.
+     * @return The exploded ingredient.
+     */
     public Set<InputWithRemainder> explodeIngredient(Ingredient ingredient, int count) {
         final Collection<Collection<ItemStack>> ingredientItemsByRemainder = GroupingUtils.groupByUsingSet(Arrays.asList(ingredient.getItems()), RemainderEquivalency::new);
 
@@ -72,6 +121,16 @@ public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?>
 
     }
 
+    /**
+     * Explode a collection of ingredients into all possible variants.
+     * <p>
+     *     This method will explode a collection of ingredients into all possible variants.
+     *     It will take into account that multiple ingredients can be used in a recipe.
+     * </p>
+     *
+     * @param ingredients The ingredients to explode.
+     * @return The exploded variants.
+     */
     public Collection<Collection<InputWithRemainder>> explodeVariants(Collection<Collection<InputWithRemainder>> ingredients) {
         if (ingredients.isEmpty()) {
             return new HashSet<>();
@@ -86,6 +145,17 @@ public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?>
         return explodeVariants(firstIngredient, restIngredients);
     }
 
+    /**
+     * Explode a collection of ingredients into all possible variants.
+     * <p>
+     *     This method will explode a collection of ingredients into all possible variants.
+     *     It will take into account that multiple ingredients can be used in a recipe.
+     * </p>
+     *
+     * @param me The ingredients to explode.
+     * @param remainder The remainder of the ingredients.
+     * @return The exploded variants.
+     */
     public Collection<Collection<InputWithRemainder>> explodeVariants(Collection<InputWithRemainder> me, Collection<Collection<InputWithRemainder>> remainder) {
         if (remainder.isEmpty()) {
             final Collection<Collection<InputWithRemainder>> exploded = new ArrayList<>();
@@ -109,66 +179,9 @@ public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?>
     }
 
     /**
-     * Construct an {@code IllegalStateException} with appropriate message.
-     *
-     * @param k the duplicate key
-     * @param u 1st value to be accumulated/merged
-     * @param v 2nd value to be accumulated/merged
+     * Wrapper class that helps to accumulate ingredients into maps and properly compare them to each other.
      */
-    private static IllegalStateException duplicateKeyException(
-            Object k, Object u, Object v) {
-        return new IllegalStateException(String.format(
-                "Duplicate key %s (attempted merging values %s and %s)",
-                k, u, v));
-    }
-
-    /**
-     * {@code BinaryOperator<Map>} that merges the contents of its right
-     * argument into its left argument, throwing {@code IllegalStateException}
-     * if duplicate keys are encountered.
-     *
-     * @param <K> type of the map keys
-     * @param <V> type of the map values
-     * @param <M> type of the map
-     * @return a merge function for two maps
-     */
-    private static <K, V, M extends Map<K, V>>
-    BinaryOperator<M> uniqKeysMapMerger() {
-        return (m1, m2) -> {
-            for (Map.Entry<K, V> e : m2.entrySet()) {
-                K k = e.getKey();
-                V v = Objects.requireNonNull(e.getValue());
-                V u = m1.putIfAbsent(k, v);
-                if (u != null) throw duplicateKeyException(k, u, v);
-            }
-            return m1;
-        };
-    }
-
-    /**
-     * {@code BiConsumer<Map, T>} that accumulates (key, value) pairs
-     * extracted from elements into the map, throwing {@code IllegalStateException}
-     * if duplicate keys are encountered.
-     *
-     * @param keyMapper   a function that maps an element into a key
-     * @param valueMapper a function that maps an element into a value
-     * @param <T>         type of elements
-     * @param <K>         type of map keys
-     * @param <V>         type of map values
-     * @return an accumulating consumer
-     */
-    private static <T, K, V>
-    BiConsumer<Map<K, V>, T> uniqKeysMapAccumulator(Function<? super T, ? extends K> keyMapper,
-                                                    Function<? super T, ? extends V> valueMapper) {
-        return (map, element) -> {
-            K k = keyMapper.apply(element);
-            V v = Objects.requireNonNull(valueMapper.apply(element));
-            V u = map.putIfAbsent(k, v);
-            if (u != null) throw duplicateKeyException(k, u, v);
-        };
-    }
-
-
+    @SuppressWarnings("deprecation")
     private final static class IngredientEquivalency {
 
         private final ItemStack[] items;
@@ -207,6 +220,10 @@ public record RecipeVariants(Collection<Ingredient> input, ICompoundContainer<?>
         }
     }
 
+    /**
+     * Wrapper class that helps to accumulate remainders into maps and properly compare them to each other.
+     */
+    @SuppressWarnings("deprecation")
     private final static class RemainderEquivalency {
 
         private final ItemStack items;

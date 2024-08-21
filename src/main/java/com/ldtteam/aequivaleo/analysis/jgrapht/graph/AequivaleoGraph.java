@@ -1,5 +1,6 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.graph;
 
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.ICoreNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
@@ -36,6 +37,12 @@ public class AequivaleoGraph extends SimpleAnalysisGraph<INode, IEdge> implement
     public void clearIncomingEdgesOf(INode node) {
         final Set<IEdge> incomingEdges = new HashSet<>(incomingEdgesOf(node));
         incomingEdges.forEach(this::removeEdge);
+
+        if (node instanceof ICoreNode coreNode) {
+            coreNode.inputs()
+                    .forEach(input -> input.removeOutput(coreNode));
+            coreNode.clearInputs();
+        }
     }
 
     @Override

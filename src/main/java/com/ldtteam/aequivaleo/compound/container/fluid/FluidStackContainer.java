@@ -87,6 +87,11 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         public double getInnateCount(@NotNull FluidStack inputInstance) {
             return inputInstance.getAmount();
         }
+
+        @Override
+        public boolean areContentsEqual(@NotNull FluidStack left, @NotNull FluidStack right) {
+            return FluidStackUtils.compareFluidStacksIgnoreStackSize(left, right);
+        }
     }
 
     private final FluidStack stack;

@@ -140,6 +140,11 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
         return new CompoundInstance(getType(), getAmount() * scale);
     }
 
+    /**
+     * Checks if this instance is empty.
+     *
+     * @return True if the amount is 0, false otherwise.
+     */
     public boolean isEmpty() {
         return getAmount() == 0;
     }

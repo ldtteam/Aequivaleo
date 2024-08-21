@@ -31,4 +31,15 @@ public abstract class CoreNode extends Node implements ICoreNode  {
     public Collection<? extends ICoreNode> outputs() {
         return ObjectSets.unmodifiable(outputs.keySet());
     }
+
+    @Override
+    public void clearInputs() {
+        inputs.clear();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void removeOutput(ICoreNode input) {
+        outputs.remove(input);
+    }
 }

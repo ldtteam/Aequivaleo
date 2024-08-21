@@ -105,6 +105,15 @@ public final class GroupingUtils
         return groups.asMap();
     }
 
+    /**
+     * Groups the source collection by the extractor function and returns the groups as a stream of streams.
+     *
+     * @param items The source collection.
+     * @param extractor The extractor function.
+     * @param <T> The type of the source collection.
+     * @param <O> The type of the extracted value.
+     * @return The grouped stream.
+     */
     public static <T, O> Stream<Stream<T>> groupByDynamically(final Stream<T> items, Function<T, O> extractor) {
         record GroupedStreams<T, O>(Map<O, Stream.Builder<T>> streams) {}
 

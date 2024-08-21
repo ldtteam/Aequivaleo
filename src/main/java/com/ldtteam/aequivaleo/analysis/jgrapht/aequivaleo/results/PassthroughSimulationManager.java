@@ -7,7 +7,7 @@ public record PassthroughSimulationManager(INode[] nodes) implements ISimulation
 
 
     @Override
-    public void push() throws ResultsAlreadyPolledException {
+    public void push() {
         for (INode node : nodes) {
             if (node instanceof ISimulateableNode simulateableNode) {
                 simulateableNode.simulationManager().push();
@@ -16,7 +16,7 @@ public record PassthroughSimulationManager(INode[] nodes) implements ISimulation
     }
 
     @Override
-    public void pop() throws ResultsAlreadyPolledException {
+    public void pop() {
         for (INode node : nodes) {
             if (node instanceof ISimulateableNode simulateableNode) {
                 simulateableNode.simulationManager().pop();
@@ -25,7 +25,7 @@ public record PassthroughSimulationManager(INode[] nodes) implements ISimulation
     }
 
     @Override
-    public void complete() throws ResultsAlreadyPolledException {
+    public void complete() {
         for (INode node : nodes) {
             if (node instanceof ISimulateableNode simulateableNode) {
                 simulateableNode.simulationManager().complete();
@@ -34,7 +34,7 @@ public record PassthroughSimulationManager(INode[] nodes) implements ISimulation
     }
 
     @Override
-    public void commit() throws ResultsAlreadyPolledException {
+    public void commit() {
         for (INode node : nodes) {
             if (node instanceof ISimulateableNode simulateableNode) {
                 simulateableNode.simulationManager().commit();

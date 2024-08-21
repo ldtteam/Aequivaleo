@@ -50,7 +50,7 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
         for (final ICompoundContainerFactory<?> iCompoundContainerFactory : getRegistry())
         {
             typedRegistryEntries.add(
-              new ExactTypedRegistryEntry<>(iCompoundContainerFactory.getCanHandlePredicate(), iCompoundContainerFactory)
+              new ExactTypedRegistryEntry<>(iCompoundContainerFactory.getCanHandleContents(), iCompoundContainerFactory)
             );
         }
     }
@@ -110,6 +110,31 @@ public class CompoundContainerFactoryManager implements ICompoundContainerFactor
                 .orElseThrow(() -> new IllegalArgumentException("Unknown wrapping type: " + gameObject.getClass()));
     }
 
+    @Override
+    public boolean areContainerContentsEqual(@NotNull ICompoundContainer<?> left, @NotNull ICompoundContainer<?> right) {
+        final Optional<? extends ICompoundContainerFactory<?>> leftFactoryCandidate = getFactoryFor(left.getContents());
+        final Optional<? extends ICompoundContainerFactory<?>> rightFactoryCandidate = getFactoryFor(right.getContents());
+
+        if (leftFactoryCandidate.isEmpty() || rightFactoryCandidate.isEmpty())
+            return false;
+
+        final ICompoundContainerFactory<?> leftFactory = leftFactoryCandidate.get();
+        final ICompoundContainerFactory<?> rightFactory = rightFactoryCandidate.get();
+
+        if (leftFactory != rightFactory)
+            return false;
+
+        return areContainerContentsEqualInternal(leftFactory, left.getContents(), right.getContents());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> boolean areContainerContentsEqualInternal(@NotNull ICompoundContainerFactory<T> factory, Object left, Object right) {
+        try {
+            return factory.areContentsEqual((T) left, (T) right);
+        } catch (ClassCastException ignored) {
+            return false;
+        }
+    }
 
     /**
      * Internal method to get a factory of a given type.

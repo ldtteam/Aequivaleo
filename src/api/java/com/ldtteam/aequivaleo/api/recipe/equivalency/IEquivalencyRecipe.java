@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.SortedSetComparator;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +57,28 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
      * @return {@code True} when valid.
      */
     default boolean isValid() {
-        return !getInputs().isEmpty() &&
+        final boolean contentsValid = !getInputs().isEmpty() &&
                  !getOutputs().isEmpty() &&
                  getInputs().stream().allMatch(IRecipeIngredient::isValid) &&
                  getRequiredKnownOutputs().stream().allMatch(IRecipeIngredient::isValid) &&
                  getOutputs().stream().allMatch(ICompoundContainer::isValid);
+
+        if (!contentsValid)
+            return false;
+
+        //If we have a duplicate between input and output, regardless of size, we are not valid!
+        for (IRecipeIngredient input : getInputs()) {
+            for (ICompoundContainer<?> candidate : input.getCandidates()) {
+                for (ICompoundContainer<?> output : getOutputs()) {
+                    if (ICompoundContainerFactoryManager.getInstance().areContainerContentsEqual(
+                            candidate, output
+                    ))
+                        return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override

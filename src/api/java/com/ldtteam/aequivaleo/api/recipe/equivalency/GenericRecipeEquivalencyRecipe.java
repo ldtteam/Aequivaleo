@@ -20,13 +20,30 @@ import java.util.TreeSet;
  */
 public class GenericRecipeEquivalencyRecipe extends BaseEquivalencyRecipe implements IGenericRecipeEquivalencyRecipe {
 
+    /**
+     * The name of the recipe.
+     */
     private final ResourceLocation name;
 
+    /**
+     * Creates a new generic recipe equivalency recipe.
+     *
+     * @param inputs               The inputs.
+     * @param requiredKnownOutputs The required known outputs.
+     * @param outputs              The outputs.
+     * @param name                 The name of the recipe.
+     */
     public GenericRecipeEquivalencyRecipe(Set<IRecipeIngredient> inputs, Set<IRecipeIngredient> requiredKnownOutputs, Set<ICompoundContainer<?>> outputs, ResourceLocation name) {
         super(inputs, requiredKnownOutputs, outputs);
         this.name = name;
     }
 
+    /**
+     * Creates a new generic recipe equivalency recipe.
+     *
+     * @param variant The recipe variant.
+     * @param name    The name of the recipe.
+     */
     public GenericRecipeEquivalencyRecipe(RecipeVariant variant, ResourceLocation name) {
         super(variant);
         this.name = name;

@@ -7,8 +7,9 @@ import java.util.Collection;
 
 /**
  * A marker interface for nodes which represent a recipe.
+ * Recipes are always free nodes, 
  */
-public interface IRecipeNode extends ICoreNode
+public interface IRecipeNode extends ICoreNode, IFreeNode
 {
     /**
      * Gives access to the recipe that this node represents.

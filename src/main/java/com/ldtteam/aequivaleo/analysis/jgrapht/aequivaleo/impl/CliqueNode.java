@@ -36,18 +36,8 @@ public final class CliqueNode extends InnerNode {
     @Override
     public void analyze(IAnalysisState state) {
         super.analyze(state);
-
-        startSimulation();
         
         final IAnalysisState simulationState = state.simulate();
-
-        //First go as deep as possible, we need this because we need to know the results of the inner nodes.
-        //It is not perfect as they might not be fully analyzed yet, and/or even depend on us.
-        for (INode node : nodes()) {
-            if (node instanceof IInnerNode innerNode) {
-                innerNode.analyze(simulationState);
-            }
-        }
 
         final List<INode> analysisStartingPoints = new ArrayList<>(nodes().length);
         determineStartingPoints(analysisStartingPoints);
@@ -70,8 +60,6 @@ public final class CliqueNode extends InnerNode {
                 container::simulate,
                 container::results
         );
-
-        completeSimulation();
 
         for (INode node : nodes()) {
             if (node instanceof IResultsOwningNode resultsOwningNode) {

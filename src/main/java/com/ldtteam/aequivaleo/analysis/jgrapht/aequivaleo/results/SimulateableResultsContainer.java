@@ -25,17 +25,10 @@ public class SimulateableResultsContainer implements IResultsContainer {
     }
 
     @Override
-    public void push() throws ResultsAlreadyPolledException {
-        if (hasResults()) {
-            throw new ResultsAlreadyPolledException(node);
-        }
-
-        if (simulations.isEmpty())
-        {
+    public void push() {
+        if (simulations.isEmpty()) {
             simulations.push(new SimulationState(Collections.emptySet()));
-        }
-        else
-        {
+        } else {
             simulations.push(simulations.peek().fork());
         }
     }
@@ -54,13 +47,10 @@ public class SimulateableResultsContainer implements IResultsContainer {
     }
 
     @Override
-    public void complete() throws ResultsAlreadyPolledException {
+    public void complete() {
         final SimulationState state = simulations.peek();
-        if (state == null)
+        if (state == null) {
             throw new IllegalStateException("No simulation state to complete.");
-
-        if (hasResults()) {
-            throw new ResultsAlreadyPolledException(node);
         }
 
         if (simulations.size() > 1) {
@@ -71,51 +61,56 @@ public class SimulateableResultsContainer implements IResultsContainer {
     }
 
     @Override
-    public void commit() throws ResultsAlreadyPolledException {
-        if (hasResults()) {
-            throw new ResultsAlreadyPolledException(node);
+    public void commit() {
+        if (simulations.isEmpty()) {
+            throw new IllegalStateException("No simulation state to commit.");
         }
 
-        if (simulations.isEmpty())
-            throw new IllegalStateException("No simulation state to commit.");
-
-        if (simulations.size() == 1)
+        if (simulations.size() == 1) {
             throw new IllegalStateException("Cannot commit simulation state without a parent state.");
+        }
 
         final SimulationState state = simulations.pop();
         Objects.requireNonNull(simulations.peek()).offer(state.results());
     }
 
     @Override
-    public void offer(CompoundInstanceSet offer) throws ResultsAlreadyPolledException {
-        if (simulations.isEmpty())
+    public void offer(CompoundInstanceSet offer) {
+        if (hasResults() && !results.equals(offer)) {
+            throw new IllegalStateException("Cannot offer results to a simulation state with results.");
+        }
+
+        if (simulations.isEmpty()) {
             throw new IllegalStateException("No simulation state to offer results to.");
+        }
 
         simulations.peek().offer(offer);
     }
 
     @Override
-    public void base(CompoundInstanceSet base) throws ResultsAlreadyPolledException {
-        if (hasResults()) {
-            throw new ResultsAlreadyPolledException(node);
+    public void base(CompoundInstanceSet base) {
+        if (hasResults() && !results.equals(base)) {
+            throw new IllegalStateException("Cannot base results to a simulation state with results.");
         }
 
-        if (simulations.isEmpty())
+        if (simulations.isEmpty()) {
             throw new IllegalStateException("No simulation state to set base values to.");
+        }
 
         simulations.peek().base(base);
     }
 
     @Override
-    public void force(CompoundInstanceSet results) throws ResultsAlreadyPolledException {
-        if (hasResults()) {
-            throw new ResultsAlreadyPolledException(node);
+    public void force(CompoundInstanceSet force) {
+        if (hasResults() && !results.equals(force)) {
+            throw new IllegalStateException("Cannot force results to a simulation state with results.");
         }
 
-        if (simulations.isEmpty())
+        if (simulations.isEmpty()) {
             throw new IllegalStateException("No simulation state to force results to.");
+        }
 
-        simulations.peek().force(results);
+        simulations.peek().force(force);
     }
 
     @Override

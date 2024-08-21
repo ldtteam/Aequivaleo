@@ -5,15 +5,17 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IRecipeNode;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 public class CliqueDetectionEdge<N> extends DefaultWeightedEdge implements IEdge
 {
 
-    private final Set<N> intermediaryNodes;
+    private final List<N> intermediaryNodes;
 
-    public CliqueDetectionEdge(Set<N> intermediaryNodes) {
+    public CliqueDetectionEdge(List<N> intermediaryNodes) {
         this.intermediaryNodes = intermediaryNodes;
     }
 
@@ -23,9 +25,9 @@ public class CliqueDetectionEdge<N> extends DefaultWeightedEdge implements IEdge
         return 1;
     }
 
-    public Set<N> getIntermediaryNodes()
+    public List<N> getIntermediaryNodes()
     {
-        return intermediaryNodes;
+        return new ArrayList<>(intermediaryNodes);
     }
 
     @Override

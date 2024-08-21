@@ -753,6 +753,73 @@ public class JGraphTBasedCompoundAnalyzerTest
     }
 
     @Test
+    public void testGenerateComplexCliqueWithInitialVariantAndDirectEquivalence() {
+        final String glassPattern = "%sGlass";
+        final String dyePattern = "%sDye";
+
+        final String uncoloredGlass = String.format(glassPattern, "uncolored");
+
+        for (Color outer : Color.values()) {
+            final String outerName = outer.getSerializedName();
+            final String outerDye = String.format(dyePattern, outerName);
+            final String outerGlass = String.format(glassPattern, outerName);
+
+            for (Color inner : Color.values()) {
+                if (inner.equals(outer))
+                    continue;
+
+                final String innerName = inner.getSerializedName();
+                final String innerGlass = String.format(glassPattern, innerName);
+
+                addConversion(1, outerGlass, List.of(innerGlass, outerDye));
+            }
+
+            input.registerValue(outerDye, s(ci(128)));
+        }
+
+        for (Color outer : Color.values()) {
+            final String outerName = outer.getSerializedName();
+            final String outerGlass = String.format(glassPattern, outerName);
+
+            for (Color inner : Color.values()) {
+                if (inner.equals(outer))
+                    continue;
+
+                final String innerName = inner.getSerializedName();
+                final String innerGlass = String.format(glassPattern, innerName);
+
+                addConversion(1, outerGlass, List.of(innerGlass));
+            }
+
+            addConversion(1, outerGlass, List.of(uncoloredGlass));
+            addConversion(1, uncoloredGlass, List.of(outerGlass));
+        }
+
+        for (Color inner : Color.values()) {
+            final String innerName = inner.getSerializedName();
+            final String innerGlass = String.format(glassPattern, innerName);
+            final String innerDye = String.format(dyePattern, inner.getSerializedName());
+
+            addConversion(1, innerGlass, List.of(uncoloredGlass, innerDye));
+        }
+
+        input.registerValue(uncoloredGlass, s(ci(64)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        for (Color value : Color.values()) {
+            final String dyeName = value.getSerializedName();
+            final String glass = glassPattern.formatted(dyeName);
+            final String dye = dyePattern.formatted(dyeName);
+
+            assertEquals("Dye: %s changed from pre-determined value!".formatted(dyeName), s(ci(128)), result.get(cc(dye)));
+            assertEquals("Glass: %s did not get the lowest calculable value of the clique.".formatted(dyeName), s(ci(64)), result.get(cc(glass)));
+        }
+
+        assertEquals("Glass: uncolored did not get the lowest calculable value of the clique.", s(ci(64)), result.get(cc(uncoloredGlass)));
+    }
+
+    @Test
     public void testGenerateBlasting() {
         final String ironOre = "iron_ore";
         final String ironIngot = "iron_ingot";

@@ -13,9 +13,8 @@ public interface IResultsContainer extends ISimulationManager {
     /**
      * Offer a set of results.
      * @param offer the results to offer.
-     * @throws ResultsAlreadyPolledException if results have already been polled and as such no new results can be offered.
      */
-    void offer(CompoundInstanceSet offer) throws ResultsAlreadyPolledException;
+    void offer(CompoundInstanceSet offer);
 
     /**
      * Sets the base values for the simulation.
@@ -26,16 +25,14 @@ public interface IResultsContainer extends ISimulationManager {
      * <p>
      *     Note that different simulation states can have different base values.
      * </p>
-     * @param base the base values.
-     * @throws ResultsAlreadyPolledException if results have already been polled and as such no new results can be set.
+     * @param base the base values. 
      */
-    void base(CompoundInstanceSet base) throws ResultsAlreadyPolledException;
+    void base(CompoundInstanceSet base);
 
     /**
-     * Sets the results.
-     * @throws ResultsAlreadyPolledException if results have already been polled and as such no new results can be set.
+     * Sets the results. 
      */
-    void force(CompoundInstanceSet results) throws ResultsAlreadyPolledException;
+    void force(CompoundInstanceSet results);
 
     /**
      * Simulate the results.

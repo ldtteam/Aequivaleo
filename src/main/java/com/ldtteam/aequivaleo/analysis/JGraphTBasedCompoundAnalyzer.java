@@ -13,8 +13,8 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.cache.CacheKey;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.JGraphTCliqueReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.connection.IConnectionFinder;
 import com.ldtteam.aequivaleo.analysis.jgrapht.connection.QueueBasedConnectionFinder;
-import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.DFSDirectCycleReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.DFSDirectCycleReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.ISearchAction;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.trace.ICycleReducingTracer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
@@ -34,10 +34,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.connectivity.ConnectivityInspector;
 
 import java.util.*;
-import java.util.function.Function;
 
 public class JGraphTBasedCompoundAnalyzer {
 
@@ -73,6 +71,11 @@ public class JGraphTBasedCompoundAnalyzer {
 
         for (IEquivalencyRecipe recipe : EquivalencyRecipeRegistry.getInstance(primaryOwner.getIdentifier())
                 .get()) {
+            if (!recipe.isValid()) {
+                LOGGER.debug("Skipping invalid recipe: {}", recipe);
+                continue;
+            }
+
             if (recipe.getInputs().isEmpty()) {
                 LOGGER.warn(String.format("Skipping recipe with no ingredients: %s", recipe));
                 continue;
@@ -209,7 +212,7 @@ public class JGraphTBasedCompoundAnalyzer {
 
         LOGGER.warn("Starting clique reduction.");
 
-        final JGraphTCliqueReducer<IGraph, INode, IEdge> cliqueReducer = new JGraphTCliqueReducer<>((Function<Collection<? extends INode>, INode>) CliqueNode::new);
+        final JGraphTCliqueReducer cliqueReducer = new JGraphTCliqueReducer(CliqueNode::new);
 
         cliqueReducer.reduce(recipeGraph);
 
@@ -392,7 +395,7 @@ public class JGraphTBasedCompoundAnalyzer {
         Set<INode> set = new HashSet<>();
         for (INode v : graph
                 .vertexSet()) {
-            if (graph.incomingEdgesOf(v).isEmpty()) {
+            if (!(v instanceof IFreeNode) && graph.incomingEdgesOf(v).isEmpty()) {
                 set.add(v);
             }
         }

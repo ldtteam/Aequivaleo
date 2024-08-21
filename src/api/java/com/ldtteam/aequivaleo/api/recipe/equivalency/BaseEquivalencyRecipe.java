@@ -11,6 +11,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+/**
+ * A base implementation of an equivalency recipe.
+ */
 public class BaseEquivalencyRecipe implements IEquivalencyRecipe {
 
     /**

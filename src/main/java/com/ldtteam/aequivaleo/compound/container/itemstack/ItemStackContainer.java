@@ -87,6 +87,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         public double getInnateCount(@NotNull ItemStack inputInstance) {
             return inputInstance.getCount();
         }
+
+        @Override
+        public boolean areContentsEqual(@NotNull ItemStack left, @NotNull ItemStack right) {
+            return ItemStackUtils.compareItemStacksIgnoreStackSize(left, right);
+        }
     }
 
     private final ItemStack stack;

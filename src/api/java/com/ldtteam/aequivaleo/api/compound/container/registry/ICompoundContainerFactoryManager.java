@@ -72,4 +72,13 @@ public interface ICompoundContainerFactoryManager extends JsonDeserializer<IComp
      */
     @NotNull
     <T> ICompoundContainer<T> wrapInContainer(@NotNull T gameObject) throws IllegalArgumentException;
+
+    /**
+     * Checks if the given containers are equal except for their count.
+     *
+     * @param left The left container to check.
+     * @param right The right container to check.
+     * @return True when they are equal in context, false otherwise
+     */
+    boolean areContainerContentsEqual(@NotNull ICompoundContainer<?> left, @NotNull ICompoundContainer<?> right);
 }

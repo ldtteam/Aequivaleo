@@ -41,4 +41,16 @@ public interface ICoreNode extends INode {
      * @return The outputs.
      */
     Collection<? extends ICoreNode> outputs();
+
+    /**
+     * Removes an input from this node.
+     *
+     * @param input The input node.
+     */
+    void removeOutput(ICoreNode input);
+
+    /**
+     * Removes all inputs from this node.
+     */
+    void clearInputs();
 }

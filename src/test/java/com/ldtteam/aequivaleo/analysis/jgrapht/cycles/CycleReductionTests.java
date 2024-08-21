@@ -312,7 +312,7 @@ public class CycleReductionTests {
 
         cyclesReducer.reduce(graph, s);
 
-        Assert.assertEquals("([s, [[a, [b, c, d, e, f, g], h], i, j, k]], [7=(s,[[a, [b, c, d, e, f, g], h], i, j, k])])", graph.toString());
+        Assert.assertEquals("([s, [a, [[b, c, d, e, f, g], i, j, k], h]], [6=(s,[a, [[b, c, d, e, f, g], i, j, k], h])])", graph.toString());
     }
 
 
@@ -347,7 +347,7 @@ public class CycleReductionTests {
 
         cyclesReducer.reduce(graph, s);
 
-        Assert.assertEquals("([s, m, [c, a, b]], [sm=(s,m), 0=(s,[c, a, b]), 1=(m,[c, a, b])])", graph.toString());
+        Assert.assertEquals("([s, m, [a, b, c]], [sm=(s,m), 0=(s,[a, b, c]), 1=(m,[a, b, c])])", graph.toString());
     }
 
 }

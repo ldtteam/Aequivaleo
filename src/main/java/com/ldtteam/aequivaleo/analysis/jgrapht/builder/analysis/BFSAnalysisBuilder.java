@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis;
 
 import com.ldtteam.aequivaleo.analysis.StatCollector;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IFreeNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.builder.depth.BFSDepthMapBuilder;
@@ -49,11 +50,16 @@ public class BFSAnalysisBuilder implements IAnalysisBuilder {
 
     @Override
     public void analyse(StatCollector statCollector) {
-        final IDepthMapBuilder<INode> depthMapBuilder = new BFSDepthMapBuilder(iteratingGraph, sourceNode);
+        final IDepthMapBuilder<INode> depthMapBuilder = new BFSDepthMapBuilder<>(iteratingGraph, sourceNode);
         final Map<INode, Integer> depthMap = depthMapBuilder.calculateDepthMap();
 
         final List<INode> toProcess = new ArrayList<>(iteratingGraph.vertexSet());
         final IAnalysisState state = new SimpleAnalysisState(statCollector, false);
+
+        //Now we need to remove those nodes that are not in the depth map
+        toProcess.removeIf(node -> !depthMap.containsKey(node));
+
+        //Sort the nodes by depth and type
         toProcess.sort(Comparator.comparing((Function<INode, Integer>) depthMap::get).thenComparing(INode::type));
         for (INode node : toProcess) {
             node.analyze(state);

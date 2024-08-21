@@ -15,6 +15,12 @@ import java.util.SortedSet;
  */
 public class SimpleIngredientBuilder {
 
+    /**
+     * Creates a simple ingredient from a given container.
+     *
+     * @param container The container to create an ingredient from.
+     * @return The simple ingredient.
+     */
     public static IRecipeIngredient simple(ICompoundContainer<?> container) {
         return new SimpleIngredientBuilder().from(container).createIngredient();
     }
