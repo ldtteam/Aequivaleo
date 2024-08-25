@@ -46,7 +46,7 @@ public class SimpleAnalysisGraph<V, E> extends SimpleDirectedWeightedGraph<V, E>
     @Override
     public E addEdge(V sourceVertex, V targetVertex) {
         if (getEdge(sourceVertex, targetVertex) != null) {
-            throw new IllegalArgumentException("Edge already exists");
+            throw new DuplicateEdgeException();
         }
 
         return super.addEdge(sourceVertex, targetVertex);

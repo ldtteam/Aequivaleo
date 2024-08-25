@@ -1,6 +1,5 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.impl;
 
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IInnerNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IRecipeNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IResultsOwningNode;
@@ -39,8 +38,7 @@ public final class CliqueNode extends InnerNode {
         
         final IAnalysisState simulationState = state.simulate();
 
-        final List<INode> analysisStartingPoints = new ArrayList<>(nodes().length);
-        determineStartingPoints(analysisStartingPoints);
+        final List<INode> analysisStartingPoints = determineStartingPoints();
 
         //Next collect all candidates
         final Set<CompoundInstanceSet> candidates = analysisStartingPoints
@@ -64,12 +62,15 @@ public final class CliqueNode extends InnerNode {
         for (INode node : nodes()) {
             if (node instanceof IResultsOwningNode resultsOwningNode) {
                 resultsOwningNode.results().force(completeSimulation);
+                resultsOwningNode.analyze(state);
             }
         }
     }
 
     @Override
-    protected void determineStartingPoints(List<INode> analysisStartingPoints) {
+    protected List<INode> determineStartingPoints() {
+        final List<INode> analysisStartingPoints = new ArrayList<>(nodes().length);
+
         //First check for container nodes with results
         for (INode node : nodes()) {
             if (node instanceof IResultsOwningNode resultsOwningNode && !resultsOwningNode.results().simulate().isEmpty()) {
@@ -79,7 +80,7 @@ public final class CliqueNode extends InnerNode {
 
         //If we have any, we take those!
         if (!analysisStartingPoints.isEmpty()) {
-            return;
+            return analysisStartingPoints;
         }
 
         //If we don't have any, we take all nodes that are recipes, who's inputs all have results
@@ -90,5 +91,7 @@ public final class CliqueNode extends InnerNode {
                 }
             }
         }
+
+        return analysisStartingPoints;
     }
 }

@@ -7,10 +7,21 @@ import org.jgrapht.Graph;
 //Marker interface indicating that this is a possible component of a graph.
 public interface IAnalysisGraphNode<G extends Graph<S, E>, N, S extends IAnalysisGraphNode<G, N, S, E>, E extends IAnalysisEdge>
 {
+    /**
+     * Analyze the node.
+     *
+     * @param state The analysis state, which can be used to retrieve information about the analysis.
+     */
     void analyze(final IAnalysisState state);
 
+    /**
+     * @return The type of the node.
+     */
     NodeType type();
 
+    /**
+     * The type of the node.
+     */
     enum NodeType
     {
         SOURCE,

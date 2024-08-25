@@ -4,8 +4,6 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results.ISimulationManager;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results.PassthroughSimulationManager;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.utils.NodeUtils;
-import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisState;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -29,7 +27,7 @@ public abstract class InnerNode extends Node implements IInnerNode {
     }
 
     @Override
-    public ICoreNode[] flatten() {
+    public Iterator<ICoreNode> flatten() {
         return NodeUtils.flatten(nodes());
     }
 
@@ -38,23 +36,32 @@ public abstract class InnerNode extends Node implements IInnerNode {
         return simulationManager;
     }
 
-    protected void determineStartingPoints(List<INode> analysisStartingPoints) {
+    @Override
+    public boolean requiresCalculation() {
+        final List<INode> analysisStartingPoints = determineStartingPoints();
+
+        if (analysisStartingPoints.isEmpty()) {
+            return false;
+        }
+
+        for (INode analysisStartingPoint : analysisStartingPoints) {
+            if (analysisStartingPoint instanceof ISimulateableNode simulateableNode && simulateableNode.requiresCalculation()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected List<INode> determineStartingPoints() {
+        final List<INode> analysisStartingPoints = new ArrayList<>(nodes().length);
         for (INode node : nodes()) {
-            if (node instanceof IResultsOwningNode resultsOwningNode && !resultsOwningNode.results().simulate().isEmpty()) {
+            if (node.canPropagate()) {
                 analysisStartingPoints.add(node);
             }
         }
 
-        if (analysisStartingPoints.isEmpty()) {
-            for (INode node : nodes()) {
-                if (!(node instanceof IRecipeNode)) {
-                    analysisStartingPoints.add(node);
-                }
-            }
-        }
-    }
-
-    protected record PreparationResult(IAnalysisState simulatedState, List<INode> analysisStartingPoints) {
+        return analysisStartingPoints;
     }
 
     protected void startSimulation() {
@@ -70,20 +77,6 @@ public abstract class InnerNode extends Node implements IInnerNode {
             if (coreNode instanceof ISimulateableNode simulateableNode) {
                 simulateableNode.simulationManager().commit();
             }
-        }
-    }
-
-    protected void completeSimulation() {
-        for (INode coreNode : nodes()) {
-            if (coreNode instanceof ISimulateableNode simulateableNode) {
-                simulateableNode.simulationManager().pop();
-            }
-        }
-    }
-
-    protected void analyzeSimulation(IAnalysisState state) {
-        for (INode node : nodes()) {
-            node.analyze(state);
         }
     }
 

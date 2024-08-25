@@ -10,4 +10,12 @@ import java.util.Set;
  */
 public interface INode extends IAnalysisGraphNode<IGraph, Set<CompoundInstance>, INode, IEdge>
 {
+
+    /**
+     * @return True when this node has results calculated that can be propagated, false otherwise.
+     * @implSpec Default implementation returns false.
+     */
+    default boolean canPropagate() {
+        return false;
+    }
 }

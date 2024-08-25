@@ -880,6 +880,73 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc(ironSword)));
     }
 
+    @Test
+    public void testFullRecyclingStack() {
+        record RecipeRegistrar(JGraphTBasedCompoundAnalyzerTest test) {
+            void registerRecipe(String creates, int ingotCount, int stickCount) {
+                test.registerRecipe(
+                  String.format("%sx ingots + %sx sticks creates %s", ingotCount, stickCount, creates),
+                    test.s(test.cc("ingot", ingotCount), test.cc("stick", stickCount)),
+                    test.s(test.cc(creates, 1))
+                );
+
+                test.registerRecipe(
+                        String.format("%s recycles to 1 nugget", creates),
+                        test.s(test.cc(creates, 1)),
+                        test.s(test.cc("nugget", 1))
+                );
+            }
+
+            void registerRecipe(String creates, int ingotCount) {
+                test.registerRecipe(
+                        String.format("%sx ingots creates %s", ingotCount, creates),
+                        test.s(test.cc("ingot", ingotCount)),
+                        test.s(test.cc(creates, 1))
+                );
+
+                test.registerRecipe(
+                        String.format("%s recycles to 1 nugget", creates),
+                        test.s(test.cc(creates, 1)),
+                        test.s(test.cc("nugget", 1))
+                );
+            }
+        }
+
+        final RecipeRegistrar registrar = new RecipeRegistrar(this);
+        registrar.registerRecipe("sword", 2, 1);
+        registrar.registerRecipe("pickaxe", 3, 2);
+        registrar.registerRecipe("shovel", 1, 2);
+        registrar.registerRecipe("axe", 3, 2);
+        registrar.registerRecipe("hoe", 2, 2);
+        registrar.registerRecipe("helmet", 5);
+        registrar.registerRecipe("chestplate", 8);
+        registrar.registerRecipe("leggings", 7);
+        registrar.registerRecipe("boots", 4);
+
+        registerRecipe("1x ore to 1x ingot", s(cc("ore", 1)), s(cc("ingot", 1)));
+        registerRecipe("1x ingot to 9x nugget", s(cc("ingot", 1)), s(cc("nugget", 9)));
+        registerRecipe("9x nugget to 1x ingot", s(cc("nugget", 9)), s(cc("ingot", 1)));
+
+        input.registerValue("ore", s(iron(9)));
+        input.registerValue("stick", s(wood(1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc("sword")));
+        assertEquals("Pickaxe was not the sum of 3 ingots and 2 sticks", s(iron(27), wood(2)), result.get(cc("pickaxe")));
+        assertEquals("Shovel was not the sum of 1 ingot and 2 sticks", s(iron(9), wood(2)), result.get(cc("shovel")));
+        assertEquals("Axe was not the sum of 3 ingots and 2 sticks", s(iron(27), wood(2)), result.get(cc("axe")));
+        assertEquals("Hoe was not the sum of 2 ingots and 2 sticks", s(iron(18), wood(2)), result.get(cc("hoe")));
+        assertEquals("Helmet was not the sum of 5 ingots", s(iron(45)), result.get(cc("helmet")));
+        assertEquals("Chestplate was not the sum of 8 ingots", s(iron(72)), result.get(cc("chestplate")));
+        assertEquals("Leggings was not the sum of 7 ingots", s(iron(63)), result.get(cc("leggings")));
+        assertEquals("Boots was not the sum of 4 ingots", s(iron(36)), result.get(cc("boots")));
+
+        assertEquals("Iron ore was not the sum of 9 nuggets", s(iron(9)), result.get(cc("ore")));
+        assertEquals("Iron was not the sum of 9 nuggets", s(iron(9)), result.get(cc("ingot")));
+        assertEquals("Stick was not the sum of 1 wood", s(wood(1)), result.get(cc("stick")));
+    }
+
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {
         EquivalencyRecipeRegistry.getInstance(key).register(

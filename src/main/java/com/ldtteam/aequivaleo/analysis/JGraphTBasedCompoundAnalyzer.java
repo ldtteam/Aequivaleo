@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.BuildRecipeGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.impl.*;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results.CompoundInstanceSet;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.utils.NodeUtils;
 import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.BFSAnalysisBuilder;
 import com.ldtteam.aequivaleo.analysis.jgrapht.builder.analysis.IAnalysisBuilder;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cache.CacheKey;
@@ -18,6 +19,7 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.DFSDirectCycleReduc
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.ISearchAction;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.trace.ICycleReducingTracer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.graph.AequivaleoGraph;
+import com.ldtteam.aequivaleo.analysis.jgrapht.graph.DuplicateEdgeException;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
@@ -30,6 +32,7 @@ import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
 import net.minecraftforge.fml.ModList;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +84,7 @@ public class JGraphTBasedCompoundAnalyzer {
                 continue;
             }
 
-            final ICoreNode recipeGraphNode = new RecipeNode(recipe);
+            final RecipeNode recipeGraphNode = new RecipeNode(recipe);
 
             recipeGraph.addVertex(recipeGraphNode);
 
@@ -157,18 +160,31 @@ public class JGraphTBasedCompoundAnalyzer {
                 source);
     }
 
-    private void handleRecipeInput(IRecipeIngredient input, Map<IRecipeIngredient, IIngredientNode> ingredientNodes, IGraph recipeGraph, ICoreNode recipeGraphNode, Map<ICompoundContainer<?>, IContainerNode> compoundNodes, int factor) {
+    private void handleRecipeInput(IRecipeIngredient input, Map<IRecipeIngredient, IIngredientNode> ingredientNodes, IGraph recipeGraph, RecipeNode recipeGraphNode, Map<ICompoundContainer<?>, IContainerNode> compoundNodes, int factor) {
         final IRecipeIngredient unitIngredient = new SimpleIngredientBuilder().from(input).withCount(1).createIngredient();
         ingredientNodes.putIfAbsent(unitIngredient, new IngredientNode(unitIngredient));
 
         final ICoreNode inputNode = ingredientNodes.get(unitIngredient);
-        recipeGraph.addVertex(inputNode);
+        if (!recipeGraph.containsVertex(inputNode)) {
+            recipeGraph.addVertex(inputNode);
+        }
 
-        recipeGraph.addEdge(inputNode, recipeGraphNode);
-        recipeGraph.setEdgeWeight(inputNode, recipeGraphNode, factor * input.getRequiredCount());
+        try {
+            recipeGraph.addEdge(inputNode, recipeGraphNode);
+            recipeGraph.setEdgeWeight(inputNode, recipeGraphNode, factor * input.getRequiredCount());
 
-        inputNode.addOutput(recipeGraphNode, factor * input.getRequiredCount());
-        recipeGraphNode.addInput(inputNode, factor * input.getRequiredCount());
+            inputNode.addOutput(recipeGraphNode, factor * input.getRequiredCount());
+            recipeGraphNode.addInput(inputNode, factor * input.getRequiredCount());
+        } catch (DuplicateEdgeException e) {
+            final IEdge existingEdge = recipeGraph.getEdge(inputNode, recipeGraphNode);
+            final double currentWeight = recipeGraph.getEdgeWeight(existingEdge);
+            final double newWeight = currentWeight + (factor * input.getRequiredCount());
+
+            recipeGraph.setEdgeWeight(inputNode, recipeGraphNode, newWeight);
+
+            inputNode.addOutput(recipeGraphNode, newWeight);
+            recipeGraphNode.addInput(inputNode, newWeight);
+        }
 
         for (final ICompoundContainer<?> candidate : input.getCandidates()) {
             handleCompoundContainerAsInput(recipeGraph, compoundNodes, inputNode, candidate);
@@ -273,7 +289,10 @@ public class JGraphTBasedCompoundAnalyzer {
 
         final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
 
-        final StatCollector statCollector = new StatCollector(WorldUtils.formatWorldNames(getOwners()), recipeGraph.vertexSet().size());
+        final StatCollector statCollector = new StatCollector(
+                WorldUtils.formatWorldNames(getOwners()),
+                NodeUtils.nodeCount(recipeGraph.vertexSet())
+        );
         final IAnalysisBuilder analysisBuilder = new BFSAnalysisBuilder(recipeGraph, source);
         analysisBuilder.analyse(statCollector);
         statCollector.onCalculationComplete();
@@ -326,7 +345,7 @@ public class JGraphTBasedCompoundAnalyzer {
             final Set<INode> notDefinedGraphNodes) {
         for (INode v : vertices) {
             if (v instanceof IInnerNode innerNode) {
-                extractCompoundInstancesFromGraph(List.of(innerNode.flatten()), resultingCompounds, notDefinedGraphNodes);
+                extractCompoundInstancesFromGraph(Lists.newArrayList(innerNode.flatten()), resultingCompounds, notDefinedGraphNodes);
             } else if (v instanceof IContainerNode containerWrapperGraphNode) {
                 //We could not find any information on this, possibly due to it being in a different set,
                 //Or it is not producible. Register it as a not defined graph node.

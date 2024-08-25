@@ -21,4 +21,14 @@ public interface IResultsOwningNode extends ICoreNode, ISimulateableNode {
     default ISimulationManager simulationManager() {
         return results();
     }
+
+    @Override
+    default boolean canPropagate() {
+        return results().hasResults() || !requiresCalculation();
+    }
+
+    @Override
+    default boolean requiresCalculation() {
+        return results().requiresCalculation();
+    }
 }

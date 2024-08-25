@@ -53,4 +53,11 @@ public interface ICoreNode extends INode {
      * Removes all inputs from this node.
      */
     void clearInputs();
+
+    /**
+     * Removes an input from this node.
+     *
+     * @param inputNode The input node.
+     */
+    void removeInput(ICoreNode inputNode);
 }

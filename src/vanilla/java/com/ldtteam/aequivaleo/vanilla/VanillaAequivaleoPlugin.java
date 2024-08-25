@@ -11,7 +11,7 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRec
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariant;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariants;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariantIterator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.tags.Tags;
@@ -62,7 +62,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ResourceLocation serializerName, final ServerLevel world) {
         if (world.getRecipeManager().recipes.get(type) == null) {
-            LOGGER.error("Could not find any recipes for recipe type: " + type + " its recipes array value is null!");
+            LOGGER.debug("Could not find any recipes for recipe type: {} its recipes array value is null!", type);
             return Lists.newArrayList();
         }
 
@@ -73,7 +73,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ServerLevel world) {
         if (world.getRecipeManager().recipes.get(type) == null) {
-            LOGGER.error("Could not find any recipes for recipe type: " + type + " its recipes array value is null!");
+            LOGGER.debug("Could not find any recipes for recipe type: {} its recipes array value is null!", type);
             return Lists.newArrayList();
         }
 
@@ -86,7 +86,10 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, SimpleEquivalencyRecipe::new);
+        if (iRecipe.getId().toString().equals("bigreactors:reactor/reinforced/activefluidport_forge")) {
+            System.out.println("Found recipe: " + iRecipe.getId());
+        }
+        processRecipe(world, iRecipe, variant -> new SimpleEquivalencyRecipe(variant, iRecipe.getId()));
     }
 
     private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
@@ -123,16 +126,15 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 return;
             }
 
-            final RecipeVariants recipeVariants = new RecipeVariants(recipe, world.registryAccess());
-            final Collection<IEquivalencyRecipe> variants = recipeVariants.variants().stream()
-                    .map(converter)
-                    .collect(Collectors.toSet());
-
-            if (configuration.getCommon().logEmptyVariantsWarning.get() && variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
+            final RecipeVariantIterator recipeVariantIterator = new RecipeVariantIterator(recipe, world.registryAccess());
+            if (configuration.getCommon().logEmptyVariantsWarning.get() && !recipeVariantIterator.hasNext() && !recipe.getId().getNamespace().equals("minecraft")) {
                 LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
             }
 
-            variants.forEach(variant -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(variant));
+            while(recipeVariantIterator.hasNext()) {
+                final RecipeVariant variant = recipeVariantIterator.next();
+                IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(converter.apply(variant));
+            }
         } catch (Exception ex) {
             LOGGER.error("A recipe has throw an exception while processing: {}", recipe.getId(), ex);
         }

@@ -136,6 +136,15 @@ public class SimulateableResultsContainer implements IResultsContainer {
         return results != null;
     }
 
+    @Override
+    public boolean requiresCalculation() {
+        if (hasResults()) {
+            return false;
+        }
+
+        return simulations.isEmpty() || simulations.peek().lastSimulationResult == null;
+    }
+
     private static final class SimulationState {
 
         private final Set<CompoundInstanceSet> candidates;
@@ -152,7 +161,7 @@ public class SimulateableResultsContainer implements IResultsContainer {
         }
 
         private void offer(CompoundInstanceSet offer) {
-            if (candidates.add(offer)) {
+            if ((lastSimulationResult == null || !lastSimulationResult.equals(offer)) && candidates.add(offer)) {
                 lastSimulationResult = null;
             }
 

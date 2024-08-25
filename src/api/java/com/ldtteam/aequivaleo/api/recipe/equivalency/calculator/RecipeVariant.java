@@ -7,10 +7,47 @@ import java.util.Collection;
 
 /**
  * Represents a recipe variant.
- *
- * @param ingredients The ingredients needed to complete the recipe.
- * @param remainders The remainders of the recipe, that are left after the recipe is completed (bucket from water bucket etc)
- * @param output The output of the recipe.
  */
-public record RecipeVariant(Collection<IRecipeIngredient> ingredients, Collection<IRecipeIngredient> remainders, ICompoundContainer<?> output) {
+public final class RecipeVariant {
+    private Collection<IRecipeIngredient> ingredients;
+    private Collection<IRecipeIngredient> remainders;
+    private ICompoundContainer<?> output;
+
+    /**
+     * Creates a new recipe variant.
+     *
+     * @param output The output of the recipe.
+     */
+    public RecipeVariant(ICompoundContainer<?> output) {
+        this.output = output;
+    }
+
+    public Collection<IRecipeIngredient> ingredients() {
+        return ingredients;
+    }
+
+    public Collection<IRecipeIngredient> remainders() {
+        return remainders;
+    }
+
+    void setIngredients(Collection<IRecipeIngredient> ingredients) {
+        this.ingredients = ingredients;
+    }
+
+    void setRemainders(Collection<IRecipeIngredient> remainders) {
+        this.remainders = remainders;
+    }
+
+    public ICompoundContainer<?> output() {
+        return output;
+    }
+
+    @Override
+    public String toString() {
+        return "RecipeVariant[" +
+                "ingredients=" + ingredients + ", " +
+                "remainders=" + remainders + ", " +
+                "output=" + output + ']';
+    }
+
 }

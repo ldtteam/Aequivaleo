@@ -23,6 +23,7 @@ public class StatCollector {
     public StatCollector(final String name, final int totalNodes) {
         this.name = name;
         this.totalNodes = totalNodes;
+        LOGGER.info(String.format("Starting analysis of recipe graph for world: %s. (%d nodes)", name, totalNodes));
     }
 
     public void onVisitSourceNode(INode node) {

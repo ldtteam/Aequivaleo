@@ -11,4 +11,9 @@ public interface ISimulateableNode extends INode {
      * @return The simulation manager for this node.
      */
     ISimulationManager simulationManager();
+
+    /**
+     * @return Whether this node requires calculation.
+     */
+    boolean requiresCalculation();
 }

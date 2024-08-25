@@ -7,10 +7,7 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.base.InnerNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisState;
 import org.apache.commons.lang3.Validate;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public final class CycleNode extends InnerNode {
 
@@ -43,35 +40,46 @@ public final class CycleNode extends InnerNode {
         startSimulation();
         
         final IAnalysisState simulationState = state.simulate();
-        final List<INode> analysisStartingPoints = new ArrayList<>(nodes().length);
-        determineStartingPoints(analysisStartingPoints);
-        
+        final List<INode> analysisStartingPoints = determineStartingPoints();
+
         if (analysisStartingPoints.size() == 1) {
             runAnalysisWithStartPoint(analysisStartingPoints, simulationState, 0);
         } else {
             //For each of the starting nodes: Create an iteration order and analyze the nodes.
             for (int i = 0; i < analysisStartingPoints.size(); i++) {
-                runAnalysisWithStartPoint(analysisStartingPoints, simulationState, i);
+                if (!runAnalysisWithStartPoint(analysisStartingPoints, simulationState, i)) {
+                    //No reanalysis required, break out of the loop.
+                    break;
+                }
             }
         }
 
         commitSimulation();
     }
 
-    private void runAnalysisWithStartPoint(List<INode> analysisStartingPoints, IAnalysisState simulationState, int i) {
+    private boolean runAnalysisWithStartPoint(List<INode> analysisStartingPoints, IAnalysisState simulationState, int i) {
 
         startSimulation();
 
         INode node = analysisStartingPoints.get(i);
         node.analyze(simulationState);
 
-        final INode[] iterationOrder = createIterationOrder(node);
+        final Iterator<INode> iterationOrder = createIterationOrder(node);
 
-        for (INode innerNode : iterationOrder) {
-            innerNode.analyze(simulationState);
+        boolean requiresReanalysis = false;
+
+        while (iterationOrder.hasNext()) {
+            INode nextNode = iterationOrder.next();
+            nextNode.analyze(simulationState);
+
+            if (nextNode instanceof IResultsOwningNode resultsOwningNode && resultsOwningNode.results().requiresCalculation()) {
+                requiresReanalysis = true;
+            }
         }
 
         commitSimulation();
+
+        return requiresReanalysis;
     }
 
     private int indexOfNodeInNodes(INode node) {
@@ -84,29 +92,31 @@ public final class CycleNode extends InnerNode {
         throw new IllegalStateException("Node not found in nodes.");
     }
 
-    private INode[] createIterationOrder(INode node) {
+    private Iterator<INode> createIterationOrder(INode node) {
         if (nodes().length == 1) {
-            return new INode[0];
+            return Collections.emptyIterator();
         }
 
-        if (nodes().length == 2) {
-            return new INode[] {nodes()[0]};
-        }
+        return new Iterator<>() {
 
-        if (nodes()[0] == node) {
-            return Arrays.copyOfRange(nodes(), 1, nodes().length);
-        }
+            private final int startIndex = indexOfNodeInNodes(node);
+            private int currentIndex = (startIndex + 1) % nodes().length;
 
-        if (nodes()[nodes().length - 1] == node) {
-            return Arrays.copyOfRange(nodes(), 0, nodes().length - 1);
-        }
+            @Override
+            public boolean hasNext() {
+                return currentIndex != startIndex;
+            }
 
-        int indexOfNode = indexOfNodeInNodes(node);
-        INode[] iterationOrder = new INode[nodes().length - 1];
-        for (int i = 0; i < nodes().length - 1; i++) {
-            iterationOrder[i] = nodes()[(indexOfNode + i + 1) % nodes().length];
-        }
+            @Override
+            public INode next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
 
-        return iterationOrder;
+                INode nextNode = nodes()[currentIndex];
+                currentIndex = (currentIndex + 1) % nodes().length;
+                return nextNode;
+            }
+        };
     }
 }

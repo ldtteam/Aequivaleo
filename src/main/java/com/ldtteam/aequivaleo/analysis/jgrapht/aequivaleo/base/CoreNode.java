@@ -37,9 +37,13 @@ public abstract class CoreNode extends Node implements ICoreNode  {
         inputs.clear();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void removeOutput(ICoreNode input) {
-        outputs.remove(input);
+        outputs.removeDouble(input);
+    }
+
+    @Override
+    public void removeInput(ICoreNode inputNode) {
+        inputs.removeDouble(inputNode);
     }
 }
