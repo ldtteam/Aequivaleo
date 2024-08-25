@@ -42,7 +42,6 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Unit;
-import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.AddReloadListenerEvent;
@@ -103,8 +102,6 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                     }
                 },
                 serverStartedEvent.getServer().getResourceManager(),
-                InactiveProfiler.INSTANCE,
-                InactiveProfiler.INSTANCE,
                 Util.backgroundExecutor(),
                 Runnable::run,
                 false
@@ -190,7 +187,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                             )
                     );
                 } catch (Exception ex) {
-                    LOGGER.error("Failed to load value data for: " + world.dimension(), ex);
+                    LOGGER.error("Failed to load value data for: %s".formatted(world.dimension()), ex);
                     AnalysisStateManager.setState(world.dimension(), AnalysisState.ERRORED);
                 }
             });
@@ -215,7 +212,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                             )
                     );
                 } catch (Exception ex) {
-                    LOGGER.error("Failed to load locking data for: " + world.dimension(), ex);
+                    LOGGER.error("Failed to load locking data for: {}", world.dimension(), ex);
                     AnalysisStateManager.setState(world.dimension(), AnalysisState.ERRORED);
                 }
             });
@@ -240,7 +237,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                             )
                     );
                 } catch (Exception ex) {
-                    LOGGER.error("Failed to load base data for: " + world.dimension(), ex);
+                    LOGGER.error("Failed to load base data for: {}", world.dimension(), ex);
                     AnalysisStateManager.setState(world.dimension(), AnalysisState.ERRORED);
                 }
             });
@@ -265,7 +262,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                             )
                     );
                 } catch (Exception ex) {
-                    LOGGER.error("Failed to load additional recipe data for: " + world.dimension(), ex);
+                    LOGGER.error("Failed to load additional recipe data for: {}", world.dimension(), ex);
                     AnalysisStateManager.setState(world.dimension(), AnalysisState.ERRORED);
                 }
             });
@@ -413,7 +410,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
             ));
         }
 
-        record GroupingData(List<CompoundInstanceData> values, List<CompoundInstanceData> locks, List<CompoundInstanceData> bases, List<IEquivalencyRecipe> recipes) {};
+        record GroupingData(List<CompoundInstanceData> values, List<CompoundInstanceData> locks, List<CompoundInstanceData> bases, List<IEquivalencyRecipe> recipes) {}
         final Collection<Collection<ServerLevel>> groups = GroupingUtils.groupByUsingSet(
                 runnableWorlds,
                 world -> new GroupingData(
@@ -426,7 +423,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
 
         return groups.stream()
                 .map(Lists::newArrayList)
-                .filter(groupWorlds -> groupWorlds.size() > 0)
+                .filter(groupWorlds -> !groupWorlds.isEmpty())
                 .map(groupWorlds -> CompletableFuture.runAsync(
                         new AequivaleoWorldAnalysisRunner(
                                 analysisOwners,
@@ -452,7 +449,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
 
         for (final Map.Entry<ResourceLocation, L> worldDataEntry : dataMap.entrySet()) {
             if (worldDataEntry.getKey() != GENERAL_DATA_NAME) {
-                if (worldDataEntry.getValue() != null && worldDataEntry.getValue().size() != 0) {
+                if (worldDataEntry.getValue() != null && !worldDataEntry.getValue().isEmpty()) {
                     return false;
                 }
             }
@@ -469,24 +466,22 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
             @NotNull Executor backgroundExecutor,
             @NotNull Executor foregroundExecutor
     ) {
-        return reload(barrier, resourceManager, backgroundProfiler, foregroundProfiler, backgroundExecutor, foregroundExecutor, true);
+        return reload(barrier, resourceManager, backgroundExecutor, foregroundExecutor, true);
     }
 
     public final @NotNull CompletableFuture<Void> reload(
             @NotNull PreparableReloadListener.PreparationBarrier barrier,
             @NotNull ResourceManager resourceManager,
-            @NotNull ProfilerFiller backgroundProfiler,
-            @NotNull ProfilerFiller foregroundProfiler,
             @NotNull Executor backgroundExecutor,
             @NotNull Executor foregroundExecutor,
             final boolean forceReload
     ) {
         return CompletableFuture
                 .runAsync(this::resetSyncedRegistries, backgroundExecutor)
-                .thenComposeAsync(unused -> loadSyncRegistries(resourceManager, backgroundExecutor, backgroundProfiler), backgroundExecutor)
-                .thenApplyAsync((syncRegistryResult) -> this.prepare(resourceManager, backgroundProfiler), backgroundExecutor)
+                .thenComposeAsync(unused -> loadSyncRegistries(resourceManager), backgroundExecutor)
+                .thenApplyAsync((syncRegistryResult) -> this.prepare(resourceManager), backgroundExecutor)
                 .thenCompose(barrier::wait)
-                .thenAcceptAsync((data) -> this.apply(data, resourceManager, foregroundProfiler, forceReload), foregroundExecutor);
+                .thenAcceptAsync((data) -> this.apply(data, resourceManager, forceReload), foregroundExecutor);
     }
 
     private void resetSyncedRegistries() {
@@ -496,13 +491,11 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
     }
 
     private CompletableFuture<Unit> loadSyncRegistries(
-            @NotNull final ResourceManager resourceManager,
-            @NotNull final Executor backgroundExecutor,
-            @NotNull final ProfilerFiller profiler) {
+            @NotNull final ResourceManager resourceManager) {
         return CompletableFuture.allOf(
                         SYNCED_REGISTRIES.stream()
                                 .map(Supplier::get)
-                                .map(registry -> loadSyncedRegistry(resourceManager, backgroundExecutor, profiler, registry))
+                                .map(registry -> loadSyncedRegistry(resourceManager, registry))
                                 .toArray(CompletableFuture[]::new)
                 )
                 .thenApply(unused -> Unit.INSTANCE);
@@ -515,21 +508,21 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
     }
 
     @NotNull
-    private DataDrivenData prepare(@NotNull final ResourceManager resourceManagerIn, @NotNull final ProfilerFiller profilerIn) {
+    private DataDrivenData prepare(@NotNull final ResourceManager resourceManagerIn) {
         return parseData(resourceManagerIn);
     }
 
-    protected void apply(@NotNull final DataDrivenData objectIn, @NotNull final ResourceManager resourceManagerIn, @NotNull final ProfilerFiller profilerIn, final boolean forcedReload) {
+    protected void apply(@NotNull final DataDrivenData objectIn, @NotNull final ResourceManager resourceManagerIn, final boolean forcedReload) {
         LOGGER.info("Reloading resources has been triggered, recalculating graph.");
         reloadResources(objectIn, forcedReload, resourceManagerIn.getClass().getClassLoader());
     }
 
     private <T extends ISyncedRegistryEntry<T>> CompletableFuture<Unit> loadSyncedRegistry(
-            @NotNull final ResourceManager resourceManager, @NotNull final Executor executor, @NotNull final ProfilerFiller profiler,
+            @NotNull final ResourceManager resourceManager,
             @NotNull final ISyncedRegistry<T> registry) {
         return CompletableFuture.allOf(
                         registry.getTypes().stream().map(
-                                        type -> loadSyncedRegistryEntriesOfType(resourceManager, executor, profiler, registry, type)
+                                        type -> loadSyncedRegistryEntriesOfType(resourceManager, registry, type)
                                 )
                                 .toArray(CompletableFuture[]::new)
                 )
@@ -538,8 +531,6 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
 
     private <T extends ISyncedRegistryEntry<T>> CompletableFuture<Unit> loadSyncedRegistryEntriesOfType(
             @NotNull final ResourceManager resourceManager,
-            @NotNull final Executor backgroundExecutor,
-            @NotNull final ProfilerFiller profiler,
             @NotNull final ISyncedRegistry<T> registry,
             @NotNull final ISyncedRegistryEntryType<T> type
     ) {
@@ -629,10 +620,12 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
                     throw new IllegalStateException("Tried to run an analysis for an error dimension!");
                 }
 
-                getAnalysisOwners()
-                        .stream()
-                        .map(LevelAnalysisOwner::serverLevel)
-                        .forEach(WorldBootstrapper::onWorldReload);
+                WorldBootstrapper.onWorldReload(
+                        getAnalysisOwners()
+                                .stream()
+                                .map(LevelAnalysisOwner::serverLevel)
+                                .collect(Collectors.toList())
+                );
 
                 final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueGeneralGroupedData = groupDataByContainer(valueGeneralData);
                 final Map<Set<ICompoundContainer<?>>, Collection<CompoundInstanceData>> valueWorldGroupedData = groupDataByContainer(valueWorldData);

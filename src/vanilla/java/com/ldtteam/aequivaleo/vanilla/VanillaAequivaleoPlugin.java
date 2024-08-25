@@ -81,42 +81,42 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 .toList();
     }
 
-    private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, CookingEquivalencyRecipe::new);
+    private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, CookingEquivalencyRecipe::new);
     }
 
-    private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
         if (iRecipe.getId().toString().equals("bigreactors:reactor/reinforced/activefluidport_forge")) {
             System.out.println("Found recipe: " + iRecipe.getId());
         }
-        processRecipe(world, iRecipe, variant -> new SimpleEquivalencyRecipe(variant, iRecipe.getId()));
+        processRecipe(world, levels, iRecipe, variant -> new SimpleEquivalencyRecipe(variant, iRecipe.getId()));
     }
 
-    private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, StoneCuttingEquivalencyRecipe::new);
+    private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, StoneCuttingEquivalencyRecipe::new);
     }
 
-    private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, v -> new GenericRecipeEquivalencyRecipe(v, iRecipe.getId()));
+    private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, v -> new GenericRecipeEquivalencyRecipe(v, iRecipe.getId()));
     }
 
-    private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
         processRecipe(world,
-                iRecipe,
+                levels, iRecipe,
                 SmithingEquivalencyRecipe::new);
     }
 
-    private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
         processRecipe(world,
-                iRecipe,
+                levels, iRecipe,
                 SmithingEquivalencyRecipe::new);
     }
 
     private void processRecipe(
             final ServerLevel world,
+            Collection<ServerLevel> levels,
             final Recipe<?> recipe,
-            final Function<RecipeVariant, IEquivalencyRecipe> converter
-    ) {
+            final Function<RecipeVariant, IEquivalencyRecipe> converter) {
         try {
             if (recipe.getResultItem(world.registryAccess()).isEmpty()) {
                 return;
@@ -131,9 +131,11 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
             }
 
-            while(recipeVariantIterator.hasNext()) {
+            while (recipeVariantIterator.hasNext()) {
                 final RecipeVariant variant = recipeVariantIterator.next();
-                IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(converter.apply(variant));
+                for (ServerLevel level : levels) {
+                    IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(converter.apply(variant));
+                }
             }
         } catch (Exception ex) {
             LOGGER.error("A recipe has throw an exception while processing: {}", recipe.getId(), ex);
@@ -324,8 +326,9 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     @SuppressWarnings("deprecation")
     @Override
-    public void onReloadStartedFor(final ServerLevel world) {
+    public void onReloadStartedFor(final Collection<ServerLevel> levels) {
 
+        final ServerLevel world = levels.iterator().next();
         final List<Recipe<?>> smeltingRecipe = Lists.newArrayList();
 
         IRecipeTypeProcessingRegistry
@@ -336,7 +339,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smeltingRecipe
                         .parallelStream()
-                        .forEach(recipe -> processSmeltingRecipe(world, recipe))
+                        .forEach(recipe -> processSmeltingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> stoneCuttingsRecipe = Lists.newArrayList();
@@ -349,7 +352,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> stoneCuttingsRecipe
                         .parallelStream()
-                        .forEach(recipe -> processStoneCuttingRecipe(world, recipe))
+                        .forEach(recipe -> processStoneCuttingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> smithingTransformRecipes = Lists.newArrayList();
@@ -362,7 +365,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smithingTransformRecipes
                         .parallelStream()
-                        .forEach(recipe -> processSmithingTransformRecipe(world, recipe))
+                        .forEach(recipe -> processSmithingTransformRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> smithingTrimRecipes = Lists.newArrayList();
@@ -375,7 +378,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smithingTrimRecipes
                         .parallelStream()
-                        .forEach(recipe -> processSmithingTrimRecipe(world, recipe))
+                        .forEach(recipe -> processSmithingTrimRecipe(world, recipe, levels))
         );
 
         //processDecoratedPotRecipe(world);
@@ -390,7 +393,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> craftingRecipes
                         .parallelStream()
-                        .forEach(recipe -> processCraftingRecipe(world, recipe))
+                        .forEach(recipe -> processCraftingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> genericRecipes = Lists.newArrayList();
@@ -412,7 +415,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> genericRecipes
                         .parallelStream()
-                        .forEach(recipe -> processGenericRecipe(world, recipe))
+                        .forEach(recipe -> processGenericRecipe(world, recipe, levels))
         );
 
         processCustomRecipes(world);
