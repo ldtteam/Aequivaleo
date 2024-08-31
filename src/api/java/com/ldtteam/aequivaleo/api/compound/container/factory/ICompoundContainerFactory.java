@@ -22,13 +22,13 @@ public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundCo
      * @return A testable predicate to verify if a given factory can wrap a given object.
      */
     @NotNull
-    default Predicate<Object> getCanHandlePredicate() {
+    default Predicate<Object> getCanHandleContents() {
         return getContainedType()::isInstance;
     }
 
     /**
-     * The contained type, used in {@link #getCanHandlePredicate()} to create an instance of check.
-     * Feel free to return {@link Object#getClass()} when overriding {@link #getCanHandlePredicate()}.
+     * The contained type, used in {@link #getCanHandleContents()} to create an instance of check.
+     * Feel free to return {@link Object#getClass()} when overriding {@link #getCanHandleContents()}.
      *
      * @return The base class contained in the container this factory makes.
      */
@@ -46,6 +46,17 @@ public interface ICompoundContainerFactory<T> extends JsonSerializer<ICompoundCo
      */
     @NotNull
     ICompoundContainer<T> create(@NotNull final T inputInstance, final double count);
+
+    /**
+     * Indicates if the contents from the left and the right are equal, should not consider the innate count of the object.
+     *
+     * @param left The left instance
+     * @param right The right instance
+     * @return True when equal, false when not.
+     */
+    default boolean areContentsEqual(@NotNull final T left, @NotNull final T right) {
+        return left.equals(right);
+    }
 
     /**
      * Method used to get the innate count of an input instance that can be wrapped in a container by this factory.

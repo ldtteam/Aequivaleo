@@ -62,7 +62,11 @@ public class ItemStackUtils
     @NotNull
     private static Boolean compareItemStacksIgnoreStackSize(final ItemStack itemStack1, final ItemStack itemStack2, final boolean matchMeta, final boolean matchNBT)
     {
-        if (!isEmpty(itemStack1) &&
+        if (isEmpty(itemStack1) && isEmpty(itemStack2))
+        {
+            return true;
+        }
+        else if (!isEmpty(itemStack1) &&
               !isEmpty(itemStack2) &&
                 Objects.equals(
                         ForgeRegistries.ITEMS.getKey(itemStack1.getItem()),

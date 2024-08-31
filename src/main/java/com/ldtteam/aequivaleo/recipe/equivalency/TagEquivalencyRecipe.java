@@ -43,7 +43,7 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    public SortedSet<IRecipeIngredient> getRequiredKnownOutputs()
     {
         return Collections.emptySortedSet();
     }

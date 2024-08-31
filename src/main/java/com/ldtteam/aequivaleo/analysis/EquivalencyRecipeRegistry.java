@@ -11,10 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
 {
@@ -26,7 +23,7 @@ public class EquivalencyRecipeRegistry implements IEquivalencyRecipeRegistry
         return INSTANCES.computeIfAbsent(worldKey, (dimType) -> new EquivalencyRecipeRegistry());
     }
 
-    private final Set<IEquivalencyRecipe> recipes = Sets.newConcurrentHashSet();
+    private final Set<IEquivalencyRecipe> recipes = Collections.synchronizedSet(new TreeSet<>());
 
     private EquivalencyRecipeRegistry()
     {

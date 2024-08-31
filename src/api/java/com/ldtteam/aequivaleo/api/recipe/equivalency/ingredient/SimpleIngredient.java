@@ -61,8 +61,10 @@ public class SimpleIngredient implements IRecipeIngredient
     }
 
     @Override
-    public String toString()
-    {
-        return candidates.stream().map(Object::toString).collect(Collectors.joining(", "));
+    public String toString() {
+        return "SimpleIngredient{" +
+                "candidates=" + candidates +
+                ", count=" + count +
+                '}';
     }
 }

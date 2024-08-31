@@ -102,6 +102,11 @@ public class CompoundTypeContainer implements ICompoundContainer<ICompoundType>
     }
 
     @Override
+    public String getContentNamespace() {
+        return type.getRegistryName().getNamespace();
+    }
+
+    @Override
     public Double getContentsCount()
     {
         return count;

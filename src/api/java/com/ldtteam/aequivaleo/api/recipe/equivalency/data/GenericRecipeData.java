@@ -30,7 +30,7 @@ public class GenericRecipeData
     );
 
     private final SortedSet<IRecipeIngredient>     inputs;
-    private final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
+    private final SortedSet<IRecipeIngredient> requiredKnownOutputs;
     private final SortedSet<ICompoundContainer<?>> outputs;
     private final SortedSet<ICondition> conditions;
 
@@ -43,7 +43,7 @@ public class GenericRecipeData
      */
     GenericRecipeData(
       final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
+      final Set<IRecipeIngredient> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs,
       final Set<ICondition> conditions
     )
@@ -70,7 +70,7 @@ public class GenericRecipeData
      *
      * @return The required known outputs.
      */
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    public SortedSet<IRecipeIngredient> getRequiredKnownOutputs()
     {
         return requiredKnownOutputs;
     }

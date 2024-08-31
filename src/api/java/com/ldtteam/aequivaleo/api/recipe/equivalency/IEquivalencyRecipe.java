@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.util.SortedSetComparator;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
      *
      * @return The compound containers who act as catalysts in the recipe.
      */
-    SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs();
+    SortedSet<IRecipeIngredient> getRequiredKnownOutputs();
 
     /**
      * The compound containers that are the output for this recipe.
@@ -56,11 +57,28 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
      * @return {@code True} when valid.
      */
     default boolean isValid() {
-        return !getInputs().isEmpty() &&
+        final boolean contentsValid = !getInputs().isEmpty() &&
                  !getOutputs().isEmpty() &&
                  getInputs().stream().allMatch(IRecipeIngredient::isValid) &&
-                 getRequiredKnownOutputs().stream().allMatch(ICompoundContainer::isValid) &&
+                 getRequiredKnownOutputs().stream().allMatch(IRecipeIngredient::isValid) &&
                  getOutputs().stream().allMatch(ICompoundContainer::isValid);
+
+        if (!contentsValid)
+            return false;
+
+        //If we have a duplicate between input and output, regardless of size, we are not valid!
+        for (IRecipeIngredient input : getInputs()) {
+            for (ICompoundContainer<?> candidate : input.getCandidates()) {
+                for (ICompoundContainer<?> output : getOutputs()) {
+                    if (ICompoundContainerFactoryManager.getInstance().areContainerContentsEqual(
+                            candidate, output
+                    ))
+                        return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -69,7 +87,7 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         if (inputComparison != 0)
             return inputComparison;
 
-        final int requiredOutputsComparison = SortedSetComparator.<ICompoundContainer<?>>getInstance().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
+        final int requiredOutputsComparison = SortedSetComparator.<IRecipeIngredient>getInstance().compare(getRequiredKnownOutputs(), recipe.getRequiredKnownOutputs());
         if (requiredOutputsComparison != 0)
             return requiredOutputsComparison;
 
@@ -77,6 +95,10 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         if (outputComparison != 0)
             return outputComparison;
 
-        return (int) (getOffsetFactor() - recipe.getOffsetFactor());
+        final int offsetFactorComparison = (int) (getOffsetFactor() - recipe.getOffsetFactor());
+        if (offsetFactorComparison != 0)
+            return offsetFactorComparison;
+
+        return toString().compareTo(recipe.toString());
     }
 }

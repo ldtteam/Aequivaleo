@@ -170,7 +170,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
       final ResourceLocation worldId,
       final ResourceLocation name,
       final Set<IRecipeIngredient> inputs,
-      final Set<ICompoundContainer<?>> requiredKnownOutputs,
+      final Set<IRecipeIngredient> requiredKnownOutputs,
       final Set<ICompoundContainer<?>> outputs) {
         this.saveData(
           worldId,
@@ -196,7 +196,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
             final ResourceLocation worldId,
             final ResourceLocation name,
             final Set<IRecipeIngredient> inputs,
-            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<IRecipeIngredient> requiredKnownOutputs,
             final Set<ICompoundContainer<?>> outputs,
             final Set<ICondition> conditions) {
         this.saveData(
@@ -272,7 +272,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
     protected void saveData(
             final ResourceLocation name,
             final Set<IRecipeIngredient> inputs,
-            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<IRecipeIngredient> requiredKnownOutputs,
             final Set<ICompoundContainer<?>> outputs) {
         this.saveData(
                 name,
@@ -296,7 +296,7 @@ public abstract class AbstractGenericRecipeDataGen implements DataProvider
     protected void saveData(
             final ResourceLocation name,
             final Set<IRecipeIngredient> inputs,
-            final Set<ICompoundContainer<?>> requiredKnownOutputs,
+            final Set<IRecipeIngredient> requiredKnownOutputs,
             final Set<ICompoundContainer<?>> outputs,
             final Set<ICondition> conditions) {
         this.saveData(

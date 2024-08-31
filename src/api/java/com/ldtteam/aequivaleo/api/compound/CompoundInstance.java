@@ -129,4 +129,23 @@ public final class CompoundInstance implements Comparable<CompoundInstance>
           getAmount()
         );
     }
+
+    /**
+     * Scales this instance by a given factor.
+     *
+     * @param scale The factor.
+     * @return The scaled instance.
+     */
+    public CompoundInstance scaled(double scale) {
+        return new CompoundInstance(getType(), getAmount() * scale);
+    }
+
+    /**
+     * Checks if this instance is empty.
+     *
+     * @return True if the amount is 0, false otherwise.
+     */
+    public boolean isEmpty() {
+        return getAmount() == 0;
+    }
 }

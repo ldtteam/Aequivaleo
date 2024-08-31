@@ -2,11 +2,9 @@ package com.ldtteam.aequivaleo.config;
 
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class CommonConfiguration extends AbstractAequivaleoConfiguration
 {
@@ -15,6 +13,9 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration
     public ForgeConfigSpec.IntValue networkBatchingSize;
     public ForgeConfigSpec.BooleanValue debugAnalysisLog;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> blackListedDimensions;
+    public ForgeConfigSpec.BooleanValue traceCycleLog;
+    public ForgeConfigSpec.BooleanValue debugCycleLog;
+    public ForgeConfigSpec.BooleanValue outputCycleCount;
 
     public CommonConfiguration(ForgeConfigSpec.Builder builder)
     {
@@ -28,6 +29,9 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration
         finishCategory(builder);
         createCategory(builder, "log");
         debugAnalysisLog = defineBoolean(builder,"debug", false);
+        traceCycleLog = defineBoolean(builder, "cycle.trace", false);
+        debugCycleLog = defineBoolean(builder, "cycle.full", false);
+        outputCycleCount = defineBoolean(builder, "cycle.count", true);
         finishCategory(builder);
         createCategory(builder, "export");
         jsonPrettyPrint = defineBoolean(builder, "json", false);

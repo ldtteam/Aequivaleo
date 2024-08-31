@@ -107,6 +107,11 @@ public class TagContainer implements ICompoundContainer<TagKey<?>>
     }
 
     @Override
+    public String getContentNamespace() {
+        return tag.registry().location().getNamespace();
+    }
+
+    @Override
     public Double getContentsCount()
     {
         return count;

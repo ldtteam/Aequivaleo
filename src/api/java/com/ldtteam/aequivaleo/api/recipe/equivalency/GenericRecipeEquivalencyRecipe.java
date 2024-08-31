@@ -1,104 +1,73 @@
 package com.ldtteam.aequivaleo.api.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariant;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.commons.lang3.Validate;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Represents a generic recipe equivalency recipe.
  * <p>
- *     This is the in-graph and game representation of a generic recipe.
+ * This is the in-graph and game representation of a generic recipe.
  * </p>
  */
-public class GenericRecipeEquivalencyRecipe implements IGenericRecipeEquivalencyRecipe
-{
-    /**
-     * The recipe name.
-     */
-    protected final ResourceLocation                 recipeName;
+public class GenericRecipeEquivalencyRecipe extends BaseEquivalencyRecipe implements IGenericRecipeEquivalencyRecipe {
 
     /**
-     * The inputs.
+     * The name of the recipe.
      */
-    protected final SortedSet<IRecipeIngredient>     inputs;
-
-    /**
-     * The required known outputs.
-     */
-    protected final SortedSet<ICompoundContainer<?>> requiredKnownOutputs;
-
-    /**
-     * The outputs.
-     */
-    protected final SortedSet<ICompoundContainer<?>> outputs;
+    private final ResourceLocation name;
 
     /**
      * Creates a new generic recipe equivalency recipe.
      *
-     * @param recipeName The recipe name.
-     * @param inputs The inputs.
+     * @param inputs               The inputs.
      * @param requiredKnownOutputs The required known outputs.
-     * @param outputs The outputs.
+     * @param outputs              The outputs.
+     * @param name                 The name of the recipe.
      */
-    public GenericRecipeEquivalencyRecipe(
-      final ResourceLocation recipeName, final Set<IRecipeIngredient> inputs, final Set<ICompoundContainer<?>> requiredKnownOutputs, final Set<ICompoundContainer<?>> outputs)
-    {
-        this.recipeName = recipeName;
-        this.inputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(inputs)));
-        this.requiredKnownOutputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(requiredKnownOutputs)));
-        this.outputs = new TreeSet<>(Validate.noNullElements(Validate.notNull(outputs)));
+    public GenericRecipeEquivalencyRecipe(Set<IRecipeIngredient> inputs, Set<IRecipeIngredient> requiredKnownOutputs, Set<ICompoundContainer<?>> outputs, ResourceLocation name) {
+        super(inputs, requiredKnownOutputs, outputs);
+        this.name = name;
+    }
+
+    /**
+     * Creates a new generic recipe equivalency recipe.
+     *
+     * @param variant The recipe variant.
+     * @param name    The name of the recipe.
+     */
+    public GenericRecipeEquivalencyRecipe(RecipeVariant variant, ResourceLocation name) {
+        super(variant);
+        this.name = name;
     }
 
     @Override
-    public SortedSet<IRecipeIngredient> getInputs()
-    {
-        return inputs;
+    public ResourceLocation getRecipeName() {
+        return name;
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
-    {
-        return requiredKnownOutputs;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        GenericRecipeEquivalencyRecipe that = (GenericRecipeEquivalencyRecipe) o;
+        return Objects.equals(name, that.name);
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getOutputs()
-    {
-        return outputs;
-    }
-
-    public ResourceLocation getRecipeName()
-    {
-        return recipeName;
+    public int hashCode() {
+        return Objects.hash(name, super.hashCode());
     }
 
     @Override
-    public boolean equals(final Object o)
-    {
-        if (this == o)
-        {
-            return true;
-        }
-        if (!(o instanceof GenericRecipeEquivalencyRecipe))
-        {
-            return false;
-        }
-        final GenericRecipeEquivalencyRecipe that = (GenericRecipeEquivalencyRecipe) o;
-        return getRecipeName().equals(that.getRecipeName()) &&
-                 getInputs().equals(that.getInputs()) &&
-                 getRequiredKnownOutputs().equals(that.getRequiredKnownOutputs()) &&
-                 getOutputs().equals(that.getOutputs());
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(getRecipeName(), getInputs(), getRequiredKnownOutputs(), getOutputs());
+    public String toString() {
+        return "GenericRecipeEquivalencyRecipe{" +
+                "name=" + name +
+                '}';
     }
 }

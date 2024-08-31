@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.api.IAequivaleoAPI;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
@@ -28,7 +29,6 @@ import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundC
 import com.ldtteam.aequivaleo.testing.recipe.equivalency.TestingEquivalencyRecipe;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
@@ -109,7 +109,10 @@ public class JGraphTBasedCompoundAnalyzerTest
         CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
         ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
         when(alwaysTrueConfig.get()).thenReturn(true);
-        commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
+        commonConfiguration.debugAnalysisLog = alwaysFalseConfig;
+        commonConfiguration.traceCycleLog = alwaysTrueConfig;
+        commonConfiguration.debugCycleLog = alwaysTrueConfig;
+        commonConfiguration.outputCycleCount = alwaysTrueConfig;
         when(config.getCommon()).thenReturn(commonConfiguration);
 
         when(mod.getConfiguration()).thenReturn(config);
@@ -118,6 +121,10 @@ public class JGraphTBasedCompoundAnalyzerTest
         ModRegistries.CONTAINER_FACTORY = Suppliers.memoize(() -> mock(IForgeRegistry.class));
         when(ModRegistries.CONTAINER_FACTORY.get().iterator()).thenReturn(containerFactories.iterator());
         CompoundContainerFactoryManager.getInstance().bake();
+
+        final IAequivaleoAPI api = mock(IAequivaleoAPI.class);
+        IAequivaleoAPI.Holder.setInstance(api);
+        when(api.getCompoundContainerFactoryManager()).thenReturn(CompoundContainerFactoryManager.getInstance());
 
         when(typeUnknownIsZero.getGroup()).thenReturn(groupUnknownIsZero);
         when(typeUnknownIsZero.toString()).thenReturn("Type:Zero");
@@ -145,6 +152,7 @@ public class JGraphTBasedCompoundAnalyzerTest
                              .orElse(Sets.newHashSet())
         ));
         when(groupUnknownIsZero.shouldIncompleteRecipeBeProcessed(any())).thenReturn(true);
+        when(groupUnknownIsZero.adaptRecipeResult(any(), any())).thenCallRealMethod();
 
         when(typeUnknownIsInvalid.getGroup()).thenReturn(groupUnknownIsInvalid);
         when(typeUnknownIsInvalid.toString()).thenReturn("Type:Invalid");
@@ -178,8 +186,8 @@ public class JGraphTBasedCompoundAnalyzerTest
               .map(IMediationCandidate::getValues)
               .orElse(Sets.newHashSet()));
         });
-
         when(groupUnknownIsInvalid.shouldIncompleteRecipeBeProcessed(any())).thenReturn(false);
+        when(groupUnknownIsInvalid.adaptRecipeResult(any(), any())).thenCallRealMethod();
 
         ISyncedRegistry<ICompoundType> typeReg = mock(ISyncedRegistry.class);
         when(typeReg.getSynchronizationIdOf(any(ICompoundType.class))).thenAnswer((Answer<Integer>) invocation -> Lists.newArrayList(typeUnknownIsZero, typeUnknownIsInvalid, ironType, woodType).indexOf(invocation.getArgument(0)));
@@ -200,6 +208,8 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         aequivaleoMock.close();
         modListMock.close();
+
+        IAequivaleoAPI.Holder.setInstance(null);
     }
 
     @Test
@@ -312,7 +322,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(cz(1)), result.get(cc("a1")));
         assertEquals(s(cz(20)), result.get(cc("b2")));
-        assertEquals(s(cz(0)), result.get(cc("c4")));
+        assertNull(result.get(cc("c4")));
     }
 
     @Test
@@ -743,6 +753,73 @@ public class JGraphTBasedCompoundAnalyzerTest
     }
 
     @Test
+    public void testGenerateComplexCliqueWithInitialVariantAndDirectEquivalence() {
+        final String glassPattern = "%sGlass";
+        final String dyePattern = "%sDye";
+
+        final String uncoloredGlass = String.format(glassPattern, "uncolored");
+
+        for (Color outer : Color.values()) {
+            final String outerName = outer.getSerializedName();
+            final String outerDye = String.format(dyePattern, outerName);
+            final String outerGlass = String.format(glassPattern, outerName);
+
+            for (Color inner : Color.values()) {
+                if (inner.equals(outer))
+                    continue;
+
+                final String innerName = inner.getSerializedName();
+                final String innerGlass = String.format(glassPattern, innerName);
+
+                addConversion(1, outerGlass, List.of(innerGlass, outerDye));
+            }
+
+            input.registerValue(outerDye, s(ci(128)));
+        }
+
+        for (Color outer : Color.values()) {
+            final String outerName = outer.getSerializedName();
+            final String outerGlass = String.format(glassPattern, outerName);
+
+            for (Color inner : Color.values()) {
+                if (inner.equals(outer))
+                    continue;
+
+                final String innerName = inner.getSerializedName();
+                final String innerGlass = String.format(glassPattern, innerName);
+
+                addConversion(1, outerGlass, List.of(innerGlass));
+            }
+
+            addConversion(1, outerGlass, List.of(uncoloredGlass));
+            addConversion(1, uncoloredGlass, List.of(outerGlass));
+        }
+
+        for (Color inner : Color.values()) {
+            final String innerName = inner.getSerializedName();
+            final String innerGlass = String.format(glassPattern, innerName);
+            final String innerDye = String.format(dyePattern, inner.getSerializedName());
+
+            addConversion(1, innerGlass, List.of(uncoloredGlass, innerDye));
+        }
+
+        input.registerValue(uncoloredGlass, s(ci(64)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        for (Color value : Color.values()) {
+            final String dyeName = value.getSerializedName();
+            final String glass = glassPattern.formatted(dyeName);
+            final String dye = dyePattern.formatted(dyeName);
+
+            assertEquals("Dye: %s changed from pre-determined value!".formatted(dyeName), s(ci(128)), result.get(cc(dye)));
+            assertEquals("Glass: %s did not get the lowest calculable value of the clique.".formatted(dyeName), s(ci(64)), result.get(cc(glass)));
+        }
+
+        assertEquals("Glass: uncolored did not get the lowest calculable value of the clique.", s(ci(64)), result.get(cc(uncoloredGlass)));
+    }
+
+    @Test
     public void testGenerateBlasting() {
         final String ironOre = "iron_ore";
         final String ironIngot = "iron_ingot";
@@ -803,6 +880,73 @@ public class JGraphTBasedCompoundAnalyzerTest
         assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc(ironSword)));
     }
 
+    @Test
+    public void testFullRecyclingStack() {
+        record RecipeRegistrar(JGraphTBasedCompoundAnalyzerTest test) {
+            void registerRecipe(String creates, int ingotCount, int stickCount) {
+                test.registerRecipe(
+                  String.format("%sx ingots + %sx sticks creates %s", ingotCount, stickCount, creates),
+                    test.s(test.cc("ingot", ingotCount), test.cc("stick", stickCount)),
+                    test.s(test.cc(creates, 1))
+                );
+
+                test.registerRecipe(
+                        String.format("%s recycles to 1 nugget", creates),
+                        test.s(test.cc(creates, 1)),
+                        test.s(test.cc("nugget", 1))
+                );
+            }
+
+            void registerRecipe(String creates, int ingotCount) {
+                test.registerRecipe(
+                        String.format("%sx ingots creates %s", ingotCount, creates),
+                        test.s(test.cc("ingot", ingotCount)),
+                        test.s(test.cc(creates, 1))
+                );
+
+                test.registerRecipe(
+                        String.format("%s recycles to 1 nugget", creates),
+                        test.s(test.cc(creates, 1)),
+                        test.s(test.cc("nugget", 1))
+                );
+            }
+        }
+
+        final RecipeRegistrar registrar = new RecipeRegistrar(this);
+        registrar.registerRecipe("sword", 2, 1);
+        registrar.registerRecipe("pickaxe", 3, 2);
+        registrar.registerRecipe("shovel", 1, 2);
+        registrar.registerRecipe("axe", 3, 2);
+        registrar.registerRecipe("hoe", 2, 2);
+        registrar.registerRecipe("helmet", 5);
+        registrar.registerRecipe("chestplate", 8);
+        registrar.registerRecipe("leggings", 7);
+        registrar.registerRecipe("boots", 4);
+
+        registerRecipe("1x ore to 1x ingot", s(cc("ore", 1)), s(cc("ingot", 1)));
+        registerRecipe("1x ingot to 9x nugget", s(cc("ingot", 1)), s(cc("nugget", 9)));
+        registerRecipe("9x nugget to 1x ingot", s(cc("nugget", 9)), s(cc("ingot", 1)));
+
+        input.registerValue("ore", s(iron(9)));
+        input.registerValue("stick", s(wood(1)));
+
+        final Map<ICompoundContainer<?>, Set<CompoundInstance>> result = analyzer.calculateAndGet();
+
+        assertEquals("Sword was not the sum of 2 ingots and a stick", s(iron(18), wood(1)), result.get(cc("sword")));
+        assertEquals("Pickaxe was not the sum of 3 ingots and 2 sticks", s(iron(27), wood(2)), result.get(cc("pickaxe")));
+        assertEquals("Shovel was not the sum of 1 ingot and 2 sticks", s(iron(9), wood(2)), result.get(cc("shovel")));
+        assertEquals("Axe was not the sum of 3 ingots and 2 sticks", s(iron(27), wood(2)), result.get(cc("axe")));
+        assertEquals("Hoe was not the sum of 2 ingots and 2 sticks", s(iron(18), wood(2)), result.get(cc("hoe")));
+        assertEquals("Helmet was not the sum of 5 ingots", s(iron(45)), result.get(cc("helmet")));
+        assertEquals("Chestplate was not the sum of 8 ingots", s(iron(72)), result.get(cc("chestplate")));
+        assertEquals("Leggings was not the sum of 7 ingots", s(iron(63)), result.get(cc("leggings")));
+        assertEquals("Boots was not the sum of 4 ingots", s(iron(36)), result.get(cc("boots")));
+
+        assertEquals("Iron ore was not the sum of 9 nuggets", s(iron(9)), result.get(cc("ore")));
+        assertEquals("Iron was not the sum of 9 nuggets", s(iron(9)), result.get(cc("ingot")));
+        assertEquals("Stick was not the sum of 1 wood", s(wood(1)), result.get(cc("stick")));
+    }
+
     public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> outputs)
     {
         EquivalencyRecipeRegistry.getInstance(key).register(
@@ -810,18 +954,6 @@ public class JGraphTBasedCompoundAnalyzerTest
             name,
             inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
             Collections.emptySet(),
-            outputs
-          )
-        );
-    }
-
-    public void registerRecipe(final String name, Set<ICompoundContainer<?>> inputs, Set<ICompoundContainer<?>> containers, Set<ICompoundContainer<?>> outputs)
-    {
-        EquivalencyRecipeRegistry.getInstance(key).register(
-          new TestingEquivalencyRecipe(
-            name,
-            inputs.stream().map(c -> new SimpleIngredientBuilder().from(c).createIngredient()).collect(Collectors.toSet()),
-            containers,
             outputs
           )
         );

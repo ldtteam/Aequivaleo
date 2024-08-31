@@ -53,14 +53,13 @@ public abstract class AbstractJGraphTDirectedCyclesReducer<G extends Graph<N, E>
     public boolean reduceOnce(final G graph, N startNode) {
         AnalysisLogHandler.debug(LOGGER, "Reducing the graph");
 
-        List<List<N>> sortedCycles = detectCycles(graph);
+        Map<N, Integer> depthMap = buildCycleProcesingDepthMap(graph, startNode);
+        List<List<N>> sortedCycles = detectcycles(graph, depthMap);
         if (sortedCycles.isEmpty() || (sortedCycles.size() == 1 && !reduceSingularCycle))
         {
             AnalysisLogHandler.debug(LOGGER, " > Reducing skipped.");
             return false;
         }
-
-        Map<N, Integer> depthMap = buildCycleProcesingDepthMap(graph, startNode);
 
         sortCycles(sortedCycles, depthMap);
 
@@ -198,8 +197,8 @@ public abstract class AbstractJGraphTDirectedCyclesReducer<G extends Graph<N, E>
         return depthMapBuilder.calculateDepthMap();
     }
 
-    private @NotNull List<List<N>> detectCycles(G graph) {
-        final DirectedSimpleCycles<N, E> cycleFinder = createCycleDetector(graph);
+    private @NotNull List<List<N>> detectcycles(G graph, Map<N, Integer> depthMap) {
+        final DirectedSimpleCycles<N, E> cycleFinder = createCycleDetector(graph, depthMap);
         List<List<N>> sortedCycles = cycleFinder.findSimpleCycles();
 
         Set<List<N>> uniqueValues = new HashSet<>(sortedCycles);
@@ -207,7 +206,7 @@ public abstract class AbstractJGraphTDirectedCyclesReducer<G extends Graph<N, E>
         return sortedCycles;
     }
 
-    protected abstract DirectedSimpleCycles<N, E> createCycleDetector(G graph);
+    protected abstract DirectedSimpleCycles<N, E> createCycleDetector(G graph, Map<N, Integer> depthMap);
 
     private CycleProcessResult<N> updateRemainingCyclesAfterReplacement(final List<List<N>> cycles, final List<N> replacedCycle, final N replacementNode) {
         final Set<N> replacedNodes = new HashSet<>(replacedCycle);

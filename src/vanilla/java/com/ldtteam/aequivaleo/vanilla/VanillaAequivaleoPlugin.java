@@ -1,8 +1,6 @@
 package com.ldtteam.aequivaleo.vanilla;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
@@ -10,40 +8,33 @@ import com.ldtteam.aequivaleo.api.recipe.IRecipeTypeProcessingRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.GenericRecipeEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.IRecipeCalculator;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariant;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariantIterator;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.tags.Tags;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
-import com.ldtteam.aequivaleo.api.util.TriFunction;
 import com.ldtteam.aequivaleo.vanilla.api.IVanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.VanillaAequivaleoPluginAPI;
 import com.ldtteam.aequivaleo.vanilla.api.tags.ITagEquivalencyRegistry;
 import com.ldtteam.aequivaleo.vanilla.api.util.Constants;
 import com.ldtteam.aequivaleo.vanilla.config.Configuration;
 import com.ldtteam.aequivaleo.vanilla.recipe.equivalency.*;
-import net.minecraft.core.Holder;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.crafting.*;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.extensions.IForgeItemStack;
 import net.minecraftforge.fml.ModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -63,7 +54,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ResourceLocation serializerName, final ServerLevel world) {
         if (world.getRecipeManager().recipes.get(type) == null) {
-            LOGGER.error("Could not find any recipes for recipe type: " + type + " its recipes array value is null!");
+            LOGGER.debug("Could not find any recipes for recipe type: {} its recipes array value is null!", type);
             return Lists.newArrayList();
         }
 
@@ -74,7 +65,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     private static List<Recipe<?>> getRecipes(final RecipeType<?> type, final ServerLevel world) {
         if (world.getRecipeManager().recipes.get(type) == null) {
-            LOGGER.error("Could not find any recipes for recipe type: " + type + " its recipes array value is null!");
+            LOGGER.debug("Could not find any recipes for recipe type: {} its recipes array value is null!", type);
             return Lists.newArrayList();
         }
 
@@ -82,77 +73,40 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 .toList();
     }
 
-    private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new CookingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    private void processSmeltingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, CookingEquivalencyRecipe::new);
     }
 
-    private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new SimpleEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, variant -> new SimpleEquivalencyRecipe(variant, iRecipe.getId()));
     }
 
-    private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new StoneCuttingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    private void processStoneCuttingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, StoneCuttingEquivalencyRecipe::new);
     }
 
-    private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
-        processRecipe(world, iRecipe, Recipe::getIngredients, (inputs, requiredKnownOutputs, outputs) -> new GenericRecipeEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+    private void processGenericRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
+        processRecipe(world, levels, iRecipe, v -> new GenericRecipeEquivalencyRecipe(v, iRecipe.getId()));
     }
 
-    private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTransformRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
         processRecipe(world,
-                iRecipe,
-                smithingRecipe -> {
-                    if (!(smithingRecipe instanceof SmithingTransformRecipe))
-                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
-
-                    final NonNullList<Ingredient> ingredients = NonNullList.create();
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).template);
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).base);
-                    ingredients.add(((SmithingTransformRecipe) smithingRecipe).addition);
-                    return ingredients;
-                },
-                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+                levels, iRecipe,
+                SmithingEquivalencyRecipe::new);
     }
 
-    private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe) {
+    private void processSmithingTrimRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
         processRecipe(world,
-                iRecipe,
-                smithingRecipe -> {
-                    if (!(smithingRecipe instanceof SmithingTrimRecipe))
-                        throw new IllegalArgumentException("Recipe is not a smithing recipe.");
-
-                    final NonNullList<Ingredient> ingredients = NonNullList.create();
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).template);
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).base);
-                    ingredients.add(((SmithingTrimRecipe) smithingRecipe).addition);
-                    return ingredients;
-                },
-                (inputs, requiredKnownOutputs, outputs) -> new SmithingEquivalencyRecipe(iRecipe.getId(), inputs, requiredKnownOutputs, outputs));
+                levels, iRecipe,
+                SmithingEquivalencyRecipe::new);
     }
 
-    private static void processDecoratedPotRecipe(@NotNull final ServerLevel world) {
-        world.registryAccess().registry(Registries.ITEM).orElseThrow()
-                .getTag(ItemTags.DECORATED_POT_SHERDS)
-                .ifPresent(holder -> {
-                    final List<Item> sherds = holder.stream().map(Holder::get).toList();
-                    final List<List<Item>> permutedSherds = IRecipeCalculator.getInstance().getAllPerturbations(sherds, 4);
-                    final List<DecoratedPotEquivalencyRecipe> recipes = permutedSherds.stream()
-                            .map(sherdList -> {
-                                final DecoratedPotBlockEntity.Decorations decorations = new DecoratedPotBlockEntity.Decorations(sherdList.get(0), sherdList.get(1), sherdList.get(2), sherdList.get(3));
-                                return new DecoratedPotEquivalencyRecipe(world, decorations);
-                            })
-                            .toList();
-
-                    recipes.forEach(recipe -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(recipe));
-                });
-    }
-
+    @SuppressWarnings("ConstantValue")
     private void processRecipe(
-            @NotNull final ServerLevel world,
+            final ServerLevel world,
+            Collection<ServerLevel> levels,
             final Recipe<?> recipe,
-            final Function<Recipe<?>, NonNullList<Ingredient>> ingredientExtractor,
-            final TriFunction<SortedSet<IRecipeIngredient>, SortedSet<ICompoundContainer<?>>, SortedSet<ICompoundContainer<?>>, IEquivalencyRecipe> recipeFactory
-    ) {
+            final Function<RecipeVariant, IEquivalencyRecipe> converter) {
         try {
             if (recipe.getResultItem(world.registryAccess()).isEmpty()) {
                 return;
@@ -162,104 +116,73 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 return;
             }
 
-            final List<IEquivalencyRecipe> variants = IRecipeCalculator.getInstance().getAllVariants(
-                    world,
-                    recipe,
-                    ingredientExtractor,
-                    IRecipeCalculator.getInstance()::getAllVariantsFromSimpleIngredient,
-                    recipeFactory
-            ).toList();
-
-            if (configuration.getCommon().logEmptyVariantsWarning.get() && variants.isEmpty() && !recipe.getId().getNamespace().equals("minecraft")) {
+            final RecipeVariantIterator recipeVariantIterator = new RecipeVariantIterator(recipe, world.registryAccess());
+            if (configuration.getCommon().logEmptyVariantsWarning.get() && !recipeVariantIterator.hasNext() && !recipe.getId().getNamespace().equals("minecraft")) {
                 LOGGER.error(String.format("Failed to process recipe: %s See ingredient error logs for more information.", recipe.getId()));
             }
 
-            variants.forEach(variant -> IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(variant));
+            while (recipeVariantIterator.hasNext()) {
+                final RecipeVariant variant = recipeVariantIterator.next();
+                for (ServerLevel level : levels) {
+                    IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(converter.apply(variant));
+                }
+            }
         } catch (Exception ex) {
-            LOGGER.error("A recipe has throw an exception while processing: " + recipe.getId(), ex);
+            LOGGER.error("A recipe has throw an exception while processing: {}", recipe.getId(), ex);
         }
     }
 
-    public void processPotionRecipe(ServerLevel level, PotionBrewing.Mix<Potion> recipe, ItemStack container) {
+    public void processPotionRecipe(Collection<ServerLevel> levels, PotionBrewing.Mix<Potion> recipe, ItemStack container) {
         final ItemStack inputStack = PotionUtils.setPotion(container, recipe.from.get());
         final ItemStack outputStack = PotionUtils.setPotion(container, recipe.to.get());
 
         for (ItemStack reagent : recipe.ingredient.getItems()) {
-            IEquivalencyRecipeRegistry.getInstance(level.dimension())
-                    .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            for (ServerLevel level : levels) {
+                IEquivalencyRecipeRegistry.getInstance(level.dimension())
+                        .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            }
         }
     }
 
-    public void processPotionContainerRecipe(ServerLevel level, PotionBrewing.Mix<Item> recipe) {
+    public void processPotionContainerRecipe(Collection<ServerLevel> levels, PotionBrewing.Mix<Item> recipe) {
         final ItemStack inputStack = new ItemStack(recipe.from.get());
         final ItemStack outputStack = new ItemStack(recipe.to.get());
 
         for (ItemStack reagent : recipe.ingredient.getItems()) {
-            IEquivalencyRecipeRegistry.getInstance(level.dimension())
-                    .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            for (ServerLevel level : levels) {
+                IEquivalencyRecipeRegistry.getInstance(level.dimension())
+                        .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            }
         }
     }
 
-    public void processRecipeWithInAndOut(ServerLevel level, String name, ItemStack outStack, ItemStack... inStacks) {
-        IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(new SimpleEquivalencyRecipe(new ResourceLocation("custom/" + name),
+    public void processRecipeWithInAndOut(Collection<ServerLevel> levels, String name, ItemStack outStack, ItemStack... inStacks) {
+        final GenericRecipeEquivalencyRecipe recipe = new GenericRecipeEquivalencyRecipe(
                 Arrays.stream(inStacks).map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
                         .map(container -> new SimpleIngredientBuilder().from(container).createIngredient()).collect(Collectors.toSet()),
                 Arrays.stream(inStacks)
                         .map(IForgeItemStack::getCraftingRemainingItem)
                         .filter(stack -> !stack.isEmpty())
                         .map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
+                        .map(c -> new SimpleIngredientBuilder().from(c).withCount(c.getContentsCount()).createIngredient())
                         .collect(Collectors.toSet()),
-                Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount()))));
-    }
-
-    private static void processBucketFluidRecipeFor(
-            @NotNull final Level world, final Item item) {
-        if (!(item instanceof final BucketItem bucketItem))
-            return;
-
-        if (bucketItem.getFluid().isSame(Fluids.EMPTY))
-            return;
-
-        final ICompoundContainer<?> emptyBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                Items.BUCKET, 1
-        );
-        final IRecipeIngredient emptyBucketIngredient = new SimpleIngredientBuilder().from(emptyBucketContainer).createIngredient();
-
-        final Fluid fluid = bucketItem.getFluid();
-        final ICompoundContainer<?> fluidContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                fluid, 1000
-        );
-        final IRecipeIngredient fluidIngredient = new SimpleIngredientBuilder().from(fluidContainer).createIngredient();
-
-        final ICompoundContainer<?> fullBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                bucketItem, 1
-        );
-        final IRecipeIngredient fullBucketIngredient = new SimpleIngredientBuilder().from(fullBucketContainer
-        ).createIngredient();
-
-        final BucketFluidRecipe fillingRecipe = new BucketFluidRecipe(
-                Sets.newHashSet(emptyBucketIngredient, fluidIngredient),
-                Sets.newHashSet(),
-                Sets.newHashSet(fullBucketContainer)
-        );
-        final BucketFluidRecipe emptyingRecipe = new BucketFluidRecipe(
-                Sets.newHashSet(fullBucketIngredient),
-                Sets.newHashSet(emptyBucketContainer),
-                Sets.newHashSet(fluidContainer)
+                Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount())),
+                new ResourceLocation("custom/" + name)
         );
 
-        IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(
-                fillingRecipe
-        );
-        IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(
-                emptyingRecipe
-        );
+        for (ServerLevel level : levels) {
+            IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(
+                    recipe
+            );
+        }
+
     }
 
     private static boolean isNotCompatibleRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
         return isDyeingRecipe(world, recipe);
     }
 
+    @SuppressWarnings("ConstantValue")
     private static boolean isDyeingRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
         if (true)
             return false;
@@ -360,8 +283,9 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
 
     @SuppressWarnings("deprecation")
     @Override
-    public void onReloadStartedFor(final ServerLevel world) {
+    public void onReloadStartedFor(final Collection<ServerLevel> levels) {
 
+        final ServerLevel world = levels.iterator().next();
         final List<Recipe<?>> smeltingRecipe = Lists.newArrayList();
 
         IRecipeTypeProcessingRegistry
@@ -372,7 +296,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smeltingRecipe
                         .parallelStream()
-                        .forEach(recipe -> processSmeltingRecipe(world, recipe))
+                        .forEach(recipe -> processSmeltingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> stoneCuttingsRecipe = Lists.newArrayList();
@@ -385,7 +309,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> stoneCuttingsRecipe
                         .parallelStream()
-                        .forEach(recipe -> processStoneCuttingRecipe(world, recipe))
+                        .forEach(recipe -> processStoneCuttingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> smithingTransformRecipes = Lists.newArrayList();
@@ -398,7 +322,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smithingTransformRecipes
                         .parallelStream()
-                        .forEach(recipe -> processSmithingTransformRecipe(world, recipe))
+                        .forEach(recipe -> processSmithingTransformRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> smithingTrimRecipes = Lists.newArrayList();
@@ -411,7 +335,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> smithingTrimRecipes
                         .parallelStream()
-                        .forEach(recipe -> processSmithingTrimRecipe(world, recipe))
+                        .forEach(recipe -> processSmithingTrimRecipe(world, recipe, levels))
         );
 
         //processDecoratedPotRecipe(world);
@@ -426,7 +350,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> craftingRecipes
                         .parallelStream()
-                        .forEach(recipe -> processCraftingRecipe(world, recipe))
+                        .forEach(recipe -> processCraftingRecipe(world, recipe, levels))
         );
 
         final List<Recipe<?>> genericRecipes = Lists.newArrayList();
@@ -448,68 +372,58 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         StreamUtils.execute(
                 () -> genericRecipes
                         .parallelStream()
-                        .forEach(recipe -> processGenericRecipe(world, recipe))
+                        .forEach(recipe -> processGenericRecipe(world, recipe, levels))
         );
 
-        processCustomRecipes(world);
+        processCustomRecipes(levels);
 
-        processWaterBottleFillRecipe(world);
-
-        processPotionRecipes(world);
+        processPotionRecipes(levels);
     }
 
-    private void processCustomRecipes(ServerLevel world) {
-        processRecipeWithInAndOut(world, "concrete_from_powder_black", new ItemStack(Blocks.BLACK_CONCRETE), new ItemStack(Blocks.BLACK_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_blue", new ItemStack(Blocks.BLUE_CONCRETE), new ItemStack(Blocks.BLUE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_brown", new ItemStack(Blocks.BROWN_CONCRETE), new ItemStack(Blocks.BROWN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_cyan", new ItemStack(Blocks.CYAN_CONCRETE), new ItemStack(Blocks.CYAN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_gray", new ItemStack(Blocks.GRAY_CONCRETE), new ItemStack(Blocks.GRAY_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_green", new ItemStack(Blocks.GREEN_CONCRETE), new ItemStack(Blocks.GREEN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_light_blue", new ItemStack(Blocks.LIGHT_BLUE_CONCRETE), new ItemStack(Blocks.LIGHT_BLUE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_lime", new ItemStack(Blocks.LIME_CONCRETE), new ItemStack(Blocks.LIME_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_magenta", new ItemStack(Blocks.MAGENTA_CONCRETE), new ItemStack(Blocks.MAGENTA_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_orange", new ItemStack(Blocks.ORANGE_CONCRETE), new ItemStack(Blocks.ORANGE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_pink", new ItemStack(Blocks.PINK_CONCRETE), new ItemStack(Blocks.PINK_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_purple", new ItemStack(Blocks.PURPLE_CONCRETE), new ItemStack(Blocks.PURPLE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_red", new ItemStack(Blocks.RED_CONCRETE), new ItemStack(Blocks.RED_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_light_gray", new ItemStack(Blocks.LIGHT_GRAY_CONCRETE), new ItemStack(Blocks.LIGHT_GRAY_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_white", new ItemStack(Blocks.WHITE_CONCRETE), new ItemStack(Blocks.WHITE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_yellow", new ItemStack(Blocks.YELLOW_CONCRETE), new ItemStack(Blocks.YELLOW_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "colored_shulker_box_black", new ItemStack(Blocks.BLACK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLACK_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_blue", new ItemStack(Blocks.BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLUE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_brown", new ItemStack(Blocks.BROWN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BROWN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_cyan", new ItemStack(Blocks.CYAN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.CYAN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_gray", new ItemStack(Blocks.GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GRAY_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_green", new ItemStack(Blocks.GREEN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GREEN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_light_blue", new ItemStack(Blocks.LIGHT_BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_BLUE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_lime", new ItemStack(Blocks.LIME_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIME_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_magenta", new ItemStack(Blocks.MAGENTA_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.MAGENTA_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_orange", new ItemStack(Blocks.ORANGE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.ORANGE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_pink", new ItemStack(Blocks.PINK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PINK_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_purple", new ItemStack(Blocks.PURPLE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PURPLE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_red", new ItemStack(Blocks.RED_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.RED_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_light_gray", new ItemStack(Blocks.LIGHT_GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_GRAY_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_white", new ItemStack(Blocks.WHITE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.WHITE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_yellow", new ItemStack(Blocks.YELLOW_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.YELLOW_DYE));
+    private void processCustomRecipes(Collection<ServerLevel> levels) {
+        processRecipeWithInAndOut(levels, "concrete_from_powder_black", new ItemStack(Blocks.BLACK_CONCRETE), new ItemStack(Blocks.BLACK_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_blue", new ItemStack(Blocks.BLUE_CONCRETE), new ItemStack(Blocks.BLUE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_brown", new ItemStack(Blocks.BROWN_CONCRETE), new ItemStack(Blocks.BROWN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_cyan", new ItemStack(Blocks.CYAN_CONCRETE), new ItemStack(Blocks.CYAN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_gray", new ItemStack(Blocks.GRAY_CONCRETE), new ItemStack(Blocks.GRAY_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_green", new ItemStack(Blocks.GREEN_CONCRETE), new ItemStack(Blocks.GREEN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_light_blue", new ItemStack(Blocks.LIGHT_BLUE_CONCRETE), new ItemStack(Blocks.LIGHT_BLUE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_lime", new ItemStack(Blocks.LIME_CONCRETE), new ItemStack(Blocks.LIME_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_magenta", new ItemStack(Blocks.MAGENTA_CONCRETE), new ItemStack(Blocks.MAGENTA_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_orange", new ItemStack(Blocks.ORANGE_CONCRETE), new ItemStack(Blocks.ORANGE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_pink", new ItemStack(Blocks.PINK_CONCRETE), new ItemStack(Blocks.PINK_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_purple", new ItemStack(Blocks.PURPLE_CONCRETE), new ItemStack(Blocks.PURPLE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_red", new ItemStack(Blocks.RED_CONCRETE), new ItemStack(Blocks.RED_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_light_gray", new ItemStack(Blocks.LIGHT_GRAY_CONCRETE), new ItemStack(Blocks.LIGHT_GRAY_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_white", new ItemStack(Blocks.WHITE_CONCRETE), new ItemStack(Blocks.WHITE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_yellow", new ItemStack(Blocks.YELLOW_CONCRETE), new ItemStack(Blocks.YELLOW_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_black", new ItemStack(Blocks.BLACK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLACK_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_blue", new ItemStack(Blocks.BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLUE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_brown", new ItemStack(Blocks.BROWN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BROWN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_cyan", new ItemStack(Blocks.CYAN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.CYAN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_gray", new ItemStack(Blocks.GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GRAY_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_green", new ItemStack(Blocks.GREEN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GREEN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_light_blue", new ItemStack(Blocks.LIGHT_BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_BLUE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_lime", new ItemStack(Blocks.LIME_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIME_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_magenta", new ItemStack(Blocks.MAGENTA_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.MAGENTA_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_orange", new ItemStack(Blocks.ORANGE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.ORANGE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_pink", new ItemStack(Blocks.PINK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PINK_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_purple", new ItemStack(Blocks.PURPLE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PURPLE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_red", new ItemStack(Blocks.RED_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.RED_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_light_gray", new ItemStack(Blocks.LIGHT_GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_GRAY_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_white", new ItemStack(Blocks.WHITE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.WHITE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_yellow", new ItemStack(Blocks.YELLOW_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.YELLOW_DYE));
     }
 
-    private void processWaterBottleFillRecipe(ServerLevel world) {
-        final BucketFluidRecipe fillBottleRecipe = new BucketFluidRecipe(
-            Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE, 1), IRecipeIngredient.from(Fluids.WATER, 250)),
-                Set.of(),
-                Set.of(ICompoundContainer.from(PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER)))
-        );
-    }
-
-    private void processPotionRecipes(ServerLevel world) {
+    private void processPotionRecipes(Collection<ServerLevel> levels) {
         for (PotionBrewing.Mix<Item> containerMix : PotionBrewing.CONTAINER_MIXES) {
-            processPotionContainerRecipe(world, containerMix);
+            processPotionContainerRecipe(levels, containerMix);
         }
 
         for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
-            for(ItemStack containerStack : container.getItems()) {
+            for (ItemStack containerStack : container.getItems()) {
                 for (PotionBrewing.Mix<Potion> potionMix : PotionBrewing.POTION_MIXES) {
-                    processPotionRecipe(world, potionMix, containerStack);
+                    processPotionRecipe(levels, potionMix, containerStack);
                 }
             }
         }

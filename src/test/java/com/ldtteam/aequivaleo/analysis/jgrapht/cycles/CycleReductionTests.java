@@ -4,6 +4,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.DFSDirectCycleReducer;
 import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
 import com.ldtteam.aequivaleo.api.util.ModRegistries;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
@@ -49,7 +50,7 @@ public class CycleReductionTests {
         }
     }
 
-    private static Node toCycle(Graph<Node, String> graph, List<Node> nodes) {
+    private static Node toCycle(List<Node> nodes) {
         return new Node(nodes);
     }
 
@@ -104,14 +105,10 @@ public class CycleReductionTests {
         modListMock.close();
     }
 
-
     @Test
     public void testSimpleCycle() {
-        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
-                CycleReductionTests::toCycle,
-                (node, neighbor, replacement) -> {
-                    System.out.printf("Replacing %s with %s on %s%n", neighbor, replacement, node);
-                }
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
         );
 
         final Node a = new Node(List.of("a"));
@@ -137,11 +134,8 @@ public class CycleReductionTests {
 
     @Test
     public void testSimpleCycleWithTail() {
-        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
-                CycleReductionTests::toCycle,
-                (node, neighbor, replacement) -> {
-                    System.out.printf("Replacing %s with %s on %s%n", neighbor, replacement, node);
-                }
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
         );
 
         final Node s = new Node(List.of("s"));
@@ -169,16 +163,13 @@ public class CycleReductionTests {
 
         cyclesReducer.reduce(graph, s);
 
-        Assert.assertEquals("([s, m, [a, b, c]], [0=(s,[a, b, c]), 1=([a, b, c],m)])", graph.toString());
+        Assert.assertEquals("([s, m, [a, b, c]], [0=([a, b, c],m), 1=(s,[a, b, c])])", graph.toString());
     }
 
     @Test
     public void testDoubleCycle() {
-        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
-                CycleReductionTests::toCycle,
-                (node, neighbor, replacement) -> {
-                    System.out.printf("Replacing %s with %s on %s%n", neighbor, replacement, node);
-                }
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
         );
 
         final Node s = new Node(List.of("s"));
@@ -218,16 +209,13 @@ public class CycleReductionTests {
 
         cyclesReducer.reduce(graph, s);
 
-        Assert.assertEquals("([s, m, [x, y, z], [a, b, c]], [0=(m,[x, y, z]), 1=(s,[a, b, c]), 2=([a, b, c],m)])", graph.toString());
+        Assert.assertEquals("([s, m, [x, y, z], [a, b, c]], [0=(m,[x, y, z]), 1=([a, b, c],m), 2=(s,[a, b, c])])", graph.toString());
     }
 
     @Test
     public void testInnerCircle() {
-        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new SzwarcfiterLauerCyclesReducer<>(
-                CycleReductionTests::toCycle,
-                (node, neighbor, replacement) -> {
-                    System.out.printf("Replacing %s with %s on %s%n", neighbor, replacement, node);
-                }
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
         );
 
         final Node s = new Node(List.of("s"));
@@ -267,6 +255,99 @@ public class CycleReductionTests {
 
         cyclesReducer.reduce(graph, s);
 
-        Assert.assertEquals("([s, [[[b, c, f, g], d, e], h, a]], [6=(s,[[[b, c, f, g], d, e], h, a])])", graph.toString());
+        Assert.assertEquals("([s, [[a, [b, c, f, g], h], d, e]], [7=(s,[[a, [b, c, f, g], h], d, e])])", graph.toString());
     }
+
+
+    @Test
+    public void testInnerCircleWithJump() {
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
+        );
+
+        final Node s = new Node(List.of("s"));
+
+        final Node a = new Node(List.of("a"));
+        final Node b = new Node(List.of("b"));
+        final Node c = new Node(List.of("c"));
+        final Node d = new Node(List.of("d"));
+        final Node e = new Node(List.of("e"));
+        final Node f = new Node(List.of("f"));
+        final Node g = new Node(List.of("g"));
+        final Node h = new Node(List.of("h"));
+        final Node i = new Node(List.of("i"));
+        final Node j = new Node(List.of("j"));
+        final Node k = new Node(List.of("k"));
+
+        graph.addVertex(s);
+        graph.addVertex(a);
+        graph.addVertex(b);
+        graph.addVertex(c);
+        graph.addVertex(d);
+        graph.addVertex(e);
+        graph.addVertex(f);
+        graph.addVertex(g);
+        graph.addVertex(h);
+        graph.addVertex(i);
+        graph.addVertex(j);
+        graph.addVertex(k);
+
+
+        graph.addEdge(c, i, "ci");
+        graph.addEdge(i, j, "ij");
+        graph.addEdge(j, k, "jk");
+        graph.addEdge(k, f, "kf");
+        graph.addEdge(g, b, "gb");
+
+        graph.addEdge(a, b, "ab");
+        graph.addEdge(b, c, "bc");
+        graph.addEdge(c, d, "cd");
+        graph.addEdge(d, e, "de");
+        graph.addEdge(e, f, "ef");
+        graph.addEdge(f, g, "fg");
+        graph.addEdge(g, h, "gh");
+        graph.addEdge(h, a, "ha");
+
+        graph.addEdge(s, a, "sa");
+
+        cyclesReducer.reduce(graph, s);
+
+        Assert.assertEquals("([s, [a, [[b, c, d, e, f, g], i, j, k], h]], [6=(s,[a, [[b, c, d, e, f, g], i, j, k], h])])", graph.toString());
+    }
+
+
+    @Test
+    public void testSimpleCycleWithJumpForward() {
+        final ICyclesReducer<Graph<Node, String>, Node, String> cyclesReducer = new DFSDirectCycleReducer<>(
+                CycleReductionTests::toCycle
+        );
+
+        final Node s = new Node(List.of("s"));
+
+        final Node m = new Node(List.of("m"));
+
+        final Node a = new Node(List.of("a"));
+        final Node b = new Node(List.of("b"));
+        final Node c = new Node(List.of("c"));
+
+        graph.addVertex(s);
+        graph.addVertex(m);
+
+        graph.addVertex(a);
+        graph.addVertex(b);
+        graph.addVertex(c);
+
+        graph.addEdge(s, c, "sc");
+        graph.addEdge(s, m, "sm");
+        graph.addEdge(m, a, "ma");
+
+        graph.addEdge(a, b, "ab");
+        graph.addEdge(b, c, "bc");
+        graph.addEdge(c, a, "ca");
+
+        cyclesReducer.reduce(graph, s);
+
+        Assert.assertEquals("([s, m, [a, b, c]], [sm=(s,m), 0=(s,[a, b, c]), 1=(m,[a, b, c])])", graph.toString());
+    }
+
 }

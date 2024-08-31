@@ -6,6 +6,7 @@ import org.jgrapht.alg.cycle.DirectedSimpleCycles;
 import org.jgrapht.alg.cycle.HawickJamesSimpleCycles;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 @Deprecated(forRemoval = true)
@@ -21,7 +22,7 @@ public class HawickJamesCyclesReducer<G extends Graph<V, E>, V, E> extends Abstr
     }
 
     @Override
-    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph) {
+    protected DirectedSimpleCycles<V, E> createCycleDetector(G graph, Map<V, Integer> depthMap) {
         return new HawickJamesSimpleCycles<>(graph);
     }
 }

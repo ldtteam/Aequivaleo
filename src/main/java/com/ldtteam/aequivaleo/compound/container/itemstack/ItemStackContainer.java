@@ -87,6 +87,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         public double getInnateCount(@NotNull ItemStack inputInstance) {
             return inputInstance.getCount();
         }
+
+        @Override
+        public boolean areContentsEqual(@NotNull ItemStack left, @NotNull ItemStack right) {
+            return ItemStackUtils.compareItemStacksIgnoreStackSize(left, right);
+        }
     }
 
     private final ItemStack stack;
@@ -125,6 +130,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     public ItemStack getContents()
     {
         return stack;
+    }
+
+    @Override
+    public String getContentNamespace() {
+        return Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getNamespace();
     }
 
     /**
@@ -201,6 +211,6 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     @Override
     public String toString()
     {
-        return String.format("%s x ItemStack: %s", count, stack);
+        return String.format("%s x ItemStack: %s", count, stack.serializeNBT());
     }
 }

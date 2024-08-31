@@ -8,6 +8,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.data.event.GatherDataEvent;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,26 +32,34 @@ public interface IAequivaleoPlugin
     /**
      * Invoked when the plugin is constructed.
      */
-    default void onConstruction() {};
+    default void onConstruction() {}
 
     /**
      * Called after Aequivaleos common setup completes.
      * Allows for the registration of static (none world specific) data.
      */
-    default void onCommonSetup() {};
+    default void onCommonSetup() {}
+
+    /**
+     * Called when the data for a world is being reloaded.
+     * Allows for the registration of world specific recipes.
+     * @param world The world in question for which the data has been reloaded.
+     */
+    default void onReloadStartedFor(final ServerLevel world) {}
+
+    /**
+     * Called when the data for all worlds is being reloaded.
+     * Allows for the registration of global recipes.
+     * @param levels The levels for which the data is being reloaded.
+     */
+    default void onReloadStartedFor(Collection<ServerLevel> levels) {}
 
     /**
      * Called when the data for a world is being reloaded.
      * Allows for the registration of recipes.
-     * @param world The world in question for which the data has been reloaded.
+     * @param world The worlds in question for which the data has been reloaded.
      */
-    default void onReloadStartedFor(final ServerLevel world) {};
-
-    /**
-     * Called when the data has been recalculated on the server side.
-     * @param world The world in question for which the data has been reloaded.
-     */
-    default void onReloadFinishedFor(final ServerLevel world) {};
+    default void onReloadFinishedFor(final ServerLevel world) {}
 
     /**
      * Called on the client side to indicate that the data for all worlds
@@ -59,7 +68,7 @@ public interface IAequivaleoPlugin
      * @param worldRegistryKey The registry
      */
     @OnlyIn(Dist.CLIENT)
-    default void onDataSynced(final ResourceKey<Level> worldRegistryKey) {};
+    default void onDataSynced(final ResourceKey<Level> worldRegistryKey) {}
 
     /**
      * Invoked when the compound type synced registry has been synced to the client.

@@ -12,10 +12,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 public class FluidStackContainer implements ICompoundContainer<FluidStack>
 {
@@ -87,6 +89,11 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
         public double getInnateCount(@NotNull FluidStack inputInstance) {
             return inputInstance.getAmount();
         }
+
+        @Override
+        public boolean areContentsEqual(@NotNull FluidStack left, @NotNull FluidStack right) {
+            return FluidStackUtils.compareFluidStacksIgnoreStackSize(left, right);
+        }
     }
 
     private final FluidStack stack;
@@ -120,6 +127,11 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
     public FluidStack getContents()
     {
         return stack;
+    }
+
+    @Override
+    public String getContentNamespace() {
+        return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(stack.getFluid())).getNamespace();
     }
 
     @Override
@@ -187,6 +199,6 @@ public class FluidStackContainer implements ICompoundContainer<FluidStack>
     @Override
     public String toString()
     {
-        return String.format("%s x FluidStack: %s", count, stack);
+        return String.format("%s x FluidStack: %s", count, stack.writeToNBT(new CompoundTag()));
     }
 }

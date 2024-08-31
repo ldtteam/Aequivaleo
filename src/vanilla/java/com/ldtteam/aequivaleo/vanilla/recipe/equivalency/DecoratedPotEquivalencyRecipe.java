@@ -29,7 +29,7 @@ public class DecoratedPotEquivalencyRecipe extends GenericRecipeEquivalencyRecip
     private static final String RECIPE_NAME_TEMPLATE = "decorated_pot_%s";
 
     public DecoratedPotEquivalencyRecipe(final ServerLevel world, final DecoratedPotBlockEntity.Decorations decorations) {
-        super(toRecipeName(world, decorations), toIngredients(decorations), Set.of(), toOutput(decorations));
+        super(toIngredients(decorations), Set.of(), toOutput(decorations), toRecipeName(world, decorations));
     }
 
     private static ResourceLocation toRecipeName(final ServerLevel world, final DecoratedPotBlockEntity.Decorations decorations) {

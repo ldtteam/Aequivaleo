@@ -100,6 +100,11 @@ public class ItemContainer implements ICompoundContainer<Item>
         return item;
     }
 
+    @Override
+    public String getContentNamespace() {
+        return Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents())).getNamespace();
+    }
+
     /**
      * The amount of {@link Item}s contained in this wrapper.
      *

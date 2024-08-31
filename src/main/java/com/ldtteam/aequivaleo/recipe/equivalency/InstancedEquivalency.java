@@ -40,7 +40,7 @@ public class InstancedEquivalency implements IInstancedEquivalency
     }
 
     @Override
-    public SortedSet<ICompoundContainer<?>> getRequiredKnownOutputs()
+    public SortedSet<IRecipeIngredient> getRequiredKnownOutputs()
     {
         return Collections.emptySortedSet();
     }
@@ -76,6 +76,6 @@ public class InstancedEquivalency implements IInstancedEquivalency
     @Override
     public String toString()
     {
-        return String.format("Equivalency via Instance: %s to: %s", getSource().getContents(), getTarget().getContents());
+        return String.format("Equivalency via Instance: %s to: %s", getSource(), getTarget());
     }
 }
