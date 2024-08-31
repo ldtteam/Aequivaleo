@@ -12,6 +12,8 @@ import java.util.function.Supplier;
 
 public class AequivaleoGraph extends SimpleAnalysisGraph<INode, IEdge> implements IGraph
 {
+    Integer hashCode = null;
+
     public AequivaleoGraph()
     {
         super(createEdgeSupplier());

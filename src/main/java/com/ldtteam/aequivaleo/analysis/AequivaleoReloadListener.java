@@ -727,7 +727,7 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
         @Override
         public File getCacheDirectory() {
             final File aequivaleoDirectory =
-                    new File(serverLevel.getChunkSource().level.getServer().storageSource.getDimensionPath(serverLevel.dimension()).toAbsolutePath().toFile().getAbsolutePath(),
+                    new File(serverLevel.getServer().storageSource.getDimensionPath(serverLevel.dimension()).toAbsolutePath().toFile().getAbsolutePath(),
                             Constants.MOD_ID);
             final File cacheDirectory = new File(aequivaleoDirectory, "cache");
             return new File(cacheDirectory, String.format("%s_%s", serverLevel.dimension().location().getNamespace(), serverLevel.dimension().location().getPath()));

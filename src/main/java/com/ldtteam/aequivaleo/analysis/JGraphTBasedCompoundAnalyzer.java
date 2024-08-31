@@ -31,7 +31,9 @@ import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,13 +57,24 @@ public class JGraphTBasedCompoundAnalyzer {
 
     public JGraphTBasedCompoundAnalyzer(final List<? extends IAnalysisOwner> owners, final boolean forceReload, final boolean writeCachedData) {
         this.owners = new ArrayList<>(owners);
-        this.primaryOwner = owners.get(0);
+        this.primaryOwner = determinePrimary(this.owners);
         this.forceReload = forceReload;
         this.writeCachedData = writeCachedData;
 
         if (this.primaryOwner == null) {
             throw new IllegalArgumentException("First passed world is null");
         }
+    }
+
+    private static IAnalysisOwner determinePrimary(final List<IAnalysisOwner> owners) {
+        if (owners.isEmpty()) {
+            throw new IllegalArgumentException("No owners passed");
+        }
+
+        return owners.stream()
+                .filter(owner -> owner.getIdentifier() == Level.OVERWORLD)
+                .findFirst()
+                .orElse(owners.get(0));
     }
 
     public BuildRecipeGraph createGraph() {
@@ -274,8 +287,8 @@ public class JGraphTBasedCompoundAnalyzer {
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.notDefinedGraphNodes();
         final SourceNode source = buildRecipeGraph.sourceNode();
 
-        final CacheKey key = new CacheKey(ModList.get(), noneReducedGraph);
-        final int graphHash = key.hashCode();
+        final String graphHash = new CacheKey(ModList.get()).hash();
+        LOGGER.warn("Starting graph analysis for: {}, with hash: {}", WorldUtils.formatWorldNames(getOwners()), graphHash);
         if (!forceReload) {
             //We are allowed to lookup cached values
             final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults(primaryOwner, graphHash);
@@ -285,6 +298,8 @@ public class JGraphTBasedCompoundAnalyzer {
                 LOGGER.warn(String.format("Cached results contained %d entries for: %s", this.results.size(), WorldUtils.formatWorldNames(getOwners())));
                 return;
             }
+        } else {
+            LOGGER.info("Forcing reload of results for: {}", WorldUtils.formatWorldNames(getOwners()));
         }
 
         final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);

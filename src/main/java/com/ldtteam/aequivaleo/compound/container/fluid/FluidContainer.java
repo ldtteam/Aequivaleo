@@ -106,6 +106,11 @@ public class FluidContainer implements ICompoundContainer<Fluid>
     }
 
     @Override
+    public String getContentNamespace() {
+        return Objects.requireNonNull(ForgeRegistries.FLUIDS.getKey(fluid)).getNamespace();
+    }
+
+    @Override
     public String getContentAsFileName()
     {
         return "fluid_%s_%s".formatted(

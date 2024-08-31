@@ -95,6 +95,10 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
         if (outputComparison != 0)
             return outputComparison;
 
-        return (int) (getOffsetFactor() - recipe.getOffsetFactor());
+        final int offsetFactorComparison = (int) (getOffsetFactor() - recipe.getOffsetFactor());
+        if (offsetFactorComparison != 0)
+            return offsetFactorComparison;
+
+        return toString().compareTo(recipe.toString());
     }
 }

@@ -2,11 +2,9 @@ package com.ldtteam.aequivaleo.config;
 
 import com.ldtteam.aequivaleo.api.config.AbstractAequivaleoConfiguration;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class CommonConfiguration extends AbstractAequivaleoConfiguration
 {

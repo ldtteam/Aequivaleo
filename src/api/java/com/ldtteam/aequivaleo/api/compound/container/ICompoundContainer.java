@@ -5,7 +5,7 @@ import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainer
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 
 /**
- * Holds a object that is made up out of compounds.
+ * Holds an object that is made up out of compounds.
  * @param <T> The type of game object that is held.
  */
 public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
@@ -58,6 +58,11 @@ public interface ICompoundContainer<T> extends Comparable<ICompoundContainer<?>>
      * @return The contents.
      */
     T getContents();
+
+    /**
+     * @return the namespace in which the content is located.
+     */
+    String getContentNamespace();
 
     /**
      * The amount of {@code T}s contained in this wrapper.

@@ -132,6 +132,11 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
         return stack;
     }
 
+    @Override
+    public String getContentNamespace() {
+        return Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(getContents().getItem())).getNamespace();
+    }
+
     /**
      * The amount of {@link ItemStack}s contained in this wrapper.
      *
@@ -206,6 +211,6 @@ public class ItemStackContainer implements ICompoundContainer<ItemStack>
     @Override
     public String toString()
     {
-        return String.format("%s x ItemStack: %s", count, stack);
+        return String.format("%s x ItemStack: %s", count, stack.serializeNBT());
     }
 }

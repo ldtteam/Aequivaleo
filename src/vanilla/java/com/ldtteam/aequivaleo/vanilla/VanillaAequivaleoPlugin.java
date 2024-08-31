@@ -1,8 +1,6 @@
 package com.ldtteam.aequivaleo.vanilla;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.compound.container.registry.ICompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.api.plugin.AequivaleoPlugin;
 import com.ldtteam.aequivaleo.api.plugin.IAequivaleoPlugin;
@@ -12,7 +10,6 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipeRegistry;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariant;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.calculator.RecipeVariantIterator;
-import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import com.ldtteam.aequivaleo.api.tags.Tags;
 import com.ldtteam.aequivaleo.api.util.StreamUtils;
@@ -27,22 +24,17 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.PotionUtils;
-import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.common.extensions.IForgeItemStack;
 import net.minecraftforge.fml.ModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -86,9 +78,6 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
     }
 
     private void processCraftingRecipe(@NotNull final ServerLevel world, Recipe<?> iRecipe, Collection<ServerLevel> levels) {
-        if (iRecipe.getId().toString().equals("bigreactors:reactor/reinforced/activefluidport_forge")) {
-            System.out.println("Found recipe: " + iRecipe.getId());
-        }
         processRecipe(world, levels, iRecipe, variant -> new SimpleEquivalencyRecipe(variant, iRecipe.getId()));
     }
 
@@ -112,6 +101,7 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                 SmithingEquivalencyRecipe::new);
     }
 
+    @SuppressWarnings("ConstantValue")
     private void processRecipe(
             final ServerLevel world,
             Collection<ServerLevel> levels,
@@ -142,90 +132,57 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
         }
     }
 
-    public void processPotionRecipe(ServerLevel level, PotionBrewing.Mix<Potion> recipe, ItemStack container) {
+    public void processPotionRecipe(Collection<ServerLevel> levels, PotionBrewing.Mix<Potion> recipe, ItemStack container) {
         final ItemStack inputStack = PotionUtils.setPotion(container, recipe.from.get());
         final ItemStack outputStack = PotionUtils.setPotion(container, recipe.to.get());
 
         for (ItemStack reagent : recipe.ingredient.getItems()) {
-            IEquivalencyRecipeRegistry.getInstance(level.dimension())
-                    .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            for (ServerLevel level : levels) {
+                IEquivalencyRecipeRegistry.getInstance(level.dimension())
+                        .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            }
         }
     }
 
-    public void processPotionContainerRecipe(ServerLevel level, PotionBrewing.Mix<Item> recipe) {
+    public void processPotionContainerRecipe(Collection<ServerLevel> levels, PotionBrewing.Mix<Item> recipe) {
         final ItemStack inputStack = new ItemStack(recipe.from.get());
         final ItemStack outputStack = new ItemStack(recipe.to.get());
 
         for (ItemStack reagent : recipe.ingredient.getItems()) {
-            IEquivalencyRecipeRegistry.getInstance(level.dimension())
-                    .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            for (ServerLevel level : levels) {
+                IEquivalencyRecipeRegistry.getInstance(level.dimension())
+                        .register(new PotionEquivalencyRecipe(inputStack, reagent, outputStack));
+            }
         }
     }
 
-    public void processRecipeWithInAndOut(ServerLevel level, String name, ItemStack outStack, ItemStack... inStacks) {
-        IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(
-                new GenericRecipeEquivalencyRecipe(
-                        Arrays.stream(inStacks).map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
-                                .map(container -> new SimpleIngredientBuilder().from(container).createIngredient()).collect(Collectors.toSet()),
-                        Arrays.stream(inStacks)
-                                .map(IForgeItemStack::getCraftingRemainingItem)
-                                .filter(stack -> !stack.isEmpty())
-                                .map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
-                                .map(c -> new SimpleIngredientBuilder().from(c).withCount(c.getContentsCount()).createIngredient())
-                                .collect(Collectors.toSet()),
-                        Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount())),
-                        new ResourceLocation("custom/" + name)
-                )
-        );
-    }
-
-    private static void processBucketFluidRecipeFor(
-            @NotNull final Level world, final Item item) {
-        if (!(item instanceof final BucketItem bucketItem))
-            return;
-
-        if (bucketItem.getFluid().isSame(Fluids.EMPTY))
-            return;
-
-        final ICompoundContainer<?> emptyBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                Items.BUCKET, 1
-        );
-        final IRecipeIngredient emptyBucketIngredient = SimpleIngredientBuilder.simple(emptyBucketContainer);
-
-        final Fluid fluid = bucketItem.getFluid();
-        final ICompoundContainer<?> fluidContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                fluid, 1000
-        );
-        final IRecipeIngredient fluidIngredient = new SimpleIngredientBuilder().from(fluidContainer).createIngredient();
-
-        final ICompoundContainer<?> fullBucketContainer = ICompoundContainerFactoryManager.getInstance().wrapInContainer(
-                bucketItem, 1
-        );
-        final IRecipeIngredient fullBucketIngredient = SimpleIngredientBuilder.simple(fullBucketContainer);
-
-        final BucketFluidRecipe fillingRecipe = new BucketFluidRecipe(
-                Sets.newHashSet(emptyBucketIngredient, fluidIngredient),
-                Sets.newHashSet(),
-                Sets.newHashSet(fullBucketContainer)
-        );
-        final BucketFluidRecipe emptyingRecipe = new BucketFluidRecipe(
-                Sets.newHashSet(fullBucketIngredient),
-                Sets.newHashSet(emptyBucketIngredient),
-                Sets.newHashSet(fluidContainer)
+    public void processRecipeWithInAndOut(Collection<ServerLevel> levels, String name, ItemStack outStack, ItemStack... inStacks) {
+        final GenericRecipeEquivalencyRecipe recipe = new GenericRecipeEquivalencyRecipe(
+                Arrays.stream(inStacks).map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
+                        .map(container -> new SimpleIngredientBuilder().from(container).createIngredient()).collect(Collectors.toSet()),
+                Arrays.stream(inStacks)
+                        .map(IForgeItemStack::getCraftingRemainingItem)
+                        .filter(stack -> !stack.isEmpty())
+                        .map(inStack -> ICompoundContainerFactoryManager.getInstance().wrapInContainer(inStack.copyWithCount(1), inStack.getCount()))
+                        .map(c -> new SimpleIngredientBuilder().from(c).withCount(c.getContentsCount()).createIngredient())
+                        .collect(Collectors.toSet()),
+                Set.of(ICompoundContainerFactoryManager.getInstance().wrapInContainer(outStack.copyWithCount(1), outStack.getCount())),
+                new ResourceLocation("custom/" + name)
         );
 
-        IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(
-                fillingRecipe
-        );
-        IEquivalencyRecipeRegistry.getInstance(world.dimension()).register(
-                emptyingRecipe
-        );
+        for (ServerLevel level : levels) {
+            IEquivalencyRecipeRegistry.getInstance(level.dimension()).register(
+                    recipe
+            );
+        }
+
     }
 
     private static boolean isNotCompatibleRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
         return isDyeingRecipe(world, recipe);
     }
 
+    @SuppressWarnings("ConstantValue")
     private static boolean isDyeingRecipe(@NotNull final ServerLevel world, final Recipe<?> recipe) {
         if (true)
             return false;
@@ -418,65 +375,55 @@ public class VanillaAequivaleoPlugin implements IAequivaleoPlugin {
                         .forEach(recipe -> processGenericRecipe(world, recipe, levels))
         );
 
-        processCustomRecipes(world);
+        processCustomRecipes(levels);
 
-        processWaterBottleFillRecipe(world);
-
-        processPotionRecipes(world);
+        processPotionRecipes(levels);
     }
 
-    private void processCustomRecipes(ServerLevel world) {
-        processRecipeWithInAndOut(world, "concrete_from_powder_black", new ItemStack(Blocks.BLACK_CONCRETE), new ItemStack(Blocks.BLACK_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_blue", new ItemStack(Blocks.BLUE_CONCRETE), new ItemStack(Blocks.BLUE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_brown", new ItemStack(Blocks.BROWN_CONCRETE), new ItemStack(Blocks.BROWN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_cyan", new ItemStack(Blocks.CYAN_CONCRETE), new ItemStack(Blocks.CYAN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_gray", new ItemStack(Blocks.GRAY_CONCRETE), new ItemStack(Blocks.GRAY_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_green", new ItemStack(Blocks.GREEN_CONCRETE), new ItemStack(Blocks.GREEN_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_light_blue", new ItemStack(Blocks.LIGHT_BLUE_CONCRETE), new ItemStack(Blocks.LIGHT_BLUE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_lime", new ItemStack(Blocks.LIME_CONCRETE), new ItemStack(Blocks.LIME_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_magenta", new ItemStack(Blocks.MAGENTA_CONCRETE), new ItemStack(Blocks.MAGENTA_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_orange", new ItemStack(Blocks.ORANGE_CONCRETE), new ItemStack(Blocks.ORANGE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_pink", new ItemStack(Blocks.PINK_CONCRETE), new ItemStack(Blocks.PINK_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_purple", new ItemStack(Blocks.PURPLE_CONCRETE), new ItemStack(Blocks.PURPLE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_red", new ItemStack(Blocks.RED_CONCRETE), new ItemStack(Blocks.RED_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_light_gray", new ItemStack(Blocks.LIGHT_GRAY_CONCRETE), new ItemStack(Blocks.LIGHT_GRAY_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_white", new ItemStack(Blocks.WHITE_CONCRETE), new ItemStack(Blocks.WHITE_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "concrete_from_powder_yellow", new ItemStack(Blocks.YELLOW_CONCRETE), new ItemStack(Blocks.YELLOW_CONCRETE_POWDER));
-        processRecipeWithInAndOut(world, "colored_shulker_box_black", new ItemStack(Blocks.BLACK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLACK_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_blue", new ItemStack(Blocks.BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLUE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_brown", new ItemStack(Blocks.BROWN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BROWN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_cyan", new ItemStack(Blocks.CYAN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.CYAN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_gray", new ItemStack(Blocks.GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GRAY_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_green", new ItemStack(Blocks.GREEN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GREEN_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_light_blue", new ItemStack(Blocks.LIGHT_BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_BLUE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_lime", new ItemStack(Blocks.LIME_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIME_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_magenta", new ItemStack(Blocks.MAGENTA_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.MAGENTA_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_orange", new ItemStack(Blocks.ORANGE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.ORANGE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_pink", new ItemStack(Blocks.PINK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PINK_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_purple", new ItemStack(Blocks.PURPLE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PURPLE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_red", new ItemStack(Blocks.RED_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.RED_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_light_gray", new ItemStack(Blocks.LIGHT_GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_GRAY_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_white", new ItemStack(Blocks.WHITE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.WHITE_DYE));
-        processRecipeWithInAndOut(world, "colored_shulker_box_yellow", new ItemStack(Blocks.YELLOW_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.YELLOW_DYE));
+    private void processCustomRecipes(Collection<ServerLevel> levels) {
+        processRecipeWithInAndOut(levels, "concrete_from_powder_black", new ItemStack(Blocks.BLACK_CONCRETE), new ItemStack(Blocks.BLACK_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_blue", new ItemStack(Blocks.BLUE_CONCRETE), new ItemStack(Blocks.BLUE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_brown", new ItemStack(Blocks.BROWN_CONCRETE), new ItemStack(Blocks.BROWN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_cyan", new ItemStack(Blocks.CYAN_CONCRETE), new ItemStack(Blocks.CYAN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_gray", new ItemStack(Blocks.GRAY_CONCRETE), new ItemStack(Blocks.GRAY_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_green", new ItemStack(Blocks.GREEN_CONCRETE), new ItemStack(Blocks.GREEN_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_light_blue", new ItemStack(Blocks.LIGHT_BLUE_CONCRETE), new ItemStack(Blocks.LIGHT_BLUE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_lime", new ItemStack(Blocks.LIME_CONCRETE), new ItemStack(Blocks.LIME_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_magenta", new ItemStack(Blocks.MAGENTA_CONCRETE), new ItemStack(Blocks.MAGENTA_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_orange", new ItemStack(Blocks.ORANGE_CONCRETE), new ItemStack(Blocks.ORANGE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_pink", new ItemStack(Blocks.PINK_CONCRETE), new ItemStack(Blocks.PINK_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_purple", new ItemStack(Blocks.PURPLE_CONCRETE), new ItemStack(Blocks.PURPLE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_red", new ItemStack(Blocks.RED_CONCRETE), new ItemStack(Blocks.RED_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_light_gray", new ItemStack(Blocks.LIGHT_GRAY_CONCRETE), new ItemStack(Blocks.LIGHT_GRAY_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_white", new ItemStack(Blocks.WHITE_CONCRETE), new ItemStack(Blocks.WHITE_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "concrete_from_powder_yellow", new ItemStack(Blocks.YELLOW_CONCRETE), new ItemStack(Blocks.YELLOW_CONCRETE_POWDER));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_black", new ItemStack(Blocks.BLACK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLACK_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_blue", new ItemStack(Blocks.BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BLUE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_brown", new ItemStack(Blocks.BROWN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.BROWN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_cyan", new ItemStack(Blocks.CYAN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.CYAN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_gray", new ItemStack(Blocks.GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GRAY_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_green", new ItemStack(Blocks.GREEN_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.GREEN_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_light_blue", new ItemStack(Blocks.LIGHT_BLUE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_BLUE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_lime", new ItemStack(Blocks.LIME_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIME_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_magenta", new ItemStack(Blocks.MAGENTA_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.MAGENTA_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_orange", new ItemStack(Blocks.ORANGE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.ORANGE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_pink", new ItemStack(Blocks.PINK_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PINK_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_purple", new ItemStack(Blocks.PURPLE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.PURPLE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_red", new ItemStack(Blocks.RED_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.RED_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_light_gray", new ItemStack(Blocks.LIGHT_GRAY_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.LIGHT_GRAY_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_white", new ItemStack(Blocks.WHITE_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.WHITE_DYE));
+        processRecipeWithInAndOut(levels, "colored_shulker_box_yellow", new ItemStack(Blocks.YELLOW_SHULKER_BOX), new ItemStack(Blocks.SHULKER_BOX), new ItemStack(Items.YELLOW_DYE));
     }
 
-    private void processWaterBottleFillRecipe(ServerLevel world) {
-        final BucketFluidRecipe fillBottleRecipe = new BucketFluidRecipe(
-                Set.of(IRecipeIngredient.from(Items.GLASS_BOTTLE, 1), IRecipeIngredient.from(Fluids.WATER, 250)),
-                Set.of(),
-                Set.of(ICompoundContainer.from(PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.WATER)))
-        );
-    }
-
-    private void processPotionRecipes(ServerLevel world) {
+    private void processPotionRecipes(Collection<ServerLevel> levels) {
         for (PotionBrewing.Mix<Item> containerMix : PotionBrewing.CONTAINER_MIXES) {
-            processPotionContainerRecipe(world, containerMix);
+            processPotionContainerRecipe(levels, containerMix);
         }
 
         for (Ingredient container : PotionBrewing.ALLOWED_CONTAINERS) {
             for (ItemStack containerStack : container.getItems()) {
                 for (PotionBrewing.Mix<Potion> potionMix : PotionBrewing.POTION_MIXES) {
-                    processPotionRecipe(world, potionMix, containerStack);
+                    processPotionRecipe(levels, potionMix, containerStack);
                 }
             }
         }

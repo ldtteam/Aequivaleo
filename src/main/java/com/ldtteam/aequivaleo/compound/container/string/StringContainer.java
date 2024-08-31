@@ -69,6 +69,11 @@ public class StringContainer implements ICompoundContainer<String> {
     }
 
     @Override
+    public String getContentNamespace() {
+        return "string";
+    }
+
+    @Override
     public Double getContentsCount() {
         return count;
     }

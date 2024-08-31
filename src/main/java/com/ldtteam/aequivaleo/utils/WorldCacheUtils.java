@@ -7,6 +7,7 @@ import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,12 +29,9 @@ public class WorldCacheUtils
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static void writeCachedResults(final IAnalysisOwner analysisOwner, final int id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
-        //final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()).toAbsolutePath().toFile().getAbsolutePath(), Constants.MOD_ID);
-        //final File cacheDirectory = analysisOwner.getCacheDirectory(); //new File(aequivaleoDirectory, "cache");
-        final File worldCacheDirectory = analysisOwner.getCacheDirectory(); /* new File(cacheDirectory,
-          String.format("%s_%s", analysisOwner.getLevelIdentifier().location().getNamespace(), analysisOwner.getLevelIdentifier().location().getPath()));*/
-        final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
+    public static void writeCachedResults(final IAnalysisOwner analysisOwner, final String id, final Map<ICompoundContainer<?>, Set<CompoundInstance>> data) {
+        final File worldCacheDirectory = analysisOwner.getCacheDirectory();
+        final File cacheFile = new File(worldCacheDirectory, String.format("%s.bin-cache", id));
 
         worldCacheDirectory.mkdirs();
 
@@ -70,11 +68,7 @@ public class WorldCacheUtils
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void cleanupCacheDirectory(final IAnalysisOwner analysisOwner) {
-        //final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()).toAbsolutePath().toFile().getAbsolutePath(), Constants.MOD_ID);
-        //final File cacheDirectory = analysisOwner.getCacheDirectory(); //new File(aequivaleoDirectory, "cache");
-        final File worldCacheDirectory = analysisOwner.getCacheDirectory(); /* new File(cacheDirectory,
-          String.format("%s_%s", analysisOwner.getLevelIdentifier().location().getNamespace(), analysisOwner.getLevelIdentifier().location().getPath()));*/
-
+        final File worldCacheDirectory = analysisOwner.getCacheDirectory();
         if (!worldCacheDirectory.exists())
             return;
 
@@ -91,17 +85,25 @@ public class WorldCacheUtils
 
     @NotNull
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final IAnalysisOwner analysisOwner, final int id) {
-        //final File aequivaleoDirectory = new File(world.getChunkSource().level.getServer().storageSource.getDimensionPath(world.dimension()).toAbsolutePath().toFile().getAbsolutePath(), Constants.MOD_ID);
-        //final File cacheDirectory = analysisOwner.getCacheDirectory(); //new File(aequivaleoDirectory, "cache");
-        final File worldCacheDirectory = analysisOwner.getCacheDirectory(); /* new File(cacheDirectory,
-          String.format("%s_%s", analysisOwner.getLevelIdentifier().location().getNamespace(), analysisOwner.getLevelIdentifier().location().getPath()));*/
-        final File cacheFile = new File(worldCacheDirectory, String.format("%d.bin-cache", id));
+    public static Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> loadCachedResults(final IAnalysisOwner analysisOwner, final String id) {
+        final File worldCacheDirectory = analysisOwner.getCacheDirectory();
+        File cacheFile = new File(worldCacheDirectory, String.format("%s.bin-cache", id));
 
         worldCacheDirectory.mkdirs();
 
-        if (!cacheFile.exists())
-            return Optional.empty();
+        if (!cacheFile.exists()) {
+            LOGGER.info("No world cache file found for: {}", cacheFile.getAbsolutePath());
+            cacheFile = new File(FMLLoader.getGamePath().toFile(), String.format("aequivaleo/cache/%s.bin-cache", id));
+
+            if (!cacheFile.exists()) {
+                LOGGER.info("No global cache file found for: {}", cacheFile.getAbsolutePath());
+                return Optional.empty();
+            } else {
+                LOGGER.info("Loading from global cache file: {}", cacheFile.getAbsolutePath());
+            }
+        }
+
+        LOGGER.info("Loading cache file: {}", cacheFile.getAbsolutePath());
 
         byte[] data = new byte[0];
         try {
@@ -114,8 +116,10 @@ public class WorldCacheUtils
             LOGGER.fatal(String.format("Exception while reading cache file: %s", cacheFile.getAbsolutePath()), ioe);
         }
 
-        if (data.length == 0)
+        if (data.length == 0) {
+            LOGGER.error("Cache data is empty: {}", cacheFile.getAbsolutePath());
             return Optional.empty();
+        }
 
         final ByteBuf buf = Unpooled.wrappedBuffer(data);
         final FriendlyByteBuf buffer = new FriendlyByteBuf(buf);
@@ -129,6 +133,8 @@ public class WorldCacheUtils
             LOGGER.fatal(String.format("Exception while reading cache data: %s", cacheFile.getAbsolutePath()), exception);
             return Optional.empty();
         }
+
+        LOGGER.info("Loaded {} cache entries from: {}", resultData.size(), cacheFile.getAbsolutePath());
 
         return Optional.of(
           resultData
