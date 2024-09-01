@@ -720,6 +720,11 @@ public class AequivaleoReloadListener implements PreparableReloadListener {
 
     private record LevelAnalysisOwner(ServerLevel serverLevel) implements IAnalysisOwner {
         @Override
+        public boolean isPrimary() {
+            return getIdentifier() == Level.OVERWORLD;
+        }
+
+        @Override
         public ResourceKey<Level> getIdentifier() {
             return serverLevel.dimension();
         }

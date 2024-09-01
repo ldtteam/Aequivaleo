@@ -37,6 +37,11 @@ public class ICompoundContainerTest
         }
 
         @Override
+        public String getContentNamespace() {
+            return "minecraft";
+        }
+
+        @Override
         public Double getContentsCount()
         {
             return 1d;

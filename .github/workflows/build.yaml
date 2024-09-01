@@ -4,9 +4,14 @@ on:
   pull_request:
     types:
       - opened
+      - edited
       - synchronize
       - labeled
       - unlabeled
+  push:
+    branches:
+      - "version/*"
+      - "release/*"
   workflow_dispatch:
 
 permissions:
@@ -16,13 +21,13 @@ permissions:
 
 jobs:
   build:
-    uses: ldtteam/operapublicacreator/.github/workflows/gradle.build.yaml@ng7
+    uses: ldtteam/operapublicacreator/.github/workflows/gradle.build.yaml@main
     with:
-      java: 21
+      java: 17
     secrets: inherit
   pre-release:
-    uses: ldtteam/operapublicacreator/.github/workflows/gradle.prerelease.yaml@ng7
+    uses: ldtteam/operapublicacreator/.github/workflows/gradle.prerelease.yaml@main
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && contains( github.event.pull_request.labels.*.name, 'Pre-release')
     with:
-      java: 21
+      java: 17
     secrets: inherit

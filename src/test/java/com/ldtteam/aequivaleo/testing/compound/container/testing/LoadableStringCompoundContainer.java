@@ -33,6 +33,11 @@ public class LoadableStringCompoundContainer implements ICompoundContainer<Strin
     }
 
     @Override
+    public String getContentNamespace() {
+        return "minecraft";
+    }
+
+    @Override
     public Double getContentsCount()
     {
         return count;

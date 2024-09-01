@@ -11,7 +11,7 @@ import java.util.Collection;
 public final class RecipeVariant {
     private Collection<IRecipeIngredient> ingredients;
     private Collection<IRecipeIngredient> remainders;
-    private ICompoundContainer<?> output;
+    private final ICompoundContainer<?> output;
 
     /**
      * Creates a new recipe variant.
@@ -22,10 +22,20 @@ public final class RecipeVariant {
         this.output = output;
     }
 
+    /**
+     * The ingredients that make up this variant.
+     *
+     * @return The ingredients in this recipe variant.
+     */
     public Collection<IRecipeIngredient> ingredients() {
         return ingredients;
     }
 
+    /**
+     * The remainders of this recipe that are left over when the ingredients are consumed for this variant to produce the output.
+     *
+     * @return The remainders of this recipe.
+     */
     public Collection<IRecipeIngredient> remainders() {
         return remainders;
     }
@@ -38,6 +48,11 @@ public final class RecipeVariant {
         this.remainders = remainders;
     }
 
+    /**
+     * The result of this variant when it is crafted.
+     *
+     * @return The output.
+     */
     public ICompoundContainer<?> output() {
         return output;
     }

@@ -20,6 +20,11 @@ public final class TestAnalysisOwner implements IAnalysisOwner
     }
 
     @Override
+    public boolean isPrimary() {
+        return true;
+    }
+
+    @Override
     public ResourceKey<Level> getIdentifier()
     {
         return key;

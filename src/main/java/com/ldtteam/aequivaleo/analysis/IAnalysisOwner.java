@@ -12,6 +12,11 @@ public interface IAnalysisOwner
 {
 
     /**
+     * @return True when this is a candidate for being a primary owner.
+     */
+    boolean isPrimary();
+
+    /**
      * The identifier of the analysis owner.
      *
      * @return The identifier of the analysis owner.

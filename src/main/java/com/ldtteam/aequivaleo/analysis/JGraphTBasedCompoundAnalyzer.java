@@ -72,7 +72,7 @@ public class JGraphTBasedCompoundAnalyzer {
         }
 
         return owners.stream()
-                .filter(owner -> owner.getIdentifier() == Level.OVERWORLD)
+                .filter(IAnalysisOwner::isPrimary)
                 .findFirst()
                 .orElse(owners.get(0));
     }

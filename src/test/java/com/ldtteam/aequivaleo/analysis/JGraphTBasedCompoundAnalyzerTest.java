@@ -367,6 +367,9 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         for (char i : "ABCD".toCharArray()) {
             for (char j : "ABCD".toCharArray()) {
+                if (j < i)
+                    continue;
+
                 Set<ICompoundContainer<?>> inputs = s(cc("planks" + i, 1), cc("planks" + j, 1));
                 if (i == j)
                     inputs = s(cc("planks" + i, 2));
@@ -378,6 +381,9 @@ public class JGraphTBasedCompoundAnalyzerTest
         registerRecipe("2x planksA to 1x crafting_table", s(cc("planksA", 4)), s(cc("crafting_table", 1)));
         for (char i : "ABCD".toCharArray()) {
             for (char j : "ABCD".toCharArray()) {
+                if (j < i)
+                    continue;
+
                 Set<ICompoundContainer<?>> inputs = s(cc("stick", 2), cc("planks" + i, 1), cc("planks" + j, 1));
                 if (i == j)
                     inputs = s(cc("stick", 2), cc("planks" + i, 2));
