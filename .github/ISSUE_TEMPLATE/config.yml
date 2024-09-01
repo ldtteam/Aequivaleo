@@ -2,8 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Support Requests and Anything Else
     about: Visit our discord
-    url: https://discord.minecolonies.com
+    url: https://discord.gg/7KxvDa86jW
   - name: Aequivaleo Bug Tracker
     about: Please follow the given template
     url: https://github.com/ldtteam/aequivaleo/issues/new/choose
-    
