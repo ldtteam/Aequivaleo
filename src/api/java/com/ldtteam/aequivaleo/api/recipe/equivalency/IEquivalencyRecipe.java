@@ -43,6 +43,17 @@ public interface IEquivalencyRecipe extends Comparable<IEquivalencyRecipe>
     SortedSet<ICompoundContainer<?>> getOutputs();
 
     /**
+     * Indicates if this recipe is a distributor.
+     * Distributors are recipes that take in a bunch of inputs, negotiate the results and then set that result on all outputs.
+     * This is useful for conversion recipes, like tags.
+     *
+     * @return {@code True} when a distributor.
+     */
+    default boolean isDistributor() {
+        return false;
+    }
+
+    /**
      * Returns the offset factor between inputs and outputs.
      *
      * @return The offset factor.

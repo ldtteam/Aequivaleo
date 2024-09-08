@@ -53,7 +53,6 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
 
     private EquivalencyResults()
     {
-
     }
 
     public static EquivalencyResults getInstance(@NotNull final ResourceKey<Level> world)
@@ -73,20 +72,26 @@ public class EquivalencyResults implements IResultsInformationCache, IEquivalenc
     @NotNull
     @Override
     public Set<CompoundInstance> dataFor(@NotNull final ICompoundContainer<?> container){
-        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
-                                                                                                     IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
+        return rawDataFor(container, true);
+    }
 
-        if (!rawData.containsKey(unitContainer)) {
-            final Set<?> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
-            for (final Object alternative : alternatives)
+    public Set<CompoundInstance> rawDataFor(@NotNull final ICompoundContainer<?> container, final boolean useAlternatives){
+        final ICompoundContainer<?> unitContainer = container.getContentsCount() == 1d ? container :
+                IAequivaleoAPI.Holder.getInstance().getCompoundContainerFactoryManager().wrapInContainer(container.getContents(), 1d);
+
+        if (!rawData.containsKey(unitContainer) && useAlternatives) {
+            final Set<ICompoundContainer<?>> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(container.getContents());
+            for (final ICompoundContainer<?> alternative : alternatives)
             {
-                final Set<CompoundInstance> result = this.dataFor(alternative);
+                final Set<CompoundInstance> result = this.rawDataFor(alternative, false);
                 if (!result.isEmpty())
                 {
                     return result;
                 }
             }
 
+            return Collections.emptySet();
+        } else if (!rawData.containsKey(unitContainer)) {
             return Collections.emptySet();
         }
 

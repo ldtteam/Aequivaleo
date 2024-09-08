@@ -69,4 +69,10 @@ public interface IResultsContainer extends ISimulationManager {
      * @return true if the results require calculation, or if the results have not yet been determined.
      */
     boolean requiresCalculation();
+
+    /**
+     * Check if the results can be calculated.
+     * @return true if the results can be calculated.
+     */
+    boolean canCalculate();
 }

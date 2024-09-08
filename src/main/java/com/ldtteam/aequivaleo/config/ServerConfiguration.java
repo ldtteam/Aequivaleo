@@ -12,15 +12,19 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
 {
     public ForgeConfigSpec.BooleanValue exportGraph;
     public ForgeConfigSpec.BooleanValue writeResultsToLog;
+    public ForgeConfigSpec.BooleanValue performCycleReductionInspection;
     public ForgeConfigSpec.BooleanValue allowNoneSimpleIngredients;
     public ForgeConfigSpec.EnumValue<IngredientLogLevel> ingredientLogLevelEnumValue;
     public ForgeConfigSpec.IntValue maxCacheFilesToKeep;
+    public ForgeConfigSpec.BooleanValue useCaching;
+    public ForgeConfigSpec.BooleanValue useActionPooling;
 
     protected ServerConfiguration(final ForgeConfigSpec.Builder builder)
     {
         createCategory(builder, "debugging");
         exportGraph = defineBoolean(builder, "debugging.export.graph", false);
         writeResultsToLog = defineBoolean(builder, "debugging.write.graph", false);
+        performCycleReductionInspection = defineBoolean(builder, "debugging.cycle.reduction.inspection", false);
         finishCategory(builder);
         createCategory(builder, "recipes");
         ingredientLogLevelEnumValue = defineEnum(builder, "recipes.ingredients.error.logging", IngredientLogLevel.FULL);
@@ -28,6 +32,10 @@ public class ServerConfiguration extends AbstractAequivaleoConfiguration
         finishCategory(builder);
         createCategory(builder, "cache");
         maxCacheFilesToKeep = defineInteger(builder, "cache.max", 5, 1, Integer.MAX_VALUE);
+        useCaching = defineBoolean(builder, "cache.use", true);
+        finishCategory(builder);
+        createCategory(builder, "performance");
+        useActionPooling = defineBoolean(builder, "performance.action.pooling", true);
         finishCategory(builder);
     }
 }

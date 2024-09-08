@@ -71,8 +71,11 @@ public class JGraphTCliqueReducer
         }
 
         final Set<Set<INode>> mergedCliques = NodeMerger.mergeSets(explodedCliques);
+        final LinkedList<Set<INode>> linkedCliques = new LinkedList<>(mergedCliques);
+        linkedCliques.sort(Comparator.comparing((Function<Set<INode>, Integer>) Set::size).reversed());
 
-        for (Set<INode> clique : mergedCliques) {
+
+        for (Set<INode> clique : linkedCliques) {
             final INode replacementNode = vertexReplacerFunction.apply(clique);
 
             graph.addVertex(replacementNode);

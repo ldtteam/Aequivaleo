@@ -1,19 +1,26 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.impl;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.ICoreNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IRecipeNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IResultsOwningNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.base.CoreNode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results.CompoundInstanceSet;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results.SimulateableResultsContainer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.core.IAnalysisState;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.util.GroupingUtils;
+import com.ldtteam.aequivaleo.mediation.SimpleMediationContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +60,11 @@ public final class RecipeNode extends CoreNode implements IRecipeNode {
     @Override
     public void analyze(IAnalysisState state) {
         super.analyze(state);
+
+        if (recipe.isDistributor()) {
+            analyzeAsDistributor(state);
+            return;
+        }
 
         CompoundInstanceSet workingSet = CompoundInstanceSet.of();
 
@@ -103,6 +115,46 @@ public final class RecipeNode extends CoreNode implements IRecipeNode {
             double scaledOutputWeight = 1d / totalOutputWeight;
             if (outputNode instanceof IResultsOwningNode resultsOwningNode) {
                 resultsOwningNode.results().offer(reducedSet.scaled(scaledOutputWeight));
+            } else {
+                throw new IllegalStateException("RecipeNode has an output that is not a ResultsOwningNode");
+            }
+        }
+    }
+
+    private void analyzeAsDistributor(IAnalysisState state) {
+        //Collect all input values and negotiate them
+
+        final IAnalysisState simulatedState = state.simulate();
+
+        final SimulateableResultsContainer container = new SimulateableResultsContainer();
+        for (ICoreNode inputNode : inputs.keySet()) {
+            if (inputNode instanceof IResultsOwningNode resultsOwningNode) {
+                final CompoundInstanceSet inputResults = simulatedState.doWhen(
+                        resultsOwningNode.results()::simulate,
+                        resultsOwningNode.results()::results
+                );
+
+                //Skip empty results
+                if (inputResults.isEmpty())
+                    continue;
+
+                //Check if input has weight 1
+                if (inputs.getOrDefault(resultsOwningNode, 1d) != 1d) {
+                    throw new IllegalStateException("Distributor recipe has input with weight != 1");
+                }
+
+                container.offer(inputResults);
+            } else {
+                throw new IllegalStateException("RecipeNode has an input that is not a ResultsOwningNode");
+            }
+        }
+
+        final CompoundInstanceSet negotiatedResults = container.simulate();
+
+        //Distribute the results to the outputs
+        for (ICoreNode outputNode : outputs.keySet()) {
+            if (outputNode instanceof IResultsOwningNode resultsOwningNode) {
+                resultsOwningNode.results().offer(negotiatedResults);
             } else {
                 throw new IllegalStateException("RecipeNode has an output that is not a ResultsOwningNode");
             }

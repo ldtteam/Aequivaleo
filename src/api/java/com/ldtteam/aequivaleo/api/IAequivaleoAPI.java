@@ -17,6 +17,7 @@ import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
+import com.ldtteam.aequivaleo.api.tag.ITagContentsRetriever;
 import com.ldtteam.aequivaleo.api.util.Constants;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -193,6 +194,11 @@ public interface IAequivaleoAPI {
      * @param <E> The type of the view entries.
      */
     <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter);
+
+    /**
+     * A contents retriever for tags.
+     */
+    ITagContentsRetriever getTagContentsRetriever();
 
     /**
      * The inner api holder class which is responsible for setting up the api instance.

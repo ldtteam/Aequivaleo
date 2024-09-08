@@ -31,7 +31,6 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration {
                 new ImmutableList.Builder<String>()
                         .add(
                                 "minecraft:wool",
-                                "minecraft:planks",
                                 "minecraft:stone_bricks",
                                 "minecraft:wooden_buttons",
                                 "minecraft:buttons",
@@ -95,9 +94,7 @@ public class CommonConfiguration extends AbstractAequivaleoConfiguration {
                                 "forge:eggs",
                                 "forge:ender_pearls",
                                 "forge:feathers",
-                                "forge:fence_gates",
                                 "forge:fence_gates/wooden",
-                                "forge:fences",
                                 "forge:fences/nether_brick",
                                 "forge:fences/wooden",
                                 "forge:gems/diamond",

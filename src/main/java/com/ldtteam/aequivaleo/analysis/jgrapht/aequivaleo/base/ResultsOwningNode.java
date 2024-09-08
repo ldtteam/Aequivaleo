@@ -11,7 +11,7 @@ import java.util.Map;
 
 public abstract class ResultsOwningNode extends CoreNode implements IResultsOwningNode {
 
-    private final IResultsContainer results = new SimulateableResultsContainer(this);
+    private final IResultsContainer results = new SimulateableResultsContainer();
 
     @Override
     public IResultsContainer results() {

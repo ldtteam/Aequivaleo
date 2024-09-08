@@ -8,18 +8,17 @@ import com.ldtteam.aequivaleo.analysis.jgrapht.edge.Edge;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 public class AequivaleoGraph extends SimpleAnalysisGraph<INode, IEdge> implements IGraph
 {
-    Integer hashCode = null;
 
     public AequivaleoGraph()
     {
         super(createEdgeSupplier());
     }
 
-    private static Supplier<IEdge> createEdgeSupplier() {
+    private static BiFunction<INode, INode, IEdge> createEdgeSupplier() {
         return Edge::new;
     }
 

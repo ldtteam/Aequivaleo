@@ -322,7 +322,7 @@ public class JGraphTBasedCompoundAnalyzerTest
 
         assertEquals(s(cz(1)), result.get(cc("a1")));
         assertEquals(s(cz(20)), result.get(cc("b2")));
-        assertNull(result.get(cc("c4")));
+        assertEquals(s(cz(4)), result.get(cc("c4")));
     }
 
     @Test

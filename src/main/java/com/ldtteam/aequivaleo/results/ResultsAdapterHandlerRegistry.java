@@ -1,14 +1,17 @@
 package com.ldtteam.aequivaleo.results;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ResultsAdapterHandlerRegistry implements IResultsAdapterHandlerRegistry
 {
@@ -23,22 +26,29 @@ public class ResultsAdapterHandlerRegistry implements IResultsAdapterHandlerRegi
 
     private ResultsAdapterHandlerRegistry()
     {
+        registerHandler(Item.class::isInstance, (Function<Item, Set<?>>) item -> Set.of(item.getDefaultInstance()));
+        registerHandler(ItemStack.class::isInstance, (Function<ItemStack, Set<?>>) itemStack -> Set.of(itemStack.getItem(), itemStack.getItem().getDefaultInstance()));
+
+        registerHandler(Fluid.class::isInstance, (Function<Fluid, Set<?>>) fluid -> Set.of(new FluidStack(fluid, 1)));
+        registerHandler(FluidStack.class::isInstance, (Function<FluidStack, Set<?>>) fluidStack -> Set.of(fluidStack.getFluid()));
     }
 
     @Override
-    public <T> IResultsAdapterHandlerRegistry registerHandler(final Predicate<Object> canHandlePredicate, final Function<T, Set<?>> alternativesProducer)
+    public <T> IResultsAdapterHandlerRegistry registerHandler(final Predicate<T> canHandlePredicate, final Function<T, Set<?>> alternativesProducer)
     {
         this.alternativeHandlers.add(new Entry<>(canHandlePredicate, alternativesProducer));
         return this;
     }
 
-    public Set<?> produceAlternatives(final Object target) {
+    public Set<ICompoundContainer<?>> produceAlternatives(final Object target) {
         for (final Entry<?> alternativeHandler : alternativeHandlers)
         {
             final Optional<Set<?>> result = handleEntry(target, alternativeHandler);
             if (result.isPresent())
             {
-                return result.get();
+                return result.get().stream()
+                        .map(obj -> ICompoundContainer.from(obj, 1))
+                        .collect(Collectors.toSet());
             }
         }
 
@@ -47,30 +57,22 @@ public class ResultsAdapterHandlerRegistry implements IResultsAdapterHandlerRegi
 
     @SuppressWarnings("unchecked")
     private <T> Optional<Set<?>> handleEntry(final Object target, final Entry<T> entry) {
-        if (entry.getCanHandleCallback().test(target)) {
-            return Optional.ofNullable(entry.getAlternativesProducer().apply((T) target));
+        if (entry.canHandle(target)) {
+            return Optional.ofNullable(entry.alternativesProducer().apply((T) target));
         }
 
         return Optional.empty();
     }
 
-    private static final class Entry<T> {
-        final Predicate<Object> canHandleCallback;
-        final Function<T, Set<?>> alternativesProducer;
+    private record Entry<T>(Predicate<T> canHandleCallback, Function<T, Set<?>> alternativesProducer) {
 
-        private Entry(final Predicate<Object> canHandleCallback, final Function<T, Set<?>> alternativesProducer) {
-            this.canHandleCallback = canHandleCallback;
-            this.alternativesProducer = alternativesProducer;
-        }
-
-        public Predicate<Object> getCanHandleCallback()
-        {
-            return canHandleCallback;
-        }
-
-        public Function<T, Set<?>> getAlternativesProducer()
-        {
-            return alternativesProducer;
+        @SuppressWarnings("unchecked")
+        public boolean canHandle(final Object target) {
+            try {
+                return canHandleCallback.test((T) target);
+            } catch (final ClassCastException e) {
+                return false;
+            }
         }
     }
 }

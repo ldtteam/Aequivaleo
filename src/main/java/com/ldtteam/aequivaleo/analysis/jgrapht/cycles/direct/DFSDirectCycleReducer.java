@@ -1,9 +1,12 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct;
 
+import com.ldtteam.aequivaleo.Aequivaleo;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.ICyclesReducer;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.ISearchAction;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.trace.ICycleReducingTracer;
+import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import org.jgrapht.Graph;
+import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import java.util.*;
@@ -27,6 +30,16 @@ public final class DFSDirectCycleReducer<G extends Graph<V, E>, V, E> implements
     @Override
     public void reduce(G graph, V startNode) {
         reduceOnce(graph, startNode);
+
+        if (Aequivaleo.getInstance().getConfiguration().getServer().performCycleReductionInspection.get()) {
+            AequivaleoLogger.startBigWarning("Cycle Reduction Inspection");
+            final SzwarcfiterLauerSimpleCycles<V, E> cycleDetector = new SzwarcfiterLauerSimpleCycles<>(graph);
+            final List<List<V>> cycles = cycleDetector.findSimpleCycles();
+            for (List<V> cycle : cycles) {
+                AequivaleoLogger.warning("Found cycle: " + cycle);
+            }
+            AequivaleoLogger.endBigWarning("Cycle Reduction Inspection");
+        }
     }
 
     @Override
@@ -40,6 +53,7 @@ public final class DFSDirectCycleReducer<G extends Graph<V, E>, V, E> implements
         while (context.hasNextAction()) {
             final ISearchAction<G, V, E> action = context.popAction();
             action.perform(context);
+            context.release(action);
         }
 
         return true;

@@ -52,7 +52,7 @@ public final class CliqueNode extends InnerNode {
                 ))
                 .collect(Collectors.toSet());
 
-        final IResultsContainer container = new SimulateableResultsContainer(this);
+        final IResultsContainer container = new SimulateableResultsContainer();
         candidates.forEach(container::offer);
         final CompoundInstanceSet completeSimulation = simulationState.doWhen(
                 container::simulate,
