@@ -1,12 +1,12 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.clique;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.*;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IFreeNode;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IGraph;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.graph.CliqueDetectionEdge;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.graph.CliqueDetectionGraph;
 import com.ldtteam.aequivaleo.analysis.jgrapht.clique.reducer.ReductionGraphBuilder;
-import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Contract;
@@ -17,7 +17,6 @@ import org.jgrapht.alg.interfaces.MaximalCliqueEnumerationAlgorithm;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class JGraphTCliqueReducer
 {
