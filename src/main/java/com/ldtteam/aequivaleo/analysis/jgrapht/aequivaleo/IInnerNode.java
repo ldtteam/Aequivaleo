@@ -26,10 +26,13 @@ public interface IInnerNode extends ISimulateableNode
     @Override
     default boolean canPropagate() {
         final Iterator<ICoreNode> flatten = flatten();
-        while (flatten.hasNext()) {
-            if (flatten.next() instanceof IResultsOwningNode resultsOwningNode && resultsOwningNode.canPropagate()) {
-                return true;
-            }
+        if (flatten.hasNext()) {
+            do {
+                final INode next = flatten.next();
+                if (next instanceof IResultsOwningNode resultsOwningNode && resultsOwningNode.canPropagate()) {
+                    return true;
+                }
+            } while (flatten.hasNext());
         }
 
         return false;

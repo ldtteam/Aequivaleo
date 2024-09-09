@@ -13,6 +13,7 @@ import com.ldtteam.aequivaleo.instanced.InstancedEquivalencyHandlerRegistry;
 import com.ldtteam.aequivaleo.plugin.PluginManger;
 import com.ldtteam.aequivaleo.recipe.equivalency.InstancedEquivalency;
 import com.ldtteam.aequivaleo.recipe.equivalency.TagEquivalencyRecipe;
+import com.ldtteam.aequivaleo.tag.TagContentsRetriever;
 import com.ldtteam.aequivaleo.vanilla.tags.TagEquivalencyRegistry;
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
@@ -43,7 +44,6 @@ public final class WorldBootstrapper {
         resetDataForWorld(levels);
 
         doBootstrapTagInformation(levels);
-        doBootstrapInstancedEquivalencies(levels);
 
         doHandleCompoundTypeWrappers(levels);
 
@@ -70,100 +70,21 @@ public final class WorldBootstrapper {
         final ICompoundContainer<TagKey> tagContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(tag, 1d);
         final ServerLevel primary = levels.iterator().next();
 
-        final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>();
-        for (Holder<T> stack : primary.registryAccess().registryOrThrow(tag.registry()).getOrCreateTag(tag)) {
-            ICompoundContainer<T> tiCompoundContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(stack.value(), 1d);
-            elementsOfTag.add(tiCompoundContainer);
+        final Collection<ICompoundContainer<?>> elementsOfTag = new ArrayList<>(TagContentsRetriever.getInstance().getContents(primary.registryAccess(), tag));
+        if (elementsOfTag.isEmpty())
+            return;
+
+        elementsOfTag.add(tagContainer);
+
+        final TagEquivalencyRecipe<T> recipe = new TagEquivalencyRecipe<>(
+                tag,
+                elementsOfTag
+        );
+
+        for (ServerLevel level : levels) {
+            EquivalencyRecipeRegistry.getInstance(level.dimension())
+                    .register(recipe);
         }
-
-        for (ICompoundContainer<?> inputStack : elementsOfTag) {
-            final TagEquivalencyRecipe<T> fromTagToStack = new TagEquivalencyRecipe<>(
-                    tag,
-                    tagContainer,
-                    inputStack
-            );
-            final TagEquivalencyRecipe<T> fromStackToTag = new TagEquivalencyRecipe<>(
-                    tag,
-                    inputStack,
-                    tagContainer
-            );
-
-            for (ServerLevel level : levels) {
-                EquivalencyRecipeRegistry.getInstance(level.dimension())
-                        .register(fromTagToStack)
-                        .register(fromStackToTag);
-            }
-        }
-    }
-
-    private static void doBootstrapInstancedEquivalencies(
-            @NotNull final Collection<ServerLevel> levels
-    ) {
-        StreamUtils.execute(() -> {
-            StreamSupport.stream(ForgeRegistries.ITEMS.spliterator(), true)
-                    .filter(item -> !item.equals(Items.AIR))
-                    .forEach(item -> InstancedEquivalencyHandlerRegistry.getInstance().process(
-                            item,
-                            o -> {
-                                final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(item, 1);
-                                final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
-
-                                final InstancedEquivalency sourceToTarget = new InstancedEquivalency(
-                                        sourceContainer, targetContainer
-                                );
-                                final InstancedEquivalency targetToSource = new InstancedEquivalency(
-                                        targetContainer, sourceContainer
-                                );
-
-                                try {
-                                    for (ServerLevel level : levels) {
-                                        EquivalencyRecipeRegistry.getInstance(level.dimension())
-                                                .register(sourceToTarget)
-                                                .register(targetToSource);
-                                    }
-                                } catch (Exception ex) {
-                                    LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                                            ForgeRegistries.ITEMS.getKey(item),
-                                            o), ex);
-
-                                }
-                            },
-                            consumer -> consumer.accept(item.getDefaultInstance())
-                    ));
-
-            StreamSupport.stream(ForgeRegistries.FLUIDS.spliterator(), true).forEach(fluid -> InstancedEquivalencyHandlerRegistry.getInstance().process(
-                    fluid,
-                    o -> {
-                        final ICompoundContainer<?> sourceContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(fluid, 1);
-                        final ICompoundContainer<?> targetContainer = CompoundContainerFactoryManager.getInstance().wrapInContainer(o, 1);
-
-                        final InstancedEquivalency sourceToTarget = new InstancedEquivalency(
-                                sourceContainer, targetContainer
-                        );
-                        final InstancedEquivalency targetToSource = new InstancedEquivalency(
-                                targetContainer, sourceContainer
-                        );
-
-                        try {
-                            for (ServerLevel level : levels) {
-                                EquivalencyRecipeRegistry.getInstance(level.dimension())
-                                        .register(sourceToTarget)
-                                        .register(targetToSource);
-                            }
-                        } catch (Exception ex) {
-                            LOGGER.error(String.format("Failed to register equivalency between: %s and: %s",
-                                    ForgeRegistries.FLUIDS.getKey(fluid),
-                                    o), ex);
-                        }
-                    },
-                    consumer -> {
-                        if (fluid.isSame(Fluids.EMPTY))
-                            return;
-
-                        consumer.accept(new FluidStack(fluid, 1));
-                    }
-            ));
-        });
     }
 
     private static void doHandleCompoundTypeWrappers(

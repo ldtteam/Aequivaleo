@@ -99,12 +99,12 @@ public final class CycleNode extends InnerNode {
 
         return new Iterator<>() {
 
-            private final int startIndex = indexOfNodeInNodes(node);
-            private int currentIndex = (startIndex + 1) % nodes().length;
+            private int remaining = nodes().length - 1;
+            private int currentIndex = (indexOfNodeInNodes(node) + 1) % nodes().length;
 
             @Override
             public boolean hasNext() {
-                return currentIndex != startIndex;
+                return remaining > 0;
             }
 
             @Override
@@ -115,6 +115,7 @@ public final class CycleNode extends InnerNode {
 
                 INode nextNode = nodes()[currentIndex];
                 currentIndex = (currentIndex + 1) % nodes().length;
+                remaining--;
                 return nextNode;
             }
         };

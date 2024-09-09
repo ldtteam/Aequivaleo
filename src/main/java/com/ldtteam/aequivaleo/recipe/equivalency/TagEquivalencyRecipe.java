@@ -1,33 +1,40 @@
 package com.ldtteam.aequivaleo.recipe.equivalency;
 
 import com.ldtteam.aequivaleo.api.compound.container.ICompoundContainer;
+import com.ldtteam.aequivaleo.api.recipe.equivalency.IEquivalencyRecipe;
 import com.ldtteam.aequivaleo.vanilla.api.recipe.equivalency.ITagEquivalencyRecipe;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.IRecipeIngredient;
 import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredientBuilder;
 import net.minecraft.tags.TagKey;
 import org.apache.commons.lang3.Validate;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
 {
     private final TagKey<T>                    tag;
     private final SortedSet<IRecipeIngredient> inputs;
-    private final SortedSet<ICompoundContainer<?>> outputs;
+    private final SortedSet<ICompoundContainer<?>> elements;
 
     public TagEquivalencyRecipe(
       final TagKey<T> tag,
-      final ICompoundContainer<?> inputs,
-      final ICompoundContainer<?> outputs)
+      final Collection<ICompoundContainer<?>> elements)
     {
-        this.tag = tag;
-        this.inputs = new TreeSet<>();
-        this.outputs = new TreeSet<>();
+        this.tag = Validate.notNull(tag, "Tag cannot be null.");
+        this.elements = new TreeSet<>();
 
-        this.inputs.add(new SimpleIngredientBuilder().from(Validate.notNull(inputs)).createSimpleIngredient());
-        this.outputs.add(Validate.notNull(outputs));
+        Validate.notNull(elements, "Elements cannot be null.");
+        this.elements.addAll(elements);
+
+        this.inputs = new TreeSet<>();
+        this.inputs.addAll(elements.stream().map(SimpleIngredientBuilder::simple).collect(Collectors.toSet()));
+
+        Validate.notEmpty(this.inputs, "Inputs cannot be empty.");
     }
 
     @Override
@@ -51,7 +58,7 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     @Override
     public SortedSet<ICompoundContainer<?>> getOutputs()
     {
-        return outputs;
+        return elements;
     }
 
     @Override
@@ -61,35 +68,34 @@ public class TagEquivalencyRecipe<T> implements ITagEquivalencyRecipe<T>
     }
 
     @Override
+    public boolean isDistributor() {
+        return true;
+    }
+
+    @Override
+    public boolean isValid() {
+        return !this.elements.isEmpty();
+    }
+
+    @Override
     public boolean equals(final Object o)
     {
         if (this == o)
         {
             return true;
         }
-        if (!(o instanceof final TagEquivalencyRecipe that))
+        if (!(o instanceof final TagEquivalencyRecipe<?> that))
         {
             return false;
         }
 
-        if (getTag() != null ? !getTag().equals(that.getTag()) : that.getTag() != null)
-        {
-            return false;
-        }
-        if (getInputs() != null ? !getInputs().equals(that.getInputs()) : that.getInputs() != null)
-        {
-            return false;
-        }
-        return getOutputs() != null ? getOutputs().equals(that.getOutputs()) : that.getOutputs() == null;
+        return getTag().equals(that.getTag());
     }
 
     @Override
     public int hashCode()
     {
-        int result = getTag() != null ? getTag().hashCode() : 0;
-        result = 31 * result + (getInputs() != null ? getInputs().hashCode() : 0);
-        result = 31 * result + (getOutputs() != null ? getOutputs().hashCode() : 0);
-        return result;
+        return getTag() != null ? getTag().hashCode() : 0;
     }
 
     @Override

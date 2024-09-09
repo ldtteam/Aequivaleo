@@ -24,7 +24,7 @@ public interface IResultsOwningNode extends ICoreNode, ISimulateableNode {
 
     @Override
     default boolean canPropagate() {
-        return results().hasResults() || !requiresCalculation();
+        return results().hasResults() || !requiresCalculation() || results().canCalculate();
     }
 
     @Override

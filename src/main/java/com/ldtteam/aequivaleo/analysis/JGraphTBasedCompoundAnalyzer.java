@@ -28,12 +28,11 @@ import com.ldtteam.aequivaleo.api.recipe.equivalency.ingredient.SimpleIngredient
 import com.ldtteam.aequivaleo.api.util.AequivaleoLogger;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
+import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.utils.AnalysisLogHandler;
 import com.ldtteam.aequivaleo.utils.WorldCacheUtils;
 import com.ldtteam.aequivaleo.utils.WorldUtils;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -131,16 +130,24 @@ public class JGraphTBasedCompoundAnalyzer {
             }
         }
 
+        final Set<INode> sourceNodes = new HashSet<>();
+
         for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().keySet()) {
-            IResultsOwningNode node = constructContainerNode(valueWrapper, recipeGraph, compoundNodes);
-            recipeGraph.clearIncomingEdgesOf(node);
-            node.results().force(CompoundInstanceSet.of(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().get(valueWrapper)));
+            final Set<ICompoundContainer<?>> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(valueWrapper.getContents());
+
+            sourceNodes.add(forceContainerNodeValues(valueWrapper, valueWrapper, recipeGraph, compoundNodes));
+            for (ICompoundContainer<?> alternative : alternatives) {
+                sourceNodes.add(forceContainerNodeValues(alternative, valueWrapper, recipeGraph, compoundNodes));
+            }
         }
 
         for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().keySet()) {
-            IResultsOwningNode node = constructContainerNode(valueWrapper, recipeGraph, compoundNodes);
-            recipeGraph.clearIncomingEdgesOf(node);
-            node.results().base(CompoundInstanceSet.of(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().get(valueWrapper)));
+            final Set<ICompoundContainer<?>> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(valueWrapper.getContents());
+
+            sourceNodes.add(baseContainerNodeValues(valueWrapper, valueWrapper, recipeGraph, compoundNodes));
+            for (ICompoundContainer<?> alternative : alternatives) {
+                sourceNodes.add(baseContainerNodeValues(alternative, valueWrapper, recipeGraph, compoundNodes));
+            }
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().exportGraph.get()) {
@@ -159,7 +166,7 @@ public class JGraphTBasedCompoundAnalyzer {
         final SourceNode source = new SourceNode();
         recipeGraph.addVertex(source);
 
-        for (IContainerNode rootNode : rootNodes) {
+        for (INode rootNode : sourceNodes) {
             recipeGraph.addEdge(source, rootNode);
             recipeGraph.setEdgeWeight(source, rootNode, 1d);
         }
@@ -171,6 +178,18 @@ public class JGraphTBasedCompoundAnalyzer {
                 ingredientNodes,
                 notDefinedGraphNodes,
                 source);
+    }
+
+    private INode baseContainerNodeValues(ICompoundContainer<?> valueWrapper, ICompoundContainer<?> valuesFrom, IGraph recipeGraph, Map<ICompoundContainer<?>, IContainerNode> compoundNodes) {
+        IResultsOwningNode node = constructContainerNode(valueWrapper, recipeGraph, compoundNodes);
+        node.results().base(CompoundInstanceSet.of(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().get(valuesFrom)));
+        return node;
+    }
+
+    private INode forceContainerNodeValues(ICompoundContainer<?> valueWrapper, ICompoundContainer<?> valuesFrom, IGraph recipeGraph, Map<ICompoundContainer<?>, IContainerNode> compoundNodes) {
+        IResultsOwningNode node = constructContainerNode(valueWrapper, recipeGraph, compoundNodes);
+        node.results().force(CompoundInstanceSet.of(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().get(valuesFrom  )));
+        return node;
     }
 
     private void handleRecipeInput(IRecipeIngredient input, Map<IRecipeIngredient, IIngredientNode> ingredientNodes, IGraph recipeGraph, RecipeNode recipeGraphNode, Map<ICompoundContainer<?>, IContainerNode> compoundNodes, int factor) {
@@ -220,7 +239,7 @@ public class JGraphTBasedCompoundAnalyzer {
         return node;
     }
 
-    private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode) {
+    private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode, Map<ICompoundContainer<?>, IContainerNode> compoundNodes) {
 
         LOGGER.warn("Starting component detection");
 
@@ -247,6 +266,28 @@ public class JGraphTBasedCompoundAnalyzer {
 
         LOGGER.warn("Finished clique reduction.");
 
+        LOGGER.warn("Stripping input values from known nodes.");
+
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getValueInformation().keySet()) {
+            final Set<ICompoundContainer<?>> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(valueWrapper.getContents());
+
+            constructContainerNode(valueWrapper, recipeGraph, compoundNodes).clearInputs();
+            for (ICompoundContainer<?> alternative : alternatives) {
+                constructContainerNode(alternative, recipeGraph, compoundNodes).clearInputs();
+            }
+        }
+
+        for (ICompoundContainer<?> valueWrapper : CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier()).getBaseInformation().keySet()) {
+            final Set<ICompoundContainer<?>> alternatives = ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(valueWrapper.getContents());
+
+            constructContainerNode(valueWrapper, recipeGraph, compoundNodes).clearInputs();
+            for (ICompoundContainer<?> alternative : alternatives) {
+                constructContainerNode(alternative, recipeGraph, compoundNodes).clearInputs();
+            }
+        }
+
+        LOGGER.warn("Stripped input values from known nodes.");
+
         LOGGER.warn("Starting cycle reduction.");
 
         final IJGraphTBasedCompoundCycleTracer tracer = createTracer();
@@ -262,17 +303,6 @@ public class JGraphTBasedCompoundAnalyzer {
 
         LOGGER.warn("Finished cycle reduction.");
 
-        recipeGraph.removeVertex(sourceNode);
-
-        final Set<INode> sourceNodeLinks = findDanglingNodes(recipeGraph);
-
-        recipeGraph.addVertex(sourceNode);
-
-        for (INode rootNode : sourceNodeLinks) {
-            recipeGraph.addEdge(sourceNode, rootNode);
-            recipeGraph.setEdgeWeight(sourceNode, rootNode, 1d);
-        }
-
         return recipeGraph;
     }
 
@@ -282,6 +312,7 @@ public class JGraphTBasedCompoundAnalyzer {
         }
 
         final BuildRecipeGraph buildRecipeGraph = createGraph();
+        final Map<ICompoundContainer<?>, IContainerNode> compoundNodes = buildRecipeGraph.compoundNodes();
         final IGraph noneReducedGraph = buildRecipeGraph.recipeGraph();
         final Map<ICompoundContainer<?>, Set<CompoundInstance>> resultingCompounds = buildRecipeGraph.resultingCompounds();
         final Set<INode> notDefinedGraphNodes = buildRecipeGraph.notDefinedGraphNodes();
@@ -289,7 +320,7 @@ public class JGraphTBasedCompoundAnalyzer {
 
         final String graphHash = new CacheKey(ModList.get()).hash();
         LOGGER.warn("Starting graph analysis for: {}, with hash: {}", WorldUtils.formatWorldNames(getOwners()), graphHash);
-        if (!forceReload) {
+        if (!forceReload && Aequivaleo.getInstance().getConfiguration().getServer().useCaching.get()) {
             //We are allowed to lookup cached values
             final Optional<Map<ICompoundContainer<?>, Set<CompoundInstance>>> cachedResults = WorldCacheUtils.loadCachedResults(primaryOwner, graphHash);
             if (cachedResults.isPresent()) {
@@ -302,7 +333,7 @@ public class JGraphTBasedCompoundAnalyzer {
             LOGGER.info("Forcing reload of results for: {}", WorldUtils.formatWorldNames(getOwners()));
         }
 
-        final IGraph recipeGraph = reduceGraph(noneReducedGraph, source);
+        final IGraph recipeGraph = reduceGraph(noneReducedGraph, source, compoundNodes);
 
         final StatCollector statCollector = new StatCollector(
                 WorldUtils.formatWorldNames(getOwners()),
@@ -318,6 +349,11 @@ public class JGraphTBasedCompoundAnalyzer {
             resultingCompounds.compute(valueWrapper, (w, v) -> Objects.requireNonNull(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier())
                     .getLockingInformation()
                     .get(valueWrapper)));
+
+            ResultsAdapterHandlerRegistry.getInstance().produceAlternatives(valueWrapper.getContents())
+                    .forEach(alternative -> resultingCompounds.compute(alternative, (w, v) -> Objects.requireNonNull(CompoundInformationRegistry.getInstance(primaryOwner.getIdentifier())
+                            .getLockingInformation()
+                            .get(valueWrapper))));
         }
 
         if (Aequivaleo.getInstance().getConfiguration().getServer().writeResultsToLog.get()) {
@@ -346,7 +382,7 @@ public class JGraphTBasedCompoundAnalyzer {
             AequivaleoLogger.bigWarningSimple(String.format("Finished the analysis of: %s", WorldUtils.formatWorldNames(getOwners())));
         }
 
-        if (writeCachedData) {
+        if (writeCachedData && Aequivaleo.getInstance().getConfiguration().getServer().useCaching.get()) {
             LOGGER.warn(String.format("Writing results to cache for: %s", WorldUtils.formatWorldNames(getOwners())));
             WorldCacheUtils.writeCachedResults(primaryOwner, graphHash, resultingCompounds);
             LOGGER.warn(String.format("Written %d results to cache for: %s", resultingCompounds.size(), WorldUtils.formatWorldNames(getOwners())));

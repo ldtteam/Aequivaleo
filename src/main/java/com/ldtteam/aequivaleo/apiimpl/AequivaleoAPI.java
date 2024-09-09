@@ -20,6 +20,7 @@ import com.ldtteam.aequivaleo.api.registry.IRegistryView;
 import com.ldtteam.aequivaleo.api.results.IEquivalencyResults;
 import com.ldtteam.aequivaleo.api.results.IResultsAdapterHandlerRegistry;
 import com.ldtteam.aequivaleo.api.results.IResultsInformationCache;
+import com.ldtteam.aequivaleo.api.tag.ITagContentsRetriever;
 import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
 import com.ldtteam.aequivaleo.compound.data.serializers.*;
 import com.ldtteam.aequivaleo.compound.information.CompoundInformationRegistry;
@@ -33,6 +34,7 @@ import com.ldtteam.aequivaleo.recipe.equivalency.ingredient.data.IngredientSetSe
 import com.ldtteam.aequivaleo.registry.ShadowRegistry;
 import com.ldtteam.aequivaleo.results.EquivalencyResults;
 import com.ldtteam.aequivaleo.results.ResultsAdapterHandlerRegistry;
+import com.ldtteam.aequivaleo.tag.TagContentsRetriever;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
@@ -155,5 +157,10 @@ public final class AequivaleoAPI implements IAequivaleoAPI
     @Override
     public <T extends IRegistryEntry, E extends IRegistryEntry> IRegistryView<E> createView(final IForgeRegistry<T> registry, final Function<T, Optional<E>> viewFilter) {
         return new ShadowRegistry<>(registry, viewFilter);
+    }
+
+    @Override
+    public ITagContentsRetriever getTagContentsRetriever() {
+        return TagContentsRetriever.getInstance();
     }
 }

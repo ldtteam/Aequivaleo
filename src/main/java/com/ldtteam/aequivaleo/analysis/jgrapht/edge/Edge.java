@@ -1,6 +1,7 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.edge;
 
 import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.IEdge;
+import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import java.util.Objects;
@@ -8,11 +9,26 @@ import java.util.Optional;
 
 public class Edge extends DefaultWeightedEdge implements IEdge
 {
-
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private Optional<Integer> hashCode = Optional.empty();
 
-    public Edge()
+    private final INode source;
+    private final INode target;
+
+    public Edge(final INode source, final INode target)
     {
+        this.source = source;
+        this.target = target;
+    }
+
+    @Override
+    public INode getSource() {
+        return source;
+    }
+
+    @Override
+    public INode getTarget() {
+        return target;
     }
 
     @Override
@@ -24,7 +40,7 @@ public class Edge extends DefaultWeightedEdge implements IEdge
     @Override
     public int hashCode()
     {
-        if (!this.hashCode.isPresent() &&
+        if (this.hashCode.isEmpty() &&
             getSource() != null &&
               getTarget() != null
         ) {
@@ -39,12 +55,16 @@ public class Edge extends DefaultWeightedEdge implements IEdge
     @Override
     public boolean equals(final Object obj)
     {
-        if (!(obj instanceof Edge))
+        if (!(obj instanceof Edge other))
             return false;
-        final Edge other = (Edge) obj;
 
         return Objects.equals(getSource(), other.getSource()) &&
                  Objects.equals(getTarget(), other.getTarget()) &&
                  Objects.equals(getWeight(), other.getWeight());
+    }
+
+    @Override
+    public String toString() {
+        return "(" + getSource() + " : " + getTarget() + ")";
     }
 }

@@ -2,6 +2,7 @@ package com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct;
 
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.CleanVertex;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.ISearchAction;
+import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.SearchActionPool;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.search.VisitVertex;
 import com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct.trace.ICycleReducingTracer;
 import org.jgrapht.Graph;
@@ -9,7 +10,7 @@ import org.jgrapht.Graph;
 import java.util.*;
 import java.util.function.Function;
 
-public final class Context<G extends Graph<V, E>, V, E> {
+public final class Context<G extends Graph<V, E>, V, E> extends SearchActionPool<G, V, E> {
     private final G graph;
 
     private final Function<List<V>, V> vertexReplacerFunction;
@@ -22,11 +23,12 @@ public final class Context<G extends Graph<V, E>, V, E> {
     private final Set<V> visitedVertexes = new HashSet<>();
 
     Context(G graph, V startingNode, Function<List<V>, V> replacementVertexBuilder, ICycleReducingTracer<G, V, E> tracer) {
+        super(graph);
         this.graph = graph;
         this.vertexReplacerFunction = replacementVertexBuilder;
         this.tracer = tracer;
 
-        offerAction(new VisitVertex<>(startingNode, graph));
+        offerAction(claimVisitVertex(startingNode));
     }
 
     public Graph<V, E> getGraph() {
@@ -55,14 +57,15 @@ public final class Context<G extends Graph<V, E>, V, E> {
                     .forEach(edgesToKeep::add);
         }
 
-        final Deque<ISearchAction<G, V, E>> actionsTouchingCycle = new ArrayDeque<>();
-        for (ISearchAction<G, V, E> gveiSearchAction : this.next) {
-            if (gveiSearchAction.actionTouchesAnyOf(cycleSet)) {
-                actionsTouchingCycle.add(gveiSearchAction);
+        //Using an iterator delete all elements from next that touch the cycle:
+        final Iterator<ISearchAction<G, V, E>> iterator = next.iterator();
+        while (iterator.hasNext()) {
+            final ISearchAction<G, V, E> action = iterator.next();
+            if (action.actionTouchesAnyOf(cycleSet)) {
+                iterator.remove();
+                release(action);
             }
         }
-
-        this.next.removeAll(actionsTouchingCycle);
 
         graph.addVertex(replacementNode);
 
@@ -83,7 +86,7 @@ public final class Context<G extends Graph<V, E>, V, E> {
 
         cycle.forEach(graph::removeVertex);
 
-        offerAction(new VisitVertex<>(replacementNode, graph));
+        offerAction(claimVisitVertex(replacementNode));
 
         final List<V> cycleCopy = new ArrayList<>(cycle);
         Collections.reverse(cycleCopy);
@@ -106,19 +109,12 @@ public final class Context<G extends Graph<V, E>, V, E> {
     }
 
     public void openVertex(V vertex) {
-        if (vertex.toString().equals("CliqueNode{nodes=[ContainerNode{contents=1.0 x Item: minecraft:raw_gold_block}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x Item: minecraft:raw_gold_block], count=1.0}}, RecipeNode{recipe=Equivalency via Instance: raw_gold_block to: 1 raw_gold_block}, ContainerNode{contents=1.0 x ItemStack: 1 raw_gold_block}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_gold_block], count=1.0}}, RecipeNode{recipe=Equivalency via Instance: 1 raw_gold_block to: raw_gold_block}]}") ||
-                vertex.toString().equals("RecipeNode{recipe=SimpleEquivalencyRecipe{inputs=[SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_gold_block], count=1.0}], requiredKnownOutputs=[], outputs=[9.0 x ItemStack: 1 raw_gold]}}") ||
-                vertex.toString().equals("CliqueNode{nodes=[ContainerNode{contents=1.0 x ItemStack: 1 raw_gold}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_gold], count=1.0}}, RecipeNode{recipe=Equivalency via Instance: 1 raw_gold to: raw_gold}, ContainerNode{contents=1.0 x Item: minecraft:raw_gold}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x Item: minecraft:raw_gold], count=1.0}}, RecipeNode{recipe=Equivalency via Instance: raw_gold to: 1 raw_gold}]}") ||
-                vertex.toString().equals("RecipeNode{recipe=SimpleEquivalencyRecipe{inputs=[SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_gold], count=9.0}], requiredKnownOutputs=[], outputs=[1.0 x ItemStack: 1 raw_gold_block]}}")
-        ) {
-            System.out.println("Hello");
-        }
         path.addFirst(vertex);
 
         visitedVertexes.add(vertex);
         tracer.onEncounterVertex(vertex);
 
-        offerAction(new CleanVertex<>(vertex));
+        offerAction(claimCleanVertex(vertex));
     }
 
     public void closeVertex(V vertex) {
@@ -128,13 +124,8 @@ public final class Context<G extends Graph<V, E>, V, E> {
     }
 
     public void offerAction(ISearchAction<G, V, E> action) {
-        if (action instanceof VisitVertex<G, V, E> visitVertex) {
-            if (visitVertex.vertex().toString().equals("CliqueNode{nodes=[ContainerNode{contents=1.0 x Item: minecraft:raw_copper_block}, RecipeNode{recipe=Equivalency via Instance: raw_copper_block to: 1 raw_copper_block}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x Item: minecraft:raw_copper_block], count=1.0}}, ContainerNode{contents=1.0 x ItemStack: 1 raw_copper_block}, RecipeNode{recipe=Equivalency via Instance: 1 raw_copper_block to: raw_copper_block}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_copper_block], count=1.0}}]}") ||
-                    visitVertex.vertex().toString().equals("RecipeNode{recipe=SimpleEquivalencyRecipe{inputs=[SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_copper_block], count=1.0}], requiredKnownOutputs=[], outputs=[9.0 x ItemStack: 1 raw_copper]}}") ||
-                    visitVertex.vertex().toString().equals("CliqueNode{nodes=[ContainerNode{contents=1.0 x Item: minecraft:raw_copper}, RecipeNode{recipe=Equivalency via Instance: raw_copper to: 1 raw_copper}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x Item: minecraft:raw_copper], count=1.0}}, ContainerNode{contents=1.0 x ItemStack: 1 raw_copper}, RecipeNode{recipe=Equivalency via Instance: 1 raw_copper to: raw_copper}, IngredientNode{ingredient=SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_copper], count=1.0}}]}") ||
-                    visitVertex.vertex().toString().equals("RecipeNode{recipe=SimpleEquivalencyRecipe{inputs=[SimpleIngredient{candidates=[1.0 x ItemStack: 1 raw_copper], count=9.0}], requiredKnownOutputs=[], outputs=[1.0 x ItemStack: 1 raw_copper_block]}}")) {
-                System.out.println("Hello");
-            }
+        if (!next.isEmpty() && next.peekFirst().equals(action)) {
+            throw new IllegalStateException("Action already in queue");
         }
 
         next.addFirst(action);

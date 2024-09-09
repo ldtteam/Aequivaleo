@@ -80,13 +80,16 @@ public class CycleReductionTests {
         Configuration config = mock(Configuration.class);
         ServerConfiguration serverConfig = mock(ServerConfiguration.class);
         ForgeConfigSpec.BooleanValue alwaysFalseConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
+
         when(alwaysFalseConfig.get()).thenReturn(false);
         serverConfig.exportGraph = alwaysFalseConfig;
         serverConfig.writeResultsToLog = alwaysFalseConfig;
+        serverConfig.useActionPooling = alwaysTrueConfig;
+        serverConfig.performCycleReductionInspection = alwaysTrueConfig;
         when(config.getServer()).thenReturn(serverConfig);
 
         CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
-        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
         when(alwaysTrueConfig.get()).thenReturn(true);
         commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
         when(config.getCommon()).thenReturn(commonConfiguration);

@@ -27,6 +27,10 @@ public class CompoundInstanceSet implements Set<CompoundInstance> {
         return new CompoundInstanceSet(compoundInstances);
     }
 
+    public static CompoundInstanceSet of(Collection<CompoundInstance> compoundInstances) {
+        return new CompoundInstanceSet(new TreeSet<>(compoundInstances));
+    }
+
     private final Set<CompoundInstance> compoundInstances;
 
     private CompoundInstanceSet(Set<CompoundInstance> compoundInstances) {

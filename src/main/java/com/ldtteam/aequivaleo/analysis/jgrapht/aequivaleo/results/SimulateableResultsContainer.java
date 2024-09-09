@@ -1,6 +1,5 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.results;
 
-import com.ldtteam.aequivaleo.analysis.jgrapht.aequivaleo.INode;
 import com.ldtteam.aequivaleo.api.compound.CompoundInstance;
 import com.ldtteam.aequivaleo.api.compound.type.ICompoundType;
 import com.ldtteam.aequivaleo.api.compound.type.group.ICompoundTypeGroup;
@@ -11,16 +10,15 @@ import com.ldtteam.aequivaleo.mediation.SimpleMediationContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SimulateableResultsContainer implements IResultsContainer {
 
     private CompoundInstanceSet results = null;
 
-    private final INode node;
     private final Deque<SimulationState> simulations = new LinkedList<>();
 
-    public SimulateableResultsContainer(INode node) {
-        this.node = node;
+    public SimulateableResultsContainer() {
         push();
     }
 
@@ -145,6 +143,20 @@ public class SimulateableResultsContainer implements IResultsContainer {
         return simulations.isEmpty() || simulations.peek().lastSimulationResult == null;
     }
 
+    @Override
+    public boolean canCalculate() {
+        if (hasResults()) {
+            return true;
+        }
+
+        if (simulations.isEmpty()) {
+            return false;
+        }
+
+        final SimulationState state = simulations.peek();
+        return state.canCalculate();
+    }
+
     private static final class SimulationState {
 
         private final Set<CompoundInstanceSet> candidates;
@@ -178,9 +190,13 @@ public class SimulateableResultsContainer implements IResultsContainer {
             return result;
         }
 
-        private @NotNull IMediationContext buildContext() {
+        private @NotNull IMediationContext buildContext(ICompoundTypeGroup group) {
             final Set<IMediationCandidate> groupCandidates = new HashSet<>();
             for (Set<CompoundInstance> candidateValues : candidates) {
+                candidateValues = candidateValues.stream()
+                        .filter(instance -> instance.getType().getGroup().equals(group))
+                        .collect(Collectors.toSet());
+
                 if (candidateValues.isEmpty()) {
                     continue;
                 }
@@ -233,7 +249,7 @@ public class SimulateableResultsContainer implements IResultsContainer {
 
             final Set<CompoundInstance> mediatedResult = new HashSet<>();
             for (ICompoundTypeGroup group : groups) {
-                final IMediationContext context = buildContext();
+                final IMediationContext context = buildContext(group);
                 final Optional<Set<CompoundInstance>> mediatedValue = group.getMediationEngine().determineMediationResult(context);
                 mediatedValue.ifPresent(mediatedResult::addAll);
             }
@@ -257,6 +273,10 @@ public class SimulateableResultsContainer implements IResultsContainer {
             fork.force = force;
             fork.lastSimulationResult = lastSimulationResult;
             return fork;
+        }
+
+        public boolean canCalculate() {
+            return lastSimulationResult != null || base != null || force != null || !candidates.isEmpty();
         }
     }
 }

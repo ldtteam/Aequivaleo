@@ -36,5 +36,5 @@ public interface IResultsAdapterHandlerRegistry
      *
      * @return The registry.
      */
-    <T> IResultsAdapterHandlerRegistry registerHandler(final Predicate<Object> canHandlePredicate, final Function<T, Set<?>> alternativesProducer);
+    <T> IResultsAdapterHandlerRegistry registerHandler(final Predicate<T> canHandlePredicate, final Function<T, Set<?>> alternativesProducer);
 }
