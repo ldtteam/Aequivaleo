@@ -197,6 +197,7 @@ public interface IAequivaleoAPI {
 
     /**
      * A contents retriever for tags.
+     * @return The tag contents retriever.
      */
     ITagContentsRetriever getTagContentsRetriever();
 
