@@ -1,12 +1,76 @@
 package com.ldtteam.aequivaleo.analysis.jgrapht.cycles.direct;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
+import com.ldtteam.aequivaleo.Aequivaleo;
+import com.ldtteam.aequivaleo.api.compound.container.factory.ICompoundContainerFactory;
+import com.ldtteam.aequivaleo.api.util.ModRegistries;
+import com.ldtteam.aequivaleo.compound.container.registry.CompoundContainerFactoryManager;
+import com.ldtteam.aequivaleo.config.CommonConfiguration;
+import com.ldtteam.aequivaleo.config.Configuration;
+import com.ldtteam.aequivaleo.config.ServerConfiguration;
+import com.ldtteam.aequivaleo.testing.compound.container.testing.StringCompoundContainer;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.registries.IForgeRegistry;
+import org.jgrapht.graph.DefaultDirectedWeightedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
+
 public class DFSDirectCycleReducerTest {
+
+    MockedStatic<Aequivaleo> aequivaleoMock;
+    MockedStatic<ModList> modListMock;
+
+    @Before
+    public void setUp()
+    {
+        aequivaleoMock = mockStatic(Aequivaleo.class);
+        modListMock = mockStatic(ModList.class);
+        Aequivaleo mod = mock(Aequivaleo.class);
+        when(Aequivaleo.getInstance()).thenReturn(mod);
+
+        Configuration config = mock(Configuration.class);
+        ServerConfiguration serverConfig = mock(ServerConfiguration.class);
+        ForgeConfigSpec.BooleanValue alwaysFalseConfig = mock(ForgeConfigSpec.BooleanValue.class);
+        ForgeConfigSpec.BooleanValue alwaysTrueConfig = mock(ForgeConfigSpec.BooleanValue.class);
+
+        when(alwaysFalseConfig.get()).thenReturn(false);
+        serverConfig.exportGraph = alwaysFalseConfig;
+        serverConfig.writeResultsToLog = alwaysFalseConfig;
+        serverConfig.useActionPooling = alwaysTrueConfig;
+        serverConfig.performCycleReductionInspection = alwaysTrueConfig;
+        when(config.getServer()).thenReturn(serverConfig);
+
+        CommonConfiguration commonConfiguration = mock(CommonConfiguration.class);
+        when(alwaysTrueConfig.get()).thenReturn(true);
+        commonConfiguration.debugAnalysisLog = alwaysTrueConfig;
+        when(config.getCommon()).thenReturn(commonConfiguration);
+
+        when(mod.getConfiguration()).thenReturn(config);
+
+        List<ICompoundContainerFactory<?>> containerFactories = ImmutableList.of(new StringCompoundContainer.Factory());
+        ModRegistries.CONTAINER_FACTORY = Suppliers.memoize(() -> mock(IForgeRegistry.class));
+        when(ModRegistries.CONTAINER_FACTORY.get().iterator()).thenReturn(containerFactories.iterator());
+        CompoundContainerFactoryManager.getInstance().bake();
+    }
+
+    @After
+    public void close() {
+        aequivaleoMock.close();
+        modListMock.close();
+    }
 
     @Test
     public void reduceSimpleCycle() {
