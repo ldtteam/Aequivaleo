@@ -241,22 +241,7 @@ public class JGraphTBasedCompoundAnalyzer {
 
     private IGraph reduceGraph(final IGraph recipeGraph, final SourceNode sourceNode, Map<ICompoundContainer<?>, IContainerNode> compoundNodes) {
 
-        LOGGER.warn("Starting component detection");
-
-        final IConnectionFinder<IGraph, INode, IEdge> connectivityInspector = new QueueBasedConnectionFinder<>();
-        final Set<INode> connectedNodes = connectivityInspector.reachableNodes(recipeGraph, sourceNode);
-
-        LOGGER.warn("Connected nodes: {} out of {}", connectedNodes.size(), recipeGraph.vertexSet().size());
-
-        final Set<INode> nodesToRemove = new HashSet<>(Sets.difference(recipeGraph.vertexSet(), connectedNodes));
-        nodesToRemove.forEach(v -> {
-            recipeGraph.removeVertex(v);
-            LOGGER.debug("Removed node: {}", v);
-        });
-
-        LOGGER.info("Removed {} nodes from the graph", nodesToRemove.size());
-
-        LOGGER.warn("Finished component detection");
+        removeDetachedComponents(recipeGraph, sourceNode);
 
         LOGGER.warn("Starting clique reduction.");
 
@@ -288,6 +273,8 @@ public class JGraphTBasedCompoundAnalyzer {
 
         LOGGER.warn("Stripped input values from known nodes.");
 
+        removeDetachedComponents(recipeGraph, sourceNode);
+
         LOGGER.warn("Starting cycle reduction.");
 
         final IJGraphTBasedCompoundCycleTracer tracer = createTracer();
@@ -304,6 +291,25 @@ public class JGraphTBasedCompoundAnalyzer {
         LOGGER.warn("Finished cycle reduction.");
 
         return recipeGraph;
+    }
+
+    private static void removeDetachedComponents(IGraph recipeGraph, SourceNode sourceNode) {
+        LOGGER.warn("Starting component detection");
+
+        final IConnectionFinder<IGraph, INode, IEdge> connectivityInspector = new QueueBasedConnectionFinder<>();
+        final Set<INode> connectedNodes = connectivityInspector.reachableNodes(recipeGraph, sourceNode);
+
+        LOGGER.warn("Connected nodes: {} out of {}", connectedNodes.size(), recipeGraph.vertexSet().size());
+
+        final Set<INode> nodesToRemove = new HashSet<>(Sets.difference(recipeGraph.vertexSet(), connectedNodes));
+        nodesToRemove.forEach(v -> {
+            recipeGraph.removeVertex(v);
+            LOGGER.debug("Removed node: {}", v);
+        });
+
+        LOGGER.info("Removed {} nodes from the graph", nodesToRemove.size());
+
+        LOGGER.warn("Finished component detection");
     }
 
     public void calculate() {

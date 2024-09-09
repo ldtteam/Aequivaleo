@@ -36,7 +36,10 @@ public final class DFSDirectCycleReducer<G extends Graph<V, E>, V, E> implements
             final SzwarcfiterLauerSimpleCycles<V, E> cycleDetector = new SzwarcfiterLauerSimpleCycles<>(graph);
             final List<List<V>> cycles = cycleDetector.findSimpleCycles();
             for (List<V> cycle : cycles) {
-                AequivaleoLogger.warning("Found cycle: " + cycle);
+                AequivaleoLogger.warning(" - Found cycle: " + cycle.size());
+                for (V vertex : cycle) {
+                    AequivaleoLogger.warning("   - " + vertex);
+                }
             }
             AequivaleoLogger.endBigWarning("Cycle Reduction Inspection");
         }
